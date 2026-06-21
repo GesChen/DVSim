@@ -1,0 +1,27 @@
+#pragma kernel LogLuma
+
+Texture2D<float4> Input;
+RWTexture2D<float> Output;
+
+[numthreads(8, 8, 1)]
+void LogLuma(uint3 id : SV_DispatchThreadID)
+{
+	uint width, height;
+	Output.GetDimensions(width, height);
+
+	if (id.x >= width || id.y >= height)
+		return;
+
+	float4 col = Input.Load(int3(id.xy, 0));
+
+	float r = max(0.0, col.r);
+	float g = max(0.0, col.g);
+	float b = max(0.0, col.b);
+
+	float luma =
+        0.2126 * r +
+        0.7152 * g +
+        0.0722 * b;
+
+	Output[id.xy] = log(max(luma, 1e-4));
+}
