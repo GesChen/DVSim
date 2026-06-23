@@ -105,6 +105,9 @@ InitTestScene*.unity*
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+
 /Assets/Assets/cmu mocap bvhs
 /Assets/Output
-/Assets/Output
+/Assets/Python/data
+/Assets/Python/__pycache__
+*.pyc
