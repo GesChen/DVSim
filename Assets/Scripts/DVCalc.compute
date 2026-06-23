@@ -1,0 +1,45 @@
+#pragma kernel Main
+
+#define COUNT_SCALE 100.
+
+Texture2D<float4> Camera;
+RWTexture2D<float> LogReference;
+RWTexture2D<float> Output;
+float ContrastThreshold;
+
+[numthreads(8, 8, 1)]
+void Main(uint3 id : SV_DispatchThreadID)
+{
+	uint width, height;
+	Camera.GetDimensions(width, height);
+
+	if (id.x >= width || id.y >= height)
+		return;
+
+	int3 loc = int3(id.xy, 0);
+	float4 col = Camera.Load(loc);
+
+	float r = max(0.0, col.r);
+	float g = max(0.0, col.g);
+	float b = max(0.0, col.b);
+
+	float luma =
+		0.2126 * r +
+		0.7152 * g +
+		0.0722 * b;
+
+	float logI = log(max(luma, 1e-4));
+	float ref = LogReference.Load(loc);
+	float diff = logI - ref;
+	
+	bool on = diff > 0;
+	int polarity = on ? 1 : -1;
+	
+	int numEvents = floor(polarity * diff / ContrastThreshold);
+	
+	// pack polarity, events, diff into one float
+	Output[id.xy] = sign(numEvents) * polarity * (numEvents * COUNT_SCALE + abs(diff));
+	
+	// update state
+	LogReference[id.xy] = ref + polarity * numEvents * ContrastThreshold;
+}

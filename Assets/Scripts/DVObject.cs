@@ -1,6 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-public class DVObject : MonoBehaviour {
-	public virtual void UpdateState() { }
+public abstract class DVObject : MonoBehaviour {
+	public abstract void UpdateState(ulong time);
 }

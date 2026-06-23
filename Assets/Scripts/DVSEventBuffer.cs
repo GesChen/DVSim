@@ -10,38 +10,74 @@ public class DVSEventBuffer {
 
 	string outFilePath;
 
+	bool fileAvailable = true;
 	public void Setup(string cameraName) {
 		outFilePath = Path.Combine(Application.dataPath, DVConfig.DataFolder, cameraName + ".txt");
 
-		File.WriteAllText(outFilePath, string.Empty);
+		try {
+			File.WriteAllText(outFilePath, string.Empty);
+		} catch {
+			Debug.LogError($"Error writing to {outFilePath}. File output will be disabled for this camera.");
+			fileAvailable = false;
+		}
 	}
 
 	public DVSEventBuffer() {
 		Events = new List<Event>(DVConfig.EventBufferCap);
 	}
 
+	private bool flushing;
+
 	public void NewEvent(int x, int y, ulong time, bool polarity) {
-		Events.Add(new() {
+		Events.Add(new Event {
 			x = x,
 			y = y,
 			t = time,
 			p = polarity
 		});
 
-		if (Events.Count > DVConfig.EventBufferFlush)
-			_ = Flush();
+		if (!flushing && Events.Count > DVConfig.EventBufferFlush)
+			_ = FlushLoop();
 	}
 
-	public async Task Flush() {
-		string content = EventsToString();
-		Events.Clear();
+	public void ForceFlush(bool bypass = false) {
+		if (flushing && !bypass) {
+			Debug.LogWarning("Can't force flush. Buffer is already flushing.");
+			return;
+		}
 
-		await File.AppendAllTextAsync(outFilePath, content + "\n");
+		Debug.Log($"Force flushing {Events.Count} events");
+		_ = FlushLoop();
 	}
 
-	string EventsToString() =>
-		string.Join('\n', Events.Select(e => EventToString(e)));
+	private async Task FlushLoop() {
+		if (!fileAvailable) return;
 
-	string EventToString(Event e) =>
-		$"{e.x}, {e.y}, {e.t}, {(e.p ? "1" : "-1")}";
+		flushing = true;
+
+		while (Events.Count > 0) {
+			var snapshot = Events.ToArray();
+			Events.Clear();
+
+			string content = await Task.Run(() =>
+			{
+				var sb = new System.Text.StringBuilder(snapshot.Length * 32);
+
+				foreach (var e in snapshot)
+			{
+					sb.Append(e.x).Append(", ")
+				  .Append(e.y).Append(", ")
+				  .Append(e.t).Append(", ")
+				  .Append(e.p ? "1" : "-1")
+				  .Append('\n');
+				}
+
+				return sb.ToString();
+			});
+
+			await File.AppendAllTextAsync(outFilePath, content);
+		}
+
+		flushing = false;
+	}
 }

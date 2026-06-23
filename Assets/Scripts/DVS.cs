@@ -1,9 +1,14 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Burst;
 using Unity.Collections;
+using Unity.Jobs;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
+using Unity.Mathematics;
+
 
 public struct Event {
 	public int x;
@@ -12,129 +17,113 @@ public struct Event {
 	public bool p; // true = on, false = off
 }
 
+
 [DisallowMultipleComponent]
 public class DVS : MonoBehaviour {
-	Camera camera;
-	RenderTexture target;
-	DVSEventBuffer events;
+	public Camera camera;
+	public DVSEventBuffer events;
 
-	class Frame {
-		public float[][] value;
+	RenderTexture cameraTarget;
+	RenderTexture logReference;
+	RenderTexture outputMap;
 
-		public Frame() {
-			(int width, int height) = (DVConfig.Resolution.x, DVConfig.Resolution.y);
+	ComputeShader Shader;
+	int kernel;
 
-			value = new float[height][];
-
-			for (int y = 0; y < height; y++) {
-				value[y] = new float[width];
-
-				for (int x = 0; x < width; x++) {
-					value[y][x] = 0;
-				}
-			}
-		}
-
-		public Frame(NativeArray<Color> pixels) {
-			(int width, int height) = (DVConfig.Resolution.x, DVConfig.Resolution.y);
-
-			value = new float[height][];
-
-			for (int y = 0; y < height; y++) {
-				value[y] = new float[width];
-
-				for (int x = 0; x < width; x++) {
-					Color col = pixels[y * width + x];
-
-					value[y][x] = LogLuma(col);
-				}
-			}
-		}
-
-		float LogLuma(Color col) {
-			float r = Mathf.Max(0f, col.r);
-			float g = Mathf.Max(0f, col.g);
-			float b = Mathf.Max(0f, col.b);
-
-			float luma =
-				0.2126f * r +
-				0.7152f * g +
-				0.0722f * b;
-			luma = Mathf.Max(luma, 1e-4f); // no zero logging
-
-			return Mathf.Log(luma);
-		}
-
-		public float Get(int x, int y) => value[y][x];
-		public void Set(int x, int y, float val) {
-			value[y][x] = val;
-		}
-	}
-
-	Frame LogReference;
+	Vector2Int groups;
 
 	private void Awake() {
-		target = new(
+
+		cameraTarget = new(
 			DVConfig.Resolution.x,
 			DVConfig.Resolution.y,
 			24,
 			RenderTextureFormat.ARGBHalf
 		);
-		target.Create();
+		cameraTarget.Create();
 
 		camera = GetComponent<Camera>();
 		camera.allowHDR = true;
-		camera.targetTexture = target;
+		camera.targetTexture = cameraTarget;
+
+		logReference = GenerateNonDepthRenTex(RenderTextureFormat.RFloat);
+		outputMap = GenerateNonDepthRenTex(RenderTextureFormat.RFloat);
+
+		Shader = AssetDatabase.LoadAssetAtPath<ComputeShader>(
+			"Assets/Scripts/DVCalc.compute"
+		);
+
+		kernel = Shader.FindKernel("Main");
+
+		// wont change so you can precompute this
+		groups = Vector2Int.CeilToInt((Vector2)DVConfig.Resolution / 8f);
 
 		events = new();
 		events.Setup(transform.name);
 	}
 
-	public void Tick() {
-		AsyncGPUReadback.Request(
-			target,
+	RenderTexture GenerateNonDepthRenTex(RenderTextureFormat format) {
+		RenderTexture tex = new(
+			DVConfig.Resolution.x,
+			DVConfig.Resolution.y,
 			0,
-			TextureFormat.RGBAFloat,
-			req => Readback(req, DVManager.Time)
+			format
+		);
+		tex.enableRandomWrite = true;
+		tex.Create();
+
+		return tex;
+	}
+
+
+	private void OnDestroy() {
+		Release(cameraTarget);
+		Release(logReference);
+		Release(outputMap);
+	}
+
+	private void Release(RenderTexture rt) {
+		if (rt == null)
+			return;
+
+		rt.Release();
+	}
+
+	public void Tick() {
+		Shader.SetTexture(kernel, "Camera", cameraTarget);
+		Shader.SetTexture(kernel, "LogReference", logReference);
+		Shader.SetTexture(kernel, "Output", outputMap);
+		Shader.SetFloat("ContrastThreshold", DVConfig.ContrastThreshold);
+
+		Shader.Dispatch(kernel, groups.x, groups.y, 1);
+
+		AsyncGPUReadback.Request(
+			outputMap,
+			0,
+			TextureFormat.RFloat,
+			req => ReadbackBurst(req, DVManager.Time)
 		);
 	}
 
-	void Readback(AsyncGPUReadbackRequest req, ulong time) {
-		if (req.hasError) {
-			Debug.LogError("Readback failed"); return;
-		}
-
-		var pixels = req.GetData<Color>();
-		
-		// convert to frame of log luma vals
-		var frame = new Frame(pixels);
-
-		// hack because fsr the first 2 frames are black 
-		if (time > DVConfig.CameraWarmupTime)
-			Compare(frame, time);
-	}
-
-	void Compare(Frame frame, ulong time) {
-		// initialize lr to frame to prevent event burst
-		LogReference ??= frame;
+	void Readback(AsyncGPUReadbackRequest request, ulong time) {
+		if (time < DVConfig.CameraWarmupTime) return;
 
 		ulong dt = (ulong)Math.Round(1_000_000_000.0 / DVConfig.SimFPS);
 
+		var outputData = request.GetData<float>();
+
+		// scan output for events
+		int index = 0;
 		for (int y = 0; y < DVConfig.Resolution.y; y++) {
 			for (int x = 0; x < DVConfig.Resolution.x; x++) {
-				float last = LogReference.Get(x, y);
-				float li = frame.Get(x, y);
 
-				// calculate diff and event count
-				float diff = li - last;
+				float data = outputData[index++];
 
+				// extract compressed data from the single float
+				int numEvents = Mathf.Abs(Mathf.FloorToInt(data / 100f));
+				int polarity = (int)Mathf.Sign(data);
+				float diff = polarity * (data - numEvents * 100f);
 				bool on = diff > 0;
-				int polarity = on ? 1 : -1;
-
-				int numEvents = Mathf.FloorToInt(polarity * diff / DVConfig.ContrastThreshold);
-				if (numEvents <= 0) continue;
-
-				Debug.Log($"generating {numEvents} events at {x} {y} time {time}");
 
 				// generate events
 				for (int n = 0; n < numEvents; n++) {
@@ -152,12 +141,89 @@ public class DVS : MonoBehaviour {
 
 					events.NewEvent(x, y, t, on);
 				}
-
-				// update logref
-				LogReference.Set(x, y,
-					last + polarity * numEvents * DVConfig.ContrastThreshold);
-
 			}
+		}
+	}
+
+	void ReadbackBurst(AsyncGPUReadbackRequest request, ulong time) {
+		if (time < DVConfig.CameraWarmupTime)
+			return;
+
+		ulong dt = (ulong)math.round(DVConfig.TimeScale / DVConfig.SimFPS);
+
+		NativeArray<float> outputData = request.GetData<float>();
+
+		var eventQueue = new NativeQueue<Event>(Allocator.TempJob);
+
+		var job = new ReadbackJob {
+			OutputData = outputData,
+			Events = eventQueue.AsParallelWriter(),
+
+			Width = DVConfig.Resolution.x,
+			Height = DVConfig.Resolution.y,
+
+			Time = time,
+			Dt = dt,
+
+			ContrastThreshold = DVConfig.ContrastThreshold,
+			InterpolateTime = DVConfig.InterpolateTime
+		};
+
+		JobHandle handle = job.Schedule(outputData.Length, 128);
+		handle.Complete();
+
+		while (eventQueue.TryDequeue(out Event e)) {
+			events.NewEvent(e.x, e.y, e.t, e.p);
+		}
+
+		eventQueue.Dispose();
+	}
+}
+
+[BurstCompile]
+public struct ReadbackJob : IJobParallelFor {
+	[ReadOnly] public NativeArray<float> OutputData;
+
+	public NativeQueue<Event>.ParallelWriter Events;
+
+	public int Width;
+	public int Height;
+
+	public ulong Time;
+	public ulong Dt;
+
+	public float ContrastThreshold;
+	public bool InterpolateTime;
+
+	public void Execute(int index) {
+		float data = OutputData[index];
+
+		if (data == 0) return;
+
+		int numEvents = math.abs((int)math.floor(data / 100f));
+
+		int x = index % Width;
+		int y = index / Width;
+
+		bool on = data > 0f;
+		int polarity = on ? 1 : -1;
+		float diff = polarity * (math.abs(data) - numEvents * 100f);
+
+		for (int n = 0; n < numEvents; n++) {
+			ulong t = Time;
+
+			if (InterpolateTime) {
+				float crossing = polarity * (n + 1) * ContrastThreshold;
+				float alpha = crossing / diff;
+				t = Time + (ulong)math.round(alpha * Dt);
+			}
+
+			Events.Enqueue(new Event {
+				x = x,
+				y = y,
+				t = t,
+				p = on
+			});
 		}
 	}
 }

@@ -11,16 +11,17 @@ public class DVManager : MonoBehaviour {
 	public List<DVObject> Objects;
 
 	public void Tick() {
+		Frame++;
+		Time = (ulong)Math.Round(Frame * DVConfig.TimeScale / DVConfig.SimFPS);
+
 		foreach (var obj in Objects) {
-			obj.UpdateState();
+			obj.UpdateState(Time);
 		}
 		
 		foreach (var sensor in Sensors) {
 			sensor.Tick();
 		}
 
-		Frame++;
-		Time = (ulong)Math.Round(Frame * 1_000_000_000.0 / DVConfig.SimFPS);
 	}
 
 	private void Awake() {
@@ -29,5 +30,12 @@ public class DVManager : MonoBehaviour {
 
 	private void LateUpdate() {
 		Tick();
+	}
+
+	// works to detect scene stop 
+	void OnDestroy() {
+		foreach (var sensor in Sensors) {
+			sensor.events.ForceFlush();
+		}
 	}
 }
