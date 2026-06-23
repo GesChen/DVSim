@@ -4,13 +4,13 @@ import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button
 import time
 
+res = (1280, 720)
+
+# (x, y, t, p) = get_data.load_umd_dataset(r'C:\CProjects\Event Camera\DVSim\Assets\Python\data\from umd\events\sequence_haowen1_SIDE_DYNAMIC_DARK_espresso\proc\events')
 (x, y, t, p) = get_data.load_unity_dataset(r'C:\CProjects\Event Camera\DVSim\Assets\Output\Main Camera.txt')
 
 # sort
 (x, y, t, p) =  get_data.sortdata(x, y, t, p)
-
-# flip y
-y = y.max() - y
 
 def visualize_3d():
     fig = plt.figure()
@@ -30,8 +30,11 @@ def visualize_slice():
     fig, ax = plt.subplots()
     plt.subplots_adjust(bottom=0.35)
 
-    ax.set_xlim(x.min(), x.max())
-    ax.set_ylim(y.min(), y.max())
+    # ax.set_xlim(x.min(), x.max())
+    # ax.set_ylim(y.min(), y.max())
+
+    ax.set_xlim(0, res[0])
+    ax.set_ylim(0, res[1])
 
     timeslice = t[0]
     tslicewidth = 0.01
@@ -45,9 +48,9 @@ def visualize_slice():
     ax_button = plt.axes([0.45, 0.05, 0.15, 0.06])
     button_play = Button(ax_button, "Play")
 
-    img = np.zeros((y.max() - y.min() + 1, x.max() - x.min() + 1, 3), dtype=np.uint8)
+    img = np.zeros((res[1], res[0], 3), dtype=np.uint8)
 
-    im = ax.imshow(img, origin="upper", interpolation="nearest")
+    im = ax.imshow(img, origin="lower", interpolation="nearest")
     ax.set_axis_off()
 
     dt = 0.038  # seconds advanced per timer tick
@@ -56,8 +59,8 @@ def visualize_slice():
         lo = np.searchsorted(t, slider_slice.val - slider_width.val / 2)
         hi = np.searchsorted(t, slider_slice.val + slider_width.val / 2)
 
-        xs = x[lo:hi] - x.min()
-        ys = y[lo:hi] - y.min() 
+        xs = x[lo:hi]
+        ys = y[lo:hi]
         ps = p[lo:hi]
         
         pos = ps == 1

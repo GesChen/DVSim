@@ -87,9 +87,12 @@ public class DVS : MonoBehaviour {
 			return;
 
 		rt.Release();
+		Destroy(rt);
 	}
 
 	public void Tick() {
+		camera.Render();
+
 		Shader.SetTexture(kernel, "Camera", cameraTarget);
 		Shader.SetTexture(kernel, "LogReference", logReference);
 		Shader.SetTexture(kernel, "Output", outputMap);
@@ -146,8 +149,8 @@ public class DVS : MonoBehaviour {
 	}
 
 	void ReadbackBurst(AsyncGPUReadbackRequest request, ulong time) {
-		if (time < DVConfig.CameraWarmupTime)
-			return;
+		if (time < DVConfig.CameraWarmupTime) return;
+		if (request.hasError) return;
 
 		ulong dt = (ulong)math.round(DVConfig.TimeScale / DVConfig.SimFPS);
 
