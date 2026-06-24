@@ -7,13 +7,13 @@ public class posetest : MonoBehaviour
 	public float scale;
 	public double time;
 
-	PoseCopy.PoseAnimation anim;
+	Poses.PoseAnimation anim;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-		PoseCopy.LoadFBX(path, out var boneModel, out var clip);
+		Poses.LoadFBX(path, out var boneModel, out var clip);
 
-		anim = PoseCopy.GeneratePoseAnim(boneModel, clip);
+		anim = Poses.GeneratePoseAnim(boneModel, clip);
 
 		anim.Scale(scale);
 	}
@@ -24,6 +24,6 @@ public class posetest : MonoBehaviour
 		//var sample = anim.Sample((ulong)(Time.timeAsDouble * DVConfig.TimeScale));
 		var sample = anim.Sample((ulong)(time / 100 * DVConfig.TimeScale));
 
-		PoseCopy.CopyPose(sample, target);
+		Poses.CopyPose(sample, target);
 	}
 }

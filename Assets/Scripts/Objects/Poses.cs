@@ -6,8 +6,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-public static class PoseCopy {
-
+public static class Poses {
 	public class PoseAnimation {
 		public Pose[] Poses;
 		public float fps;

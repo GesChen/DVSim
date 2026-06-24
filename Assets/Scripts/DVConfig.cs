@@ -19,14 +19,14 @@ public class DVConfig : MonoBehaviour {
 	// interpolate t for better accuracy?
 	public const bool InterpolateTime = true;
 
-	// scene warmup time ns
-	public const ulong CameraWarmupTime = 1_000_000_000;
+	// scene warmup time seconds
+	public const float CameraWarmupTime = 1f;
 
-	// buffer capacity
-	public const int EventBufferCap = 100000;
+	// buffer initial capacity
+	public const int EventBufferInitCap = 100000;
 
-	// buffer flush threshold
-	public const int EventBufferFlush = 80000;
+	// buffer flush interval
+	public const int EventFlushIntervalMs = 10;
 
 	// event output folder
 	public const string DataFolder = "Output";

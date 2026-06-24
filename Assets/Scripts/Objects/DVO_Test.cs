@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class TestObject : DVObject {
+public class DVO_Test : DVObject {
 	public float speed;
 	public Vector3 off;
 	public Vector3 pos;
@@ -8,7 +8,7 @@ public class TestObject : DVObject {
 
 	Vector3 posInit;
 
-	private void Awake() {
+	public override void Init() {
 		posInit = transform.position;
 	}
 

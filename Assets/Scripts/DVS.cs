@@ -32,7 +32,7 @@ public class DVS : MonoBehaviour {
 
 	Vector2Int groups;
 
-	private void Awake() {
+	public void Init() {
 
 		cameraTarget = new(
 			DVConfig.Resolution.x,
@@ -60,6 +60,7 @@ public class DVS : MonoBehaviour {
 
 		events = new();
 		events.Setup(transform.name);
+		events.Open();
 	}
 
 	RenderTexture GenerateNonDepthRenTex(RenderTextureFormat format) {
@@ -76,10 +77,14 @@ public class DVS : MonoBehaviour {
 	}
 
 
-	private void OnDestroy() {
+	public void Cleanup() {
+		camera.targetTexture = null;
+
 		Release(cameraTarget);
 		Release(logReference);
 		Release(outputMap);
+
+		_ = events.Close();
 	}
 
 	private void Release(RenderTexture rt) {
