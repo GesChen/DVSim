@@ -103,7 +103,7 @@ public class DVSNonCompute : MonoBehaviour {
 		var frame = new Frame(pixels);
 
 		// hack because fsr the first 2 frames are black 
-		if (time > DVConfig.CameraWarmupTime)
+		//if (time > DVConfig.CameraWarmupTime)
 			Compare(frame, time);
 	}
 

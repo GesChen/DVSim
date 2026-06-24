@@ -143,7 +143,7 @@ public static class Poses {
 			PoseBone b3 = p3.Bones[i];
 
 			newBones[i].Position =
-				InterpolationMath.CatmullRomVec3Components(
+				InterpolatePosition(
 					b0.Position,
 					b1.Position,
 					b2.Position,
@@ -151,7 +151,7 @@ public static class Poses {
 					T);
 
 			newBones[i].Rotation =
-				InterpolationMath.CatmullLikeQuaternion(
+				InterpolateRotation(
 					b0.Rotation,
 					b1.Rotation,
 					b2.Rotation,
@@ -165,6 +165,20 @@ public static class Poses {
 
 		return newPose;
 	}
+
+	static Vector3 InterpolatePosition(Vector3 v0, Vector3 v1, Vector3 v2, Vector3 v3, float t) =>
+		InterpolationMath.CatmullRomVec3Components(v0, v1, v2, v3, t);
+
+	static Quaternion InterpolateRotation(Quaternion q0, Quaternion q1, Quaternion q2, Quaternion q3, float t) =>
+		InterpolationMath.CatmullLikeQuaternion(q0, q1, q2, q3, t);
+
+	// linear fun
+
+	//static Vector3 InterpolatePosition(Vector3 v0, Vector3 v1, Vector3 v2, Vector3 v3, float t) =>
+	//	Vector3.Lerp(v1, v2, t);
+
+	//static Quaternion InterpolateRotation(Quaternion q0, Quaternion q1, Quaternion q2, Quaternion q3, float t) =>
+	//	Quaternion.Lerp(q1, q2, t);
 
 	public static void CopyPose(Pose pose, Transform target) {
 

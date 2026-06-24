@@ -4,10 +4,11 @@ using System.Collections.Generic;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
+using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
-using Unity.Mathematics;
 
 
 public struct Event {
@@ -34,12 +35,17 @@ public class DVS : MonoBehaviour {
 
 	public void Init() {
 
-		cameraTarget = new(
-			DVConfig.Resolution.x,
-			DVConfig.Resolution.y,
-			24,
-			RenderTextureFormat.ARGBHalf
+		cameraTarget = new RenderTexture(
+			new RenderTextureDescriptor(DVConfig.Resolution.x, DVConfig.Resolution.y)
+			{
+				graphicsFormat = GraphicsFormat.R16G16B16A16_SFloat,
+				depthBufferBits = 24,
+				msaaSamples = 1,          // no MSAA
+				sRGB = false,
+				enableRandomWrite = true  // only if used by compute shaders
+			}
 		);
+
 		cameraTarget.Create();
 
 		camera = GetComponent<Camera>();
@@ -78,7 +84,8 @@ public class DVS : MonoBehaviour {
 
 
 	public void Cleanup() {
-		camera.targetTexture = null;
+		if (camera != null)
+			camera.targetTexture = null;
 
 		Release(cameraTarget);
 		Release(logReference);
@@ -96,6 +103,7 @@ public class DVS : MonoBehaviour {
 	}
 
 	public void Tick() {
+		//Debug.Log("tick");
 		camera.Render();
 
 		Shader.SetTexture(kernel, "Camera", cameraTarget);
@@ -112,7 +120,7 @@ public class DVS : MonoBehaviour {
 			req => ReadbackBurst(req, DVManager.Time)
 		);
 	}
-
+/*
 	void Readback(AsyncGPUReadbackRequest request, ulong time) {
 		if (time < DVConfig.CameraWarmupTime) return;
 
@@ -152,9 +160,9 @@ public class DVS : MonoBehaviour {
 			}
 		}
 	}
-
+*/
 	void ReadbackBurst(AsyncGPUReadbackRequest request, ulong time) {
-		if (time < DVConfig.CameraWarmupTime) return;
+		if (time / DVConfig.TimeScale * DVConfig.SimFPS < DVConfig.CameraWarmupTimeFrames) return;
 		if (request.hasError) return;
 
 		ulong dt = (ulong)math.round(DVConfig.TimeScale / DVConfig.SimFPS);

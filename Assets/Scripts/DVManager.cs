@@ -38,7 +38,7 @@ public class DVManager : Singleton<DVManager> {
 
 		LoadPermutation(new int[] { 0, 0, 0, 0, 0 });
 
-		StartCoroutine(DelayStart());
+		StartCoroutine(SimulateCurrentScene());
 	}
 
 	private void OnDisable() {
@@ -69,14 +69,6 @@ public class DVManager : Singleton<DVManager> {
 		SceneManager.Instance.CurrentSceneLengthSeconds = (double)anim.Animation.Poses.Length / anim.Animation.fps;
 	}
 
-	IEnumerator DelayStart() {
-		yield return new WaitForSeconds(DVConfig.CameraWarmupTime);
-
-		yield return SimulateCurrentScene();
-
-		CleanupCurrentScene();
-	}
-
 	IEnumerator SimulateCurrentScene() {
 		Frame = 0;
 
@@ -84,8 +76,10 @@ public class DVManager : Singleton<DVManager> {
 			Tick();
 
 			// dont freeze the player
-			yield return null;
+			yield return new WaitForEndOfFrame();
 		}
+
+		CleanupCurrentScene();
 	}
 
 	void CleanupCurrentScene() {

@@ -136,3 +136,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e6c4d1b687068c74789532db5ea9281d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_HumanModel
+  SourceAsset: {fileID: 919132149155446097, guid: 05d84dd0341737f449f1125b73392402, type: 3}
