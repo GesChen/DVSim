@@ -19,6 +19,8 @@ public class DVManager : Singleton<DVManager> {
 	public List<DVS> Sensors;
 	public List<DVObject> Objects;
 
+	public int[] CurrentPermutation { get; private set; }
+
 	public void Tick() {
 		Frame++;
 		Time = (ulong)Math.Round(Frame * DVConfig.TimeScale / DVConfig.SimFPS);
@@ -34,6 +36,9 @@ public class DVManager : Singleton<DVManager> {
 	}
 
 	private void Start() {
+		Frame = 0;
+		Time = 0;
+
 		InitSensors();
 
 		LoadPermutation(new int[] { 0, 0, 0, 0, 0 });
@@ -56,6 +61,8 @@ public class DVManager : Singleton<DVManager> {
 			Debug.LogError("Cannot load permutation: incorrect permutation array length");
 			return;
 		}
+
+		CurrentPermutation = permutation;
 
 		Objects = SceneManager.Instance.CreateSceneFromPermutations(permutation, PermutationGroups);
 

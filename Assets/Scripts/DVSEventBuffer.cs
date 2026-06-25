@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.IO;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -17,11 +19,15 @@ public class DVSEventBuffer {
 	private CancellationTokenSource flushCts;
 	private Task flushTask;
 
+	static readonly string PostProcessPyFile = "Scripts/postprocessoutput.py";
+
 	public void Setup(string cameraName) {
 		outFilePath = Path.Combine(
 			Application.dataPath,
 			DVConfig.DataFolder,
 			cameraName + ".txt");
+
+		isOpen = false;
 	}
 
 	public void Open() {
@@ -38,7 +44,7 @@ public class DVSEventBuffer {
 			isOpen = true;
 			fileAvailable = true;
 		} catch {
-			Debug.LogError($"Error opening {outFilePath}. File output will be disabled.");
+			UnityEngine.Debug.LogError($"Error opening {outFilePath}. File output will be disabled.");
 			fileAvailable = false;
 			isOpen = false;
 		}
@@ -48,6 +54,8 @@ public class DVSEventBuffer {
 	public async Task Close() {
 		if (!isOpen)
 			return;
+
+		UnityEngine.Debug.Log($"Closing eventbuffer");
 
 		flushCts.Cancel();
 
@@ -67,6 +75,10 @@ public class DVSEventBuffer {
 		flushTask = null;
 
 		isOpen = false;
+
+		UnityEngine.Debug.Log("Eventbuffer finished closing. Post processing");
+
+		TriggerPythonPostProcess();
 	}
 
 	public void NewEvent(int x, int y, ulong time, bool polarity) {
@@ -90,8 +102,8 @@ public class DVSEventBuffer {
 		while (!token.IsCancellationRequested) {
 			await DrainOnce();
 
-			if (writer != null)
-				await writer.FlushAsync();
+			//if (writer != null)
+			//	await writer.FlushAsync();
 
 			await Task.Delay(DVConfig.EventFlushIntervalMs, token);
 		}
@@ -104,13 +116,37 @@ public class DVSEventBuffer {
 		return Task.Run(() => {
 			while (events.TryDequeue(out var e)) {
 				writer.Write(e.x);
-				writer.Write(", ");
+				writer.Write(",");
 				writer.Write(e.y);
-				writer.Write(", ");
+				writer.Write(",");
 				writer.Write(e.t);
-				writer.Write(", ");
+				writer.Write(",");
 				writer.WriteLine(e.p ? 1 : -1);
 			}
 		});
+	}
+
+	void TriggerPythonPostProcess() {
+		string script = Path.Combine(Application.dataPath, PostProcessPyFile);
+
+		string args = $"\"{outFilePath}\" \"{string.Join(',', DVManager.Instance.CurrentPermutation)}\"";
+
+		script = script.Replace('/', '\\');
+		args = args.Replace('/', '\\');
+
+		var p = new Process();
+		p.StartInfo.FileName = "py";
+		p.StartInfo.Arguments = $"\"{script}\" {args}";
+		p.StartInfo.UseShellExecute = false;
+		p.StartInfo.RedirectStandardOutput = true;
+
+		UnityEngine.Debug.Log($"calling py {p.StartInfo.Arguments}");
+
+		p.Start();
+
+		string output = p.StandardOutput.ReadToEnd();
+		p.WaitForExit();
+
+	 	UnityEngine.Debug.Log(output);
 	}
 }

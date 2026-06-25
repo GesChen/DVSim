@@ -8,7 +8,7 @@ public class DVConfig : MonoBehaviour {
 	// simulated fps 10k-100k realistic.
 	// make it 1m if you have all the time in the world i guess.
 	// higher = better temporal precision, more realistic
-	public const float SimFPS = 1000;
+	public const float SimFPS = 30;
 
 	// global time scale
 	public const int TimeScale = 1_000_000_000;
