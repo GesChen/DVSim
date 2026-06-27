@@ -2,9 +2,9 @@
 
 #define COUNT_SCALE 100.
 
-Texture2D<float4> Camera;
+Texture2D<float4> Camera; // HDR output
 RWTexture2D<float> LogReference;
-RWTexture2D<float> Output;
+RWTexture2D<float> Output; // packed event value
 float ContrastThreshold;
 
 [numthreads(8, 8, 1)]
@@ -18,15 +18,11 @@ void Main(uint3 id : SV_DispatchThreadID)
 
 	int3 loc = int3(id.xy, 0);
 	float4 col = Camera.Load(loc);
-
-	float r = max(0.0, col.r);
-	float g = max(0.0, col.g);
-	float b = max(0.0, col.b);
-
+	
 	float luma =
-		0.2126 * r +
-		0.7152 * g +
-		0.0722 * b;
+		0.2126 * max(0.0, col.r) +
+		0.7152 * max(0.0, col.g) +
+		0.0722 * max(0.0, col.b);
 
 	float logI = log(max(luma, 1e-4));
 	float ref = LogReference.Load(loc);

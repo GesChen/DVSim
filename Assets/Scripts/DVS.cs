@@ -1,15 +1,16 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEditor;
+using UnityEditor.PackageManager.Requests;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
-
 
 public struct Event {
 	public int x;
@@ -28,45 +29,64 @@ public class DVS : MonoBehaviour {
 	RenderTexture logReference;
 	RenderTexture outputMap;
 
-	ComputeShader Shader;
-	int kernel;
+	private const string EventShaderAssetPath = "Assets/Scripts/DVCalc.compute";
+	ComputeShader EventShader;
+	int eventKernel;
 
-	Vector2Int groups;
+	// all shaders use the global texture, downscaling done in py post process
+	Vector2Int globalShaderGroups;
+
+	// frame capture -------
+	RenderTexture frameCapOut;
+	Texture2D frameCapTexture;
+
+	private const string FrameCapShaderAssetPath = "Assets/Scripts/FrameCapture.compute";
+	ComputeShader FrameCapShader;
+	int frameCapKernel;
 
 	public void Init() {
 
-		cameraTarget = new RenderTexture(
-			new RenderTextureDescriptor(DVConfig.Resolution.x, DVConfig.Resolution.y)
-			{
-				graphicsFormat = GraphicsFormat.R16G16B16A16_SFloat,
-				depthBufferBits = 24,
-				msaaSamples = 1,          // no MSAA
-				sRGB = false,
-				enableRandomWrite = true  // only if used by compute shaders
-			}
-		);
-
-		cameraTarget.Create();
+		cameraTarget = GenerateCameraRenTex(DVConfig.Resolution);
 
 		camera = GetComponent<Camera>();
 		camera.allowHDR = true;
 		camera.targetTexture = cameraTarget;
+		camera.depthTextureMode |= DepthTextureMode.Depth;
 
 		logReference = GenerateNonDepthRenTex(RenderTextureFormat.RFloat);
 		outputMap = GenerateNonDepthRenTex(RenderTextureFormat.RFloat);
 
-		Shader = AssetDatabase.LoadAssetAtPath<ComputeShader>(
-			"Assets/Scripts/DVCalc.compute"
-		);
+		EventShader = AssetDatabase.LoadAssetAtPath<ComputeShader>(EventShaderAssetPath);
+		eventKernel = EventShader.FindKernel("Main");
 
-		kernel = Shader.FindKernel("Main");
+		frameCapOut = GenerateNonDepthRenTex(RenderTextureFormat.ARGBFloat);
+		frameCapTexture = new Texture2D(DVConfig.Resolution.x, DVConfig.Resolution.y, TextureFormat.RGBAFloat, false);
+
+		FrameCapShader = AssetDatabase.LoadAssetAtPath<ComputeShader>(FrameCapShaderAssetPath);
+		frameCapKernel = FrameCapShader.FindKernel("Main");
 
 		// wont change so you can precompute this
-		groups = Vector2Int.CeilToInt((Vector2)DVConfig.Resolution / 8f);
+		globalShaderGroups = Vector2Int.CeilToInt((Vector2)DVConfig.Resolution / 8f);
 
 		events = new();
 		events.Setup(transform.name);
 		events.Open();
+	}
+
+	RenderTexture GenerateCameraRenTex(Vector2Int res) {
+		var tex = new RenderTexture(
+			new RenderTextureDescriptor(res.x, res.y)
+			{
+				graphicsFormat = GraphicsFormat.R16G16B16A16_SFloat,
+				depthBufferBits = 24,
+				msaaSamples = 1,          // no MSAA
+				sRGB = true,
+				enableRandomWrite = false  // only if used by compute shaders
+			}
+		);
+
+		tex.Create();
+		return tex;
 	}
 
 	RenderTexture GenerateNonDepthRenTex(RenderTextureFormat format) {
@@ -90,6 +110,8 @@ public class DVS : MonoBehaviour {
 		Release(cameraTarget);
 		Release(logReference);
 		Release(outputMap);
+		Release(frameCapOut);
+		Destroy(frameCapTexture);
 
 		_ = events.Close();
 	}
@@ -106,62 +128,27 @@ public class DVS : MonoBehaviour {
 		//Debug.Log("tick");
 		camera.Render();
 
-		Shader.SetTexture(kernel, "Camera", cameraTarget);
-		Shader.SetTexture(kernel, "LogReference", logReference);
-		Shader.SetTexture(kernel, "Output", outputMap);
-		Shader.SetFloat("ContrastThreshold", DVConfig.ContrastThreshold);
+		EventShader.SetTexture(eventKernel, "Camera", cameraTarget);
+		EventShader.SetTexture(eventKernel, "LogReference", logReference);
+		EventShader.SetTexture(eventKernel, "Output", outputMap);
+		EventShader.SetFloat("ContrastThreshold", DVConfig.ContrastThreshold);
 
-		Shader.Dispatch(kernel, groups.x, groups.y, 1);
+		EventShader.Dispatch(eventKernel, globalShaderGroups.x, globalShaderGroups.y, 1);
+
+		ulong timeAtReq = DVManager.Time;
 
 		AsyncGPUReadback.Request(
 			outputMap,
 			0,
 			TextureFormat.RFloat,
-			req => ReadbackBurst(req, DVManager.Time)
+			req => Readback(req, timeAtReq)
 		);
+
+		if (DVConfig.DoFrameCaptures && (DVManager.Frame % (DVConfig.SimFPS / DVConfig.FrameCapFPS)) < 1f)
+			TakeFrameCapture();
 	}
-/*
+
 	void Readback(AsyncGPUReadbackRequest request, ulong time) {
-		if (time < DVConfig.CameraWarmupTime) return;
-
-		ulong dt = (ulong)Math.Round(1_000_000_000.0 / DVConfig.SimFPS);
-
-		var outputData = request.GetData<float>();
-
-		// scan output for events
-		int index = 0;
-		for (int y = 0; y < DVConfig.Resolution.y; y++) {
-			for (int x = 0; x < DVConfig.Resolution.x; x++) {
-
-				float data = outputData[index++];
-
-				// extract compressed data from the single float
-				int numEvents = Mathf.Abs(Mathf.FloorToInt(data / 100f));
-				int polarity = (int)Mathf.Sign(data);
-				float diff = polarity * (data - numEvents * 100f);
-				bool on = diff > 0;
-
-				// generate events
-				for (int n = 0; n < numEvents; n++) {
-
-					ulong t = time;
-					if (DVConfig.InterpolateTime) {
-						// estimate crossing point based on intensity 
-						// assuming linear luma change between frames
-						float crossing = polarity * (n + 1) * DVConfig.ContrastThreshold;
-						float alpha = crossing / diff;
-
-						// interpolated time also accounts for multi event bursts
-						t = time + (ulong)Math.Round(alpha * dt);
-					}
-
-					events.NewEvent(x, y, t, on);
-				}
-			}
-		}
-	}
-*/
-	void ReadbackBurst(AsyncGPUReadbackRequest request, ulong time) {
 		if (time / DVConfig.TimeScale * DVConfig.SimFPS < DVConfig.CameraWarmupTimeFrames) return;
 		if (request.hasError) return;
 
@@ -193,6 +180,54 @@ public class DVS : MonoBehaviour {
 		}
 
 		eventQueue.Dispose();
+	}
+
+	void TakeFrameCapture() {
+		FrameCapShader.SetTexture(frameCapKernel, "Color", cameraTarget);
+		Texture depth = Shader.GetGlobalTexture("_CameraDepthTexture"); // TODO: fix this.. 
+		// weird unity 6 new rendering system makes this no longer work. 
+		FrameCapShader.SetTexture(frameCapKernel, "Depth", depth);
+		FrameCapShader.SetTexture(frameCapKernel, "Result", frameCapOut);
+
+		FrameCapShader.Dispatch(frameCapKernel, globalShaderGroups.x, globalShaderGroups.y, 1);
+
+		string permutationAtCall = string.Join('_', DVManager.Instance.CurrentPermutation);
+		int frameCapFrameAtCall = (int)(DVManager.Frame * DVConfig.FrameCapFPS / DVConfig.SimFPS);
+
+		AsyncGPUReadback.Request(
+			frameCapOut,
+			0,
+			TextureFormat.RGBAFloat,
+			req => FrameCapReadback(req, permutationAtCall, frameCapFrameAtCall)
+		);
+	}
+
+	void FrameCapReadback(AsyncGPUReadbackRequest req, string permutation, int frame) {
+		if (req.hasError)
+			return;
+		if (frameCapTexture == null) return; 
+
+		var data = req.GetData<Vector4>(); // or Color32 / float / half-compatible struct
+
+		frameCapTexture.SetPixelData(data, 0);
+		frameCapTexture.Apply(false);
+
+		byte[] bytes = frameCapTexture.EncodeToEXR(); // HDR-safe
+
+		string location = Path.Combine(
+			Application.dataPath,
+			DVConfig.DataFolder,
+			DVConfig.PermutationFolder,
+			permutation,
+			DVConfig.FrameCapSubFolder);
+
+
+		Directory.CreateDirectory(location);
+
+		string fullPath = Path.Combine(location, $"{frame}.exr");
+
+		File.WriteAllBytes(fullPath, bytes);
+
 	}
 }
 

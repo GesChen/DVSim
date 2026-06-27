@@ -107,7 +107,10 @@ InitTestScene*.unity*
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
 
 /Assets/Assets/cmu mocap bvhs
-/Assets/Output
+/Assets/.Output
 /Assets/Python/data
 /Assets/Python/__pycache__
 *.pyc
+/Python/data
+/Python/__pycache__
+/Python/v2e-master

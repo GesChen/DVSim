@@ -82,7 +82,7 @@ def load_umd_dataset(src):
 
     return xy[:, 0], xy[:, 1], t, p
 
-def load_unity_dataset(path):
+def load_unity_raw_dataset(path):
     print('loading dataset...')
 
     data = np.loadtxt(path, delimiter=',')
@@ -94,4 +94,16 @@ def load_unity_dataset(path):
 
     print('loaded')
 
+    return (x, y, t, p)
+
+def load_unity_dataset(path):
+    data = np.load(path)['arr_0']
+    
+    x = data['x'].astype(np.int32)
+    y = data['y'].astype(np.int32)
+    t = data['t'].astype(np.float64) / 1e9
+    p = data['p'].astype(np.bool)
+    p = np.where(p, 1, -1)
+
+    print('loaded')
     return (x, y, t, p)

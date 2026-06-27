@@ -55,7 +55,7 @@ public class DVSEventBuffer {
 		if (!isOpen)
 			return;
 
-		UnityEngine.Debug.Log($"Closing eventbuffer");
+		UnityEngine.Debug.Log("Closing eventbuffer, awaiting flushtask");
 
 		flushCts.Cancel();
 
@@ -63,6 +63,8 @@ public class DVSEventBuffer {
 			await flushTask;
 		} catch (OperationCanceledException) {
 		}
+
+		UnityEngine.Debug.Log("Final drain and flush");
 
 		await DrainOnce();
 		await writer.FlushAsync();
@@ -102,8 +104,8 @@ public class DVSEventBuffer {
 		while (!token.IsCancellationRequested) {
 			await DrainOnce();
 
-			//if (writer != null)
-			//	await writer.FlushAsync();
+			if (writer != null)
+				await writer.FlushAsync();
 
 			await Task.Delay(DVConfig.EventFlushIntervalMs, token);
 		}
@@ -144,9 +146,8 @@ public class DVSEventBuffer {
 
 		p.Start();
 
-		string output = p.StandardOutput.ReadToEnd();
 		p.WaitForExit();
 
-	 	UnityEngine.Debug.Log(output);
+		UnityEngine.Debug.Log($"complete");
 	}
 }

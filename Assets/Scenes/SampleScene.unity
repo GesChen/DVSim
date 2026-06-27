@@ -20,13 +20,13 @@ RenderSettings:
   m_FogDensity: 0.01
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
-  m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
+  m_AmbientSkyColor: {r: 0, g: 0, b: 0, a: 1}
   m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
   m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
   m_AmbientIntensity: 1
-  m_AmbientMode: 0
+  m_AmbientMode: 3
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
+  m_SkyboxMaterial: {fileID: 0}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -93,8 +93,8 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 20201, guid: 0000000000000000f000000000000000, type: 0}
-  m_LightingSettings: {fileID: 0}
+  m_LightingDataAsset: {fileID: 112000000, guid: df1a25daf0fb8c241812a7f2089edf9c, type: 2}
+  m_LightingSettings: {fileID: 4890085278179872738, guid: 990b669e983977d4fbdc9e8461f93e74, type: 2}
 --- !u!196 &4
 NavMeshSettings:
   serializedVersion: 2
@@ -154,7 +154,7 @@ MonoBehaviour:
     - {fileID: 3591755856426225698, guid: 9014330d742b1db4582d1224372630fd, type: 3}
   - Category: Objects
     Objects:
-    - {fileID: 6115162786170074136, guid: e360ca4e83d891544bcc1f048b609759, type: 3}
+    - {fileID: 104868901684500863, guid: 5f8bc45d8a89ce54ebaab874f5b4a708, type: 3}
   - Category: Models
     Objects:
     - {fileID: 3283860553894444512, guid: 5c6e742ca291e9643bebd00329bd445f, type: 3}
@@ -291,14 +291,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: -0.0056996383, y: 0.00000064221337, z: -0.0066097016, w: 0.9999619}
   m_LocalPosition: {x: 0, y: 1, z: -4.24}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1912218703}
   m_Father: {fileID: 2103401425}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: -0.653, y: 0.004, z: -0.757}
 --- !u!114 &330585547
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -322,7 +322,7 @@ MonoBehaviour:
     m_Bits: 1
   m_VolumeTrigger: {fileID: 0}
   m_VolumeFrameworkUpdateModeOption: 2
-  m_RenderPostProcessing: 1
+  m_RenderPostProcessing: 0
   m_Antialiasing: 0
   m_AntialiasingQuality: 2
   m_StopNaN: 0

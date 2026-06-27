@@ -1,0 +1,17 @@
+#pragma kernel Main
+
+Texture2D<float4> Color;
+Texture2D<float> Depth;
+RWTexture2D<float4> Result;
+
+[numthreads(8,8,1)]
+void Main (uint3 id : SV_DispatchThreadID)
+{
+	uint w, h;
+	Result.GetDimensions(w, h);
+
+	if (id.x >= w || id.y >= h)
+		return;
+	
+	Result[id.xy] = float4(Color[id.xy].rgb, Depth[id.xy]);
+}
