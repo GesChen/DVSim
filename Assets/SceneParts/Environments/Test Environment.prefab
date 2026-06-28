@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 6138856100848643431}
   - component: {fileID: 9016290252716298172}
   - component: {fileID: 3591755856426225698}
+  - component: {fileID: 6634741475884582210}
   m_Layer: 0
   m_Name: Test Environment
   m_TagString: Untagged
@@ -103,3 +104,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f778bd6dc8af20f4fb63019366df052e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_Environment
+--- !u!64 &6634741475884582210
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4789286283667102354}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -462981019419857548, guid: f5b3a6dbd39bfa941aeec3161832e811, type: 3}
