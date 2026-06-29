@@ -97,6 +97,8 @@ def load_unity_raw_dataset(path):
     return (x, y, t, p)
 
 def load_unity_dataset(path):
+    print('loading dataset...')
+    
     data = np.load(path)['arr_0']
     
     x = data['x'].astype(np.int32)

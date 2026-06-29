@@ -7,12 +7,13 @@ import time
 res = (1280, 720)
 
 # (x, y, t, p) = get_data.load_umd_dataset(r'E:\DVSim\Python\data\from umd\events\sequence_haowen1_SIDE_DYNAMIC_DARK_bottle\proc\events')
-(x, y, t, p) = get_data.load_unity_dataset(r'E:\DVSim\Assets\.Output\Permutations\0_0_0_0_0\Main Camera.npz')
+(x, y, t, p) = get_data.load_unity_dataset(r'E:\DVSim\Assets\.Output\Permutations\0_0_0_0_0\Main Camera\events.npz')
 
 # sort
 (x, y, t, p) =  get_data.sortdata(x, y, t, p)
 
 def visualize_3d():
+    print('loading 3d graph...')
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
 

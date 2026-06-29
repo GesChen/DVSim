@@ -1,33 +1,82 @@
+using System.Linq;
+using System.Collections;
+using System.Collections.Generic;
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
+using Newtonsoft.Json;
 
 public class DVSEventBuffer {
-	private readonly ConcurrentQueue<Event> events = new ConcurrentQueue<Event>();
+	public readonly ConcurrentQueue<Event> queue = new();
 
-	private string outFilePath;
+	string outFilePath;
 
-	private bool fileAvailable = true;
-	private bool isOpen;
+	bool fileAvailable = true;
+	bool isOpen;
 
-	private StreamWriter writer;
-	private CancellationTokenSource flushCts;
-	private Task flushTask;
+	FileStream stream;
+	BinaryWriter writer;
+	CancellationTokenSource flushCts;
+	Task flushTask;
 
-	static readonly string PostProcessPyFile = "Scripts/postprocessoutput.py";
+	Camera camera;
 
-	public void Setup(string cameraName) {
+	Dictionary<string, object> outputMetadata;
+
+	static readonly string PostProcessPyFile = "Scripts/postprocessoutput_log.py";
+
+	public void Setup(Camera sourceCam) {
+		camera = sourceCam;
+
 		outFilePath = Path.Combine(
 			Application.dataPath,
-			DVConfig.DataFolder,
-			cameraName + ".txt");
+			DVConfig.OutputFolder,
+			camera.name + ".bin");
+
+		Directory.CreateDirectory(Path.GetDirectoryName(outFilePath));
 
 		isOpen = false;
+
+	}
+
+	void GenerateMeta() {
+		outputMetadata = new() {
+			{ "outfilepath", outFilePath },
+			{ "permutation", DVManager.CurrentPermutation },
+
+			{ "config", new Dictionary<string, object> {
+				{ "resolution", new[] { DVConfig.Resolution.x, DVConfig.Resolution.y } },
+
+				{ "simfps", DVConfig.SimFPS },
+				{ "timescale", DVConfig.TimeScale },
+				{ "contrastthreshold", DVConfig.ContrastThreshold },
+				{ "interpolatetime", DVConfig.InterpolateTime },
+				{ "refractoryperiod", DVConfig.RefractoryPeriod },
+
+				{ "camerawarmuptimeframes", DVConfig.CameraWarmupTimeFrames },
+				{ "eventbufferinitcap", DVConfig.EventBufferInitCap },
+				{ "eventflushintervalms", DVConfig.EventFlushIntervalMs },
+				{ "eventcountscale", DVConfig.EventCountScale },
+
+				{ "doframecaptures", DVConfig.DoFrameCaptures },
+				{ "framecapfps", DVConfig.FrameCapFPS },
+				{ "framecapsubfolder", DVConfig.FrameCapSubFolder },
+			}},
+
+			{ "camera", new Dictionary<string, object> {
+				{ "position", (S_Vector3)camera.transform.position },
+				{ "rotation", (S_Quaternion)camera.transform.rotation },
+
+				{ "projection", camera.orthographic ? "orthographic" : "perspective" },
+				{ "fov", camera.fieldOfView },
+
+				{ "resolution", new[] { camera.pixelWidth, camera.pixelHeight } },
+			}}
+		};
 	}
 
 	public void Open() {
@@ -35,8 +84,14 @@ public class DVSEventBuffer {
 			return;
 
 		try {
-			writer = new StreamWriter(outFilePath, append: false);
-			writer.AutoFlush = false;
+			stream = new FileStream(
+				outFilePath,
+				FileMode.Create,
+				FileAccess.Write,
+				FileShare.Read,
+				bufferSize: 1024 * 1024);
+
+			writer = new BinaryWriter(stream);
 
 			flushCts = new CancellationTokenSource();
 			flushTask = ConstantFlushLoop(flushCts.Token);
@@ -50,10 +105,11 @@ public class DVSEventBuffer {
 		}
 	}
 
-	// also force flushes everything 
 	public async Task Close() {
 		if (!isOpen)
 			return;
+
+		var permAtClose = DVManager.CurrentPermutation.ToArray();
 
 		UnityEngine.Debug.Log("Closing eventbuffer, awaiting flushtask");
 
@@ -67,10 +123,12 @@ public class DVSEventBuffer {
 		UnityEngine.Debug.Log("Final drain and flush");
 
 		await DrainOnce();
-		await writer.FlushAsync();
+		writer.Flush();
+		await stream.FlushAsync();
 
 		writer.Dispose();
 		writer = null;
+		stream = null;
 
 		flushCts.Dispose();
 		flushCts = null;
@@ -80,11 +138,15 @@ public class DVSEventBuffer {
 
 		UnityEngine.Debug.Log("Eventbuffer finished closing. Post processing");
 
-		TriggerPythonPostProcess();
+		try {
+			TriggerPythonPostProcess(permAtClose);
+		} catch (Exception e) {
+			UnityEngine.Debug.LogError(e);
+		}
 	}
 
 	public void NewEvent(int x, int y, ulong time, bool polarity) {
-		events.Enqueue(new Event {
+		queue.Enqueue(new Event {
 			x = x,
 			y = y,
 			t = time,
@@ -97,7 +159,10 @@ public class DVSEventBuffer {
 			return;
 
 		await DrainOnce();
-		await writer.FlushAsync();
+		writer.Flush();
+
+		if (stream != null)
+			await stream.FlushAsync();
 	}
 
 	private async Task ConstantFlushLoop(CancellationToken token) {
@@ -105,7 +170,10 @@ public class DVSEventBuffer {
 			await DrainOnce();
 
 			if (writer != null)
-				await writer.FlushAsync();
+				writer.Flush();
+
+			if (stream != null)
+				await stream.FlushAsync(token);
 
 			await Task.Delay(DVConfig.EventFlushIntervalMs, token);
 		}
@@ -116,38 +184,68 @@ public class DVSEventBuffer {
 			return Task.CompletedTask;
 
 		return Task.Run(() => {
-			while (events.TryDequeue(out var e)) {
+			var sw = System.Diagnostics.Stopwatch.StartNew();
+
+			long count = 0;
+			long lastCount = 0;
+			long lastMs = 0;
+
+			while (queue.TryDequeue(out var e)) {
+				// Binary layout per event:
+				// int x      = 4 bytes
+				// int y      = 4 bytes
+				// ulong t    = 8 bytes
+				// byte p     = 1 byte, 1 = ON, 0 = OFF
+				// total      = 17 bytes/event
+
 				writer.Write(e.x);
-				writer.Write(",");
 				writer.Write(e.y);
-				writer.Write(",");
 				writer.Write(e.t);
-				writer.Write(",");
-				writer.WriteLine(e.p ? 1 : -1);
+				writer.Write((byte)(e.p ? 1 : 0));
+
+				count++;
+
+				long ms = sw.ElapsedMilliseconds;
+				if (ms - lastMs >= 1000) {
+					long delta = count - lastCount;
+					double rate = delta * 1000.0 / (ms - lastMs);
+
+					UnityEngine.Debug.Log($"Event write rate: {rate:N0}/s | total: {count:N0}");
+
+					lastCount = count;
+					lastMs = ms;
+				}
 			}
+
+			double avgRate = count / Math.Max(sw.Elapsed.TotalSeconds, 1e-9);
+			UnityEngine.Debug.Log($"Event write finished: {count:N0} events | avg: {avgRate:N0}/s");
 		});
 	}
 
-	void TriggerPythonPostProcess() {
+	void TriggerPythonPostProcess(int[] permutationAtClose) {
 		string script = Path.Combine(Application.dataPath, PostProcessPyFile);
-
-		string args = $"\"{outFilePath}\" \"{string.Join(',', DVManager.Instance.CurrentPermutation)}\"";
-
 		script = script.Replace('/', '\\');
-		args = args.Replace('/', '\\');
+
+		GenerateMeta();
+
+		string jsonPath = Path.Combine(
+			Application.dataPath,
+			DVConfig.OutputFolder,
+			DVConfig.PermutationFolder,
+			string.Join('_', permutationAtClose),
+			camera.name,
+			"meta.json");
+
+		File.WriteAllText(jsonPath, JsonConvert.SerializeObject(outputMetadata, Formatting.Indented));
 
 		var p = new Process();
 		p.StartInfo.FileName = "py";
-		p.StartInfo.Arguments = $"\"{script}\" {args}";
+		p.StartInfo.Arguments = $"\"{script}\" \"{jsonPath}\"";
 		p.StartInfo.UseShellExecute = false;
 		p.StartInfo.RedirectStandardOutput = true;
 
 		UnityEngine.Debug.Log($"calling py {p.StartInfo.Arguments}");
 
 		p.Start();
-
-		p.WaitForExit();
-
-		UnityEngine.Debug.Log($"complete");
 	}
 }

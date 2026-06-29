@@ -2,11 +2,13 @@ using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEditor;
 using System;
 
 public class DVManager : Singleton<DVManager> {
 	public static ulong Frame; 
 	public static ulong Time; // ns
+	static bool Playing;
 
 	[Serializable]
 	public class PermutationGroup {
@@ -19,20 +21,19 @@ public class DVManager : Singleton<DVManager> {
 	public List<DVS> Sensors;
 	public List<DVObject> Objects;
 
-	public int[] CurrentPermutation { get; private set; }
+	public static int[] CurrentPermutation { get; private set; }
 
 	public void Tick() {
-		Frame++;
-		Time = (ulong)Math.Round(Frame * DVConfig.TimeScale / DVConfig.SimFPS);
-
 		foreach (var obj in Objects) {
 			obj.UpdateState(Time);
 		}
-		
+
 		foreach (var sensor in Sensors) {
 			sensor.Tick();
 		}
 
+		Frame++;
+		Time = (ulong)Math.Round(Frame * DVConfig.TimeScale / DVConfig.SimFPS);
 	}
 
 	private void Start() {
@@ -44,10 +45,12 @@ public class DVManager : Singleton<DVManager> {
 		LoadPermutation(new int[] { 0, 0, 0, 0, 0 });
 
 		StartCoroutine(SimulateCurrentScene());
-	}
 
-	private void OnDisable() {
-		CleanupCurrentScene();
+		EditorApplication.playModeStateChanged += state => {
+			if (state == PlayModeStateChange.ExitingPlayMode) {
+				Playing = false;
+			}
+		};
 	}
 
 	void InitSensors() {
@@ -78,15 +81,27 @@ public class DVManager : Singleton<DVManager> {
 
 	IEnumerator SimulateCurrentScene() {
 		Frame = 0;
+		ClearAllSensorFrames();
 
+		Playing = true;
 		while (Time < SceneManager.Instance.CurrentSceneLengthSeconds * DVConfig.TimeScale) {
-			Tick();
+			if (Playing)
+				Tick();
+			else 
+				break;
 
 			// dont freeze the player
 			yield return new WaitForEndOfFrame();
 		}
+		Playing = false;
 
 		CleanupCurrentScene();
+	}
+
+	void ClearAllSensorFrames() {
+		foreach (var sensor in Sensors) {
+			sensor.ClearFrameCaptures(CurrentPermutation);
+		}
 	}
 
 	void CleanupCurrentScene() {

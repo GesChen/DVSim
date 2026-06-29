@@ -1,32 +1,62 @@
-#pragma kernel Main
+﻿#pragma kernel Main
 
-#define COUNT_SCALE 100.
-
+// --- dynamically changing vals ---
 Texture2D<float4> Camera; // HDR output
-RWTexture2D<float> LogReference;
+
+// x=intensity reference y=low pass value
+RWTexture2D<float2> State;
 RWTexture2D<float> Output; // packed event value
+
+bool firstFrame;
+
+// --- consts ---
+// config provided
+int EventCountScale;
 float ContrastThreshold;
+float dtSecs; // explicitly "secs" because tau is as well
+
+// can be moved to config
+const float tauOn = .005;
+const float tauOff = .010;
+
+float luma(float4 col)
+{
+	return 
+		.2126 * max(0., col.r) +
+		.7152 * max(0., col.g) +
+		.0722 * max(0., col.b);
+}
 
 [numthreads(8, 8, 1)]
 void Main(uint3 id : SV_DispatchThreadID)
 {
 	uint width, height;
 	Camera.GetDimensions(width, height);
-
 	if (id.x >= width || id.y >= height)
 		return;
-
 	int3 loc = int3(id.xy, 0);
-	float4 col = Camera.Load(loc);
-	
-	float luma =
-		0.2126 * max(0.0, col.r) +
-		0.7152 * max(0.0, col.g) +
-		0.0722 * max(0.0, col.b);
 
-	float logI = log(max(luma, 1e-4));
-	float ref = LogReference.Load(loc);
-	float diff = logI - ref;
+	float I = luma(Camera.Load(loc)); // current luma
+	float L = log(max(I, 1e-4)); // linlog was designed for 8 bit color, HDR float color can use pure log
+	
+	if (firstFrame)
+	{
+		State[id.xy] = float2(L, L);
+		Output[id.xy] = 0;
+		return;
+	}
+	
+	float2 state = State.Load(loc);
+	float Lf = state.y;
+	
+	// low pass filter pixel "motion blur" simulation
+	float tau = (L > Lf) ? tauOn : tauOff;
+	float alpha = 1 - exp(-dtSecs / tau); // α = 1 - e^(-Δt / τ)
+	
+	Lf += alpha * (L - Lf); // Lf(t+Δt) = Lf(t) + α(L(t) - Lf(t))
+	
+	float ref = state.x;
+	float diff = Lf - ref;
 	
 	bool on = diff > 0;
 	int polarity = on ? 1 : -1;
@@ -34,8 +64,9 @@ void Main(uint3 id : SV_DispatchThreadID)
 	int numEvents = floor(polarity * diff / ContrastThreshold);
 	
 	// pack polarity, events, diff into one float
-	Output[id.xy] = sign(numEvents) * polarity * (numEvents * COUNT_SCALE + abs(diff));
+	Output[id.xy] = sign(numEvents) * polarity * (numEvents * EventCountScale + abs(diff));
 	
 	// update state
-	LogReference[id.xy] = ref + polarity * numEvents * ContrastThreshold;
+	ref += polarity * numEvents * ContrastThreshold; 
+	State[id.xy] = float2(ref, Lf); // Lf was updated earlier
 }

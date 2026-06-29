@@ -31,8 +31,7 @@ sys.stdout = log
 sys.stderr = log
 # ---
 
-camfilepath = sys.argv[1]
-permutation = sys.argv[2].split(',')
+josnpath = sys.argv[1]
 
 import postprocessoutput
-postprocessoutput.process(camfilepath, permutation, True)
+postprocessoutput.processbin(josnpath)

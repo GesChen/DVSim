@@ -1,5 +1,7 @@
 using System;
+using System.Linq;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using Unity.Burst;
@@ -7,7 +9,6 @@ using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEditor;
-using UnityEditor.PackageManager.Requests;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -26,7 +27,7 @@ public class DVS : MonoBehaviour {
 	public DVSEventBuffer events;
 
 	RenderTexture cameraTarget;
-	RenderTexture logReference;
+	RenderTexture sensorState;
 	RenderTexture outputMap;
 
 	private const string EventShaderAssetPath = "Assets/Scripts/DVCalc.compute";
@@ -45,7 +46,6 @@ public class DVS : MonoBehaviour {
 	int frameCapKernel;
 
 	public void Init() {
-
 		cameraTarget = GenerateCameraRenTex(DVConfig.Resolution);
 
 		camera = GetComponent<Camera>();
@@ -53,11 +53,15 @@ public class DVS : MonoBehaviour {
 		camera.targetTexture = cameraTarget;
 		camera.depthTextureMode |= DepthTextureMode.Depth;
 
-		logReference = GenerateNonDepthRenTex(RenderTextureFormat.RFloat);
+		sensorState = GenerateNonDepthRenTex(RenderTextureFormat.RGFloat);
 		outputMap = GenerateNonDepthRenTex(RenderTextureFormat.RFloat);
 
 		EventShader = AssetDatabase.LoadAssetAtPath<ComputeShader>(EventShaderAssetPath);
 		eventKernel = EventShader.FindKernel("Main");
+
+		EventShader.SetFloat("EventCountScale", DVConfig.EventCountScale);
+		EventShader.SetFloat("ContrastThreshold", DVConfig.ContrastThreshold);
+		EventShader.SetFloat("dtSecs", 1 / DVConfig.SimFPS);
 
 		frameCapOut = GenerateNonDepthRenTex(RenderTextureFormat.ARGBFloat);
 		frameCapTexture = new Texture2D(DVConfig.Resolution.x, DVConfig.Resolution.y, TextureFormat.RGBAFloat, false);
@@ -69,7 +73,7 @@ public class DVS : MonoBehaviour {
 		globalShaderGroups = Vector2Int.CeilToInt((Vector2)DVConfig.Resolution / 8f);
 
 		events = new();
-		events.Setup(transform.name);
+		events.Setup(camera);
 		events.Open();
 	}
 
@@ -102,13 +106,12 @@ public class DVS : MonoBehaviour {
 		return tex;
 	}
 
-
 	public void Cleanup() {
 		if (camera != null)
 			camera.targetTexture = null;
 
 		Release(cameraTarget);
-		Release(logReference);
+		Release(sensorState);
 		Release(outputMap);
 		Release(frameCapOut);
 		Destroy(frameCapTexture);
@@ -129,9 +132,9 @@ public class DVS : MonoBehaviour {
 		camera.Render();
 
 		EventShader.SetTexture(eventKernel, "Camera", cameraTarget);
-		EventShader.SetTexture(eventKernel, "LogReference", logReference);
+		EventShader.SetTexture(eventKernel, "State", sensorState);
 		EventShader.SetTexture(eventKernel, "Output", outputMap);
-		EventShader.SetFloat("ContrastThreshold", DVConfig.ContrastThreshold);
+		EventShader.SetBool("firstFrame", DVManager.Frame == 0);
 
 		EventShader.Dispatch(eventKernel, globalShaderGroups.x, globalShaderGroups.y, 1);
 
@@ -149,8 +152,9 @@ public class DVS : MonoBehaviour {
 	}
 
 	void Readback(AsyncGPUReadbackRequest request, ulong time) {
-		if (time / DVConfig.TimeScale * DVConfig.SimFPS < DVConfig.CameraWarmupTimeFrames) return;
+		if ((double)time / DVConfig.TimeScale * DVConfig.SimFPS < DVConfig.CameraWarmupTimeFrames) return;
 		if (request.hasError) return;
+
 
 		ulong dt = (ulong)math.round(DVConfig.TimeScale / DVConfig.SimFPS);
 
@@ -168,6 +172,7 @@ public class DVS : MonoBehaviour {
 			Time = time,
 			Dt = dt,
 
+			EventCountScale = DVConfig.EventCountScale,
 			ContrastThreshold = DVConfig.ContrastThreshold,
 			InterpolateTime = DVConfig.InterpolateTime
 		};
@@ -180,6 +185,7 @@ public class DVS : MonoBehaviour {
 		}
 
 		eventQueue.Dispose();
+		outputData.Dispose();
 	}
 
 	void TakeFrameCapture() {
@@ -191,7 +197,7 @@ public class DVS : MonoBehaviour {
 
 		FrameCapShader.Dispatch(frameCapKernel, globalShaderGroups.x, globalShaderGroups.y, 1);
 
-		string permutationAtCall = string.Join('_', DVManager.Instance.CurrentPermutation);
+		string permutationAtCall = string.Join('_', DVManager.CurrentPermutation);
 		int frameCapFrameAtCall = (int)(DVManager.Frame * DVConfig.FrameCapFPS / DVConfig.SimFPS);
 
 		AsyncGPUReadback.Request(
@@ -216,18 +222,34 @@ public class DVS : MonoBehaviour {
 
 		string location = Path.Combine(
 			Application.dataPath,
-			DVConfig.DataFolder,
+			DVConfig.OutputFolder,
 			DVConfig.PermutationFolder,
 			permutation,
+			camera.name,
 			DVConfig.FrameCapSubFolder);
-
 
 		Directory.CreateDirectory(location);
 
-		string fullPath = Path.Combine(location, $"{frame}.exr");
+		string fullPath = Path.Combine(location, $"{frame:D5}.exr");
 
 		File.WriteAllBytes(fullPath, bytes);
 
+	}
+
+	public void ClearFrameCaptures(int[] permutation) {
+		string permStr = string.Join('_', permutation);
+
+		string location = Path.Combine(
+			Application.dataPath,
+			DVConfig.OutputFolder,
+			DVConfig.PermutationFolder,
+			permStr,
+			camera.name,
+			DVConfig.FrameCapSubFolder);
+
+		if (Directory.Exists(location))
+			Directory.Delete(location, true);
+		Directory.CreateDirectory(location);
 	}
 }
 
@@ -243,6 +265,7 @@ public struct ReadbackJob : IJobParallelFor {
 	public ulong Time;
 	public ulong Dt;
 
+	public int EventCountScale;
 	public float ContrastThreshold;
 	public bool InterpolateTime;
 
@@ -251,23 +274,28 @@ public struct ReadbackJob : IJobParallelFor {
 
 		if (data == 0) return;
 
-		int numEvents = math.abs((int)math.floor(data / 100f));
+		int numEvents = (int)math.floor(math.abs(data) / EventCountScale);
 
 		int x = index % Width;
 		int y = index / Width;
 
 		bool on = data > 0f;
 		int polarity = on ? 1 : -1;
-		float diff = polarity * (math.abs(data) - numEvents * 100f);
+		float diff = polarity * (math.abs(data) - numEvents * EventCountScale);
 
+		ulong lastTime = Time;
+		ulong t = Time;
 		for (int n = 0; n < numEvents; n++) {
-			ulong t = Time;
 
 			if (InterpolateTime) {
 				float crossing = polarity * (n + 1) * ContrastThreshold;
 				float alpha = crossing / diff;
 				t = Time + (ulong)math.round(alpha * Dt);
+
+				if (t < lastTime + DVConfig.RefractoryPeriod) continue;
 			}
+
+			lastTime = t;
 
 			Events.Enqueue(new Event {
 				x = x,

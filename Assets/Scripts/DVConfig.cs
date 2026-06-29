@@ -2,22 +2,27 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 public static class DVConfig {
+
+	// --- Sensor Settings ---
+
 	// global resolution for sim
 	public static readonly Vector2Int Resolution = new(1280, 720);
 
 	// simulated fps 10k-100k realistic.
 	// make it 1m if you have all the time in the world i guess.
 	// higher = better temporal precision, more realistic
-	public const float SimFPS = 100;
+	public const float SimFPS = 1000;
 
-	// global time scale
 	public const int TimeScale = 1_000_000_000;
 
-	// contrast threshold realistic .1 - .15
-	public const float ContrastThreshold = .1f;
+	public const float ContrastThreshold = .2f;
 
-	// interpolate t for better accuracy?
 	public const bool InterpolateTime = true;
+
+	public const int RefractoryPeriod = 10000; // global timescale, this is ns
+
+
+	// --- Unity side config ---
 
 	// scene warmup time frames
 	public const int CameraWarmupTimeFrames = 50;
@@ -28,8 +33,11 @@ public static class DVConfig {
 	// buffer flush interval
 	public const int EventFlushIntervalMs = 10;
 
+	// coefficient for event count in the packed float output from compute
+	public const int EventCountScale = 100;
+
 	// event output folder
-	public const string DataFolder = ".Output";
+	public const string OutputFolder = ".Output";
 	public const string PermutationFolder = "Permutations";
 
 	// ------- frame captures ------
