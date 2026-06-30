@@ -1,6 +1,8 @@
 import get_data
 import numpy as np
 
+v2e = np.load(r'E:\DVSim\Python\v2e-master\v2ecore\output\testout.npz')
+
 (x, y, t, p) = get_data.load_unity_dataset(r'E:\DVSim\Assets\.Output\Permutations\0_0_0_0_0\Main Camera.npz')
 (x, y, t, p) =  get_data.sortdata(x, y, t, p)
 # t*= 1e9

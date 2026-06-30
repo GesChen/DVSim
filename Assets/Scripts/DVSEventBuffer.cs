@@ -1,14 +1,16 @@
-using System.Linq;
-using System.Collections;
-using System.Collections.Generic;
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using UnityEngine;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using UnityEngine;
 
 public class DVSEventBuffer {
 	public readonly ConcurrentQueue<Event> queue = new();
@@ -48,24 +50,7 @@ public class DVSEventBuffer {
 			{ "outfilepath", outFilePath },
 			{ "permutation", DVManager.CurrentPermutation },
 
-			{ "config", new Dictionary<string, object> {
-				{ "resolution", new[] { DVConfig.Resolution.x, DVConfig.Resolution.y } },
-
-				{ "simfps", DVConfig.SimFPS },
-				{ "timescale", DVConfig.TimeScale },
-				{ "contrastthreshold", DVConfig.ContrastThreshold },
-				{ "interpolatetime", DVConfig.InterpolateTime },
-				{ "refractoryperiod", DVConfig.RefractoryPeriod },
-
-				{ "camerawarmuptimeframes", DVConfig.CameraWarmupTimeFrames },
-				{ "eventbufferinitcap", DVConfig.EventBufferInitCap },
-				{ "eventflushintervalms", DVConfig.EventFlushIntervalMs },
-				{ "eventcountscale", DVConfig.EventCountScale },
-
-				{ "doframecaptures", DVConfig.DoFrameCaptures },
-				{ "framecapfps", DVConfig.FrameCapFPS },
-				{ "framecapsubfolder", DVConfig.FrameCapSubFolder },
-			}},
+			{ "config", null},
 
 			{ "camera", new Dictionary<string, object> {
 				{ "position", (S_Vector3)camera.transform.position },
@@ -77,6 +62,31 @@ public class DVSEventBuffer {
 				{ "resolution", new[] { camera.pixelWidth, camera.pixelHeight } },
 			}}
 		};
+
+		outputMetadata["config"] = StaticClassToJObject(typeof(DVConfig));
+	}
+
+	public static JObject StaticClassToJObject(Type staticClass) {
+		const BindingFlags flags =
+		BindingFlags.Public |
+		BindingFlags.Static |
+		BindingFlags.FlattenHierarchy;
+
+		var obj = new JObject();
+
+		foreach (var field in staticClass.GetFields(flags)) {
+			if (field.IsLiteral) continue; // skip const if unwanted
+			obj[field.Name] = JToken.FromObject(field.GetValue(null));
+		}
+
+		foreach (var prop in staticClass.GetProperties(flags)) {
+			if (!prop.CanRead) continue;
+			if (prop.GetIndexParameters().Length > 0) continue;
+
+			obj[prop.Name] = JToken.FromObject(prop.GetValue(null));
+		}
+
+		return obj;
 	}
 
 	public void Open() {

@@ -127,7 +127,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DVO_ConstTransform
   constPositionRate: {x: 0, y: 0, z: 0}
   sinPositionAmount: {x: 3, y: 0, z: 0}
-  sinPositionRate: {x: 5, y: 0, z: 0}
+  sinPositionRate: {x: 1, y: 0, z: 0}
 --- !u!1 &5559994706701909578
 GameObject:
   m_ObjectHideFlags: 0

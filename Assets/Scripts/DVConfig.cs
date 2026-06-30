@@ -15,12 +15,19 @@ public static class DVConfig {
 
 	public const int TimeScale = 1_000_000_000;
 
-	public const float ContrastThreshold = .2f;
-
 	public const bool InterpolateTime = true;
 
 	public const int RefractoryPeriod = 10000; // global timescale, this is ns
 
+	public const float tauOn = .005f;
+	public const float tauOff = .010f;
+
+	// v2e values
+	public const float threshSigma = .05f;
+	public const float idealPosThresh = .2f;
+	public const float idealNegThresh = .2f;
+	public const bool doLeaking = true;
+	public const float noiseRateCovDecades = .1f;
 
 	// --- Unity side config ---
 

@@ -8,7 +8,7 @@ using System;
 public class DVManager : Singleton<DVManager> {
 	public static ulong Frame; 
 	public static ulong Time; // ns
-	static bool Playing;
+	public static bool Playing;
 
 	[Serializable]
 	public class PermutationGroup {

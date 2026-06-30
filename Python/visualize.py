@@ -8,6 +8,7 @@ res = (1280, 720)
 
 # (x, y, t, p) = get_data.load_umd_dataset(r'E:\DVSim\Python\data\from umd\events\sequence_haowen1_SIDE_DYNAMIC_DARK_bottle\proc\events')
 (x, y, t, p) = get_data.load_unity_dataset(r'E:\DVSim\Assets\.Output\Permutations\0_0_0_0_0\Main Camera\events.npz')
+# (x, y, t, p) = get_data.load_v2e_dataset(r'E:\DVSim\Python\v2e-master\v2ecore\output\testout.npz')
 
 # sort
 (x, y, t, p) =  get_data.sortdata(x, y, t, p)

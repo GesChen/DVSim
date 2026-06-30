@@ -109,3 +109,16 @@ def load_unity_dataset(path):
 
     print('loaded')
     return (x, y, t, p)
+
+def load_v2e_dataset(path):
+    print('loading dataset...')
+    
+    data = np.load(path)['arr_0']
+
+    t = data[:, 0].astype(np.float64)
+    x = data[:, 1].astype(np.int32)
+    y = data[:, 2].astype(np.int32)
+    p = data[:, 3].astype(np.int8)
+
+    print('loaded')
+    return (x, y, t, p)

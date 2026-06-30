@@ -12,12 +12,11 @@ bool firstFrame;
 // --- consts ---
 // config provided
 int EventCountScale;
-float ContrastThreshold;
 float dtSecs; // explicitly "secs" because tau is as well
+float tauOn;
+float tauOff;
 
-// can be moved to config
-const float tauOn = .005;
-const float tauOff = .010;
+Texture2D<float3> ThreshsAndNoiseRate;
 
 float luma(float4 col)
 {
@@ -60,6 +59,10 @@ void Main(uint3 id : SV_DispatchThreadID)
 	
 	bool on = diff > 0;
 	int polarity = on ? 1 : -1;
+	
+	// compute the rest
+	float3 threshNoiseRate = ThreshsAndNoiseRate[id.xy];
+	float ContrastThreshold = on ? threshNoiseRate.x : threshNoiseRate.y;
 	
 	int numEvents = floor(polarity * diff / ContrastThreshold);
 	

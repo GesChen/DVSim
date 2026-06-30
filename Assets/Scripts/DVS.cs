@@ -1,9 +1,9 @@
 using System;
-using System.Linq;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
@@ -11,7 +11,9 @@ using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
+using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
+using UnityEditorInternal;
 
 public struct Event {
 	public int x;
@@ -34,8 +36,10 @@ public class DVS : MonoBehaviour {
 	ComputeShader EventShader;
 	int eventKernel;
 
-	// all shaders use the global texture, downscaling done in py post process
-	Vector2Int globalShaderGroups;
+	private const string ImperfectionAssetPath = "Assets/Scripts/Imperfection.compute";
+	ComputeShader ImperfectionShader;
+	RenderTexture ThreshNoiseRateRT;
+	NativeArray<Vector4> ThreshNRData;
 
 	// frame capture -------
 	RenderTexture frameCapOut;
@@ -44,6 +48,9 @@ public class DVS : MonoBehaviour {
 	private const string FrameCapShaderAssetPath = "Assets/Scripts/FrameCapture.compute";
 	ComputeShader FrameCapShader;
 	int frameCapKernel;
+
+	// all shaders use the global texture, downscaling done in py post process
+	Vector2Int globalShaderGroups;
 
 	public void Init() {
 		cameraTarget = GenerateCameraRenTex(DVConfig.Resolution);
@@ -59,9 +66,9 @@ public class DVS : MonoBehaviour {
 		EventShader = AssetDatabase.LoadAssetAtPath<ComputeShader>(EventShaderAssetPath);
 		eventKernel = EventShader.FindKernel("Main");
 
-		EventShader.SetFloat("EventCountScale", DVConfig.EventCountScale);
-		EventShader.SetFloat("ContrastThreshold", DVConfig.ContrastThreshold);
-		EventShader.SetFloat("dtSecs", 1 / DVConfig.SimFPS);
+		ImperfectionShader = AssetDatabase.LoadAssetAtPath<ComputeShader>(ImperfectionAssetPath);
+		ThreshNoiseRateRT = GenerateNonDepthRenTex(RenderTextureFormat.ARGBFloat);
+		ThreshNRData = new NativeArray<Vector4>(DVConfig.Resolution.x * DVConfig.Resolution.y, Allocator.Persistent);
 
 		frameCapOut = GenerateNonDepthRenTex(RenderTextureFormat.ARGBFloat);
 		frameCapTexture = new Texture2D(DVConfig.Resolution.x, DVConfig.Resolution.y, TextureFormat.RGBAFloat, false);
@@ -75,6 +82,8 @@ public class DVS : MonoBehaviour {
 		events = new();
 		events.Setup(camera);
 		events.Open();
+
+		SetupEventShader();
 	}
 
 	RenderTexture GenerateCameraRenTex(Vector2Int res) {
@@ -106,6 +115,33 @@ public class DVS : MonoBehaviour {
 		return tex;
 	}
 
+	void SetupEventShader() {
+		EventShader.SetFloat("EventCountScale", DVConfig.EventCountScale);
+		EventShader.SetFloat("dtSecs", 1 / DVConfig.SimFPS);
+		EventShader.SetFloat("tauOn", DVConfig.tauOn);
+		EventShader.SetFloat("tauOff", DVConfig.tauOff);
+
+		int imperfectInitKernel = ImperfectionShader.FindKernel("VariableThreshAndLeak");
+		ImperfectionShader.SetFloat("threshSigma", DVConfig.threshSigma);
+		ImperfectionShader.SetFloat("idealPosThresh", DVConfig.idealPosThresh);
+		ImperfectionShader.SetFloat("idealNegThresh", DVConfig.idealNegThresh);
+		ImperfectionShader.SetBool ("doLeaking", DVConfig.doLeaking);
+		ImperfectionShader.SetFloat("noiseRateCovDecades", DVConfig.noiseRateCovDecades);
+		ImperfectionShader.SetTexture(imperfectInitKernel, "VaryThreshsAndNoiseRate", ThreshNoiseRateRT);
+		ImperfectionShader.Dispatch(imperfectInitKernel, globalShaderGroups.x, globalShaderGroups.y, 1);
+
+		EventShader.SetTexture(imperfectInitKernel, "ThreshsAndNoiseRate", ThreshNoiseRateRT);
+
+		AsyncGPUReadback.Request(ThreshNoiseRateRT, 0, TextureFormat.RGBAFloat,
+			req => {
+				if (req.hasError) return;
+				
+				var data = req.GetData<Vector4>();
+
+				data.CopyTo(ThreshNRData);
+			});
+	}
+
 	public void Cleanup() {
 		if (camera != null)
 			camera.targetTexture = null;
@@ -115,6 +151,8 @@ public class DVS : MonoBehaviour {
 		Release(outputMap);
 		Release(frameCapOut);
 		Destroy(frameCapTexture);
+		Release(ThreshNoiseRateRT);
+		ThreshNRData.Dispose();
 
 		_ = events.Close();
 	}
@@ -154,7 +192,7 @@ public class DVS : MonoBehaviour {
 	void Readback(AsyncGPUReadbackRequest request, ulong time) {
 		if ((double)time / DVConfig.TimeScale * DVConfig.SimFPS < DVConfig.CameraWarmupTimeFrames) return;
 		if (request.hasError) return;
-
+		if (!DVManager.Playing) return;
 
 		ulong dt = (ulong)math.round(DVConfig.TimeScale / DVConfig.SimFPS);
 
@@ -164,6 +202,7 @@ public class DVS : MonoBehaviour {
 
 		var job = new ReadbackJob {
 			OutputData = outputData,
+			ThreshNoiseRateData = ThreshNRData,
 			Events = eventQueue.AsParallelWriter(),
 
 			Width = DVConfig.Resolution.x,
@@ -173,7 +212,6 @@ public class DVS : MonoBehaviour {
 			Dt = dt,
 
 			EventCountScale = DVConfig.EventCountScale,
-			ContrastThreshold = DVConfig.ContrastThreshold,
 			InterpolateTime = DVConfig.InterpolateTime
 		};
 
@@ -256,6 +294,7 @@ public class DVS : MonoBehaviour {
 [BurstCompile]
 public struct ReadbackJob : IJobParallelFor {
 	[ReadOnly] public NativeArray<float> OutputData;
+	[ReadOnly] public NativeArray<Vector4> ThreshNoiseRateData;
 
 	public NativeQueue<Event>.ParallelWriter Events;
 
@@ -266,7 +305,6 @@ public struct ReadbackJob : IJobParallelFor {
 	public ulong Dt;
 
 	public int EventCountScale;
-	public float ContrastThreshold;
 	public bool InterpolateTime;
 
 	public void Execute(int index) {
@@ -282,6 +320,9 @@ public struct ReadbackJob : IJobParallelFor {
 		bool on = data > 0f;
 		int polarity = on ? 1 : -1;
 		float diff = polarity * (math.abs(data) - numEvents * EventCountScale);
+
+		Vector4 threshData = ThreshNoiseRateData[index];
+		float ContrastThreshold = on ? threshData.x : threshData.y;
 
 		ulong lastTime = Time;
 		ulong t = Time;
