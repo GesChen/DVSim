@@ -14,7 +14,7 @@ public class DVO_Test : DVObject {
 
 	public override void UpdateState(ulong time) {
 		float t = time;
-		t /= DVConfig.TimeScale;
+		t /= DVConfig.timeScale;
 		t *= speed;
 
 		transform.position = posInit + 

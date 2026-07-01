@@ -110,7 +110,7 @@ public static class Poses {
 		// sample 4 points for time interpolation
 
 		// convert time to seconds 
-		double t = (double)time / DVConfig.TimeScale;
+		double t = (double)time / DVConfig.timeScale;
 
 		// find closest 4 frames around t bounded by src clip
 		// t0---t1-t--t2---t3

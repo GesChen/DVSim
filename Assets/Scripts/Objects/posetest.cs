@@ -22,7 +22,7 @@ public class posetest : MonoBehaviour
     void Update()
     {
 		//var sample = anim.Sample((ulong)(Time.timeAsDouble * DVConfig.TimeScale));
-		var sample = anim.Sample((ulong)(time / 100 * DVConfig.TimeScale));
+		var sample = anim.Sample((ulong)(time / 100 * DVConfig.timeScale));
 
 		Poses.CopyPose(sample, target);
 	}

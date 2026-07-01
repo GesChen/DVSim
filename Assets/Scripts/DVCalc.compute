@@ -1,4 +1,6 @@
-﻿#pragma kernel Main
+﻿#include "common.hlsl"
+
+#pragma kernel Main
 
 // --- dynamically changing vals ---
 Texture2D<float4> Camera; // HDR output
@@ -10,13 +12,16 @@ RWTexture2D<float> Output; // packed event value
 bool firstFrame;
 
 // --- consts ---
-// config provided
 int EventCountScale;
 float dtSecs; // explicitly "secs" because tau is as well
 float tauOn;
 float tauOff;
 
-Texture2D<float3> ThreshsAndNoiseRate;
+//_imperfections_
+float leakRateHz;
+float leakJitterFraction;
+
+Texture2D<float4> ThreshAndNoiseRate;
 
 float luma(float4 col)
 {
@@ -24,6 +29,22 @@ float luma(float4 col)
 		.2126 * max(0., col.r) +
 		.7152 * max(0., col.g) +
 		.0722 * max(0., col.b);
+}
+
+float leakCurrent(uint3 id, float4 threshNoiseRate)
+{
+	uint4 seed = coord2seed(id);
+
+/* original from v2e
+	rand = torch.randn...
+	curr_leak_rate = leak_rate_hz*noise_rate_array*(1-leak_jitter_fraction*rand)
+	delta_leak = delta_time*curr_leak_rate*pos_thres
+*/
+	float rand = boxMullerRandomNormal(seed);
+	float curLeakRate = leakRateHz * threshNoiseRate.z * (1 - leakJitterFraction * rand);
+	float deltaLeak = dtSecs * curLeakRate * threshNoiseRate.x;
+	
+	return deltaLeak;
 }
 
 [numthreads(8, 8, 1)]
@@ -44,9 +65,12 @@ void Main(uint3 id : SV_DispatchThreadID)
 		Output[id.xy] = 0;
 		return;
 	}
-	
+
+	// get references
 	float2 state = State.Load(loc);
-	float Lf = state.y;
+	
+	float Lf = state.y; // Lf == low pass filtered L
+	float ref = state.x; // ref == base_log_frame
 	
 	// low pass filter pixel "motion blur" simulation
 	float tau = (L > Lf) ? tauOn : tauOff;
@@ -54,14 +78,17 @@ void Main(uint3 id : SV_DispatchThreadID)
 	
 	Lf += alpha * (L - Lf); // Lf(t+Δt) = Lf(t) + α(L(t) - Lf(t))
 	
-	float ref = state.x;
+	// leak 
+	float4 threshNoiseRate = ThreshAndNoiseRate[id.xy];
+	float leak = leakCurrent(id, threshNoiseRate);
+	ref -= leak;
+	
 	float diff = Lf - ref;
 	
 	bool on = diff > 0;
 	int polarity = on ? 1 : -1;
 	
 	// compute the rest
-	float3 threshNoiseRate = ThreshsAndNoiseRate[id.xy];
 	float ContrastThreshold = on ? threshNoiseRate.x : threshNoiseRate.y;
 	
 	int numEvents = floor(polarity * diff / ContrastThreshold);

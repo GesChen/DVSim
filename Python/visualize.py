@@ -45,7 +45,7 @@ def visualize_slice():
     slider_slice = Slider(ax_time, "Time Slice", t.min(), t.max(), valinit=timeslice)
 
     ax_width = plt.axes([0.25, 0.15, 0.65, 0.03])
-    slider_width = Slider(ax_width, "Slice Width", 0.0, 0.1, valinit=tslicewidth)
+    slider_width = Slider(ax_width, "Slice Width", 0.0, 1., valinit=tslicewidth)
 
     ax_button = plt.axes([0.45, 0.05, 0.15, 0.06])
     button_play = Button(ax_button, "Play")

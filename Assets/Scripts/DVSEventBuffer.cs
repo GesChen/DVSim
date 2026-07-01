@@ -36,7 +36,7 @@ public class DVSEventBuffer {
 
 		outFilePath = Path.Combine(
 			Application.dataPath,
-			DVConfig.OutputFolder,
+			DVConfig.outputFolder,
 			camera.name + ".bin");
 
 		Directory.CreateDirectory(Path.GetDirectoryName(outFilePath));
@@ -72,10 +72,14 @@ public class DVSEventBuffer {
 		BindingFlags.Static |
 		BindingFlags.FlattenHierarchy;
 
+		static object ProcessUnserializables(object obj) {
+			if (obj is Vector3Int v3i) return (S_Vector3)(Vector3)v3i;
+			return obj;
+		}
+
 		var obj = new JObject();
 
 		foreach (var field in staticClass.GetFields(flags)) {
-			if (field.IsLiteral) continue; // skip const if unwanted
 			obj[field.Name] = JToken.FromObject(field.GetValue(null));
 		}
 
@@ -83,7 +87,7 @@ public class DVSEventBuffer {
 			if (!prop.CanRead) continue;
 			if (prop.GetIndexParameters().Length > 0) continue;
 
-			obj[prop.Name] = JToken.FromObject(prop.GetValue(null));
+			obj[prop.Name] = JToken.FromObject(ProcessUnserializables(prop.GetValue(null)));
 		}
 
 		return obj;
@@ -149,7 +153,7 @@ public class DVSEventBuffer {
 		UnityEngine.Debug.Log("Eventbuffer finished closing. Post processing");
 
 		try {
-			TriggerPythonPostProcess(permAtClose);
+			_ = TriggerPythonPostProcessAsync(permAtClose);
 		} catch (Exception e) {
 			UnityEngine.Debug.LogError(e);
 		}
@@ -185,7 +189,7 @@ public class DVSEventBuffer {
 			if (stream != null)
 				await stream.FlushAsync(token);
 
-			await Task.Delay(DVConfig.EventFlushIntervalMs, token);
+			await Task.Delay(DVConfig.eventFlushIntervalMs, token);
 		}
 	}
 
@@ -232,30 +236,55 @@ public class DVSEventBuffer {
 		});
 	}
 
-	void TriggerPythonPostProcess(int[] permutationAtClose) {
-		string script = Path.Combine(Application.dataPath, PostProcessPyFile);
-		script = script.Replace('/', '\\');
+	async Task TriggerPythonPostProcessAsync(int[] permutationAtClose) {
+		string script = Path.Combine(Application.dataPath, PostProcessPyFile)
+		.Replace('/', '\\');
 
 		GenerateMeta();
 
 		string jsonPath = Path.Combine(
-			Application.dataPath,
-			DVConfig.OutputFolder,
-			DVConfig.PermutationFolder,
-			string.Join('_', permutationAtClose),
-			camera.name,
-			"meta.json");
+		Application.dataPath,
+		DVConfig.outputFolder,
+		DVConfig.permutationFolder,
+		string.Join('_', permutationAtClose),
+		camera.name,
+		"meta.json");
 
-		File.WriteAllText(jsonPath, JsonConvert.SerializeObject(outputMetadata, Formatting.Indented));
+		string json = JsonConvert.SerializeObject(outputMetadata, Formatting.Indented);
 
-		var p = new Process();
+		await File.WriteAllTextAsync(jsonPath, json);
+
+		using var p = new Process();
+
 		p.StartInfo.FileName = "py";
 		p.StartInfo.Arguments = $"\"{script}\" \"{jsonPath}\"";
 		p.StartInfo.UseShellExecute = false;
 		p.StartInfo.RedirectStandardOutput = true;
+		p.StartInfo.RedirectStandardError = true;
+		p.StartInfo.CreateNoWindow = true;
 
 		UnityEngine.Debug.Log($"calling py {p.StartInfo.Arguments}");
 
 		p.Start();
+
+		Task<string> stdoutTask = p.StandardOutput.ReadToEndAsync();
+		Task<string> stderrTask = p.StandardError.ReadToEndAsync();
+
+#if NET5_0_OR_GREATER
+    await p.WaitForExitAsync();
+#else
+		await Task.Run(() => p.WaitForExit());
+#endif
+
+		string stdout = await stdoutTask;
+		string stderr = await stderrTask;
+
+		if (!string.IsNullOrWhiteSpace(stdout))
+			UnityEngine.Debug.Log(stdout);
+
+		if (!string.IsNullOrWhiteSpace(stderr))
+			UnityEngine.Debug.LogError(stderr);
+
+		UnityEngine.Debug.Log($"done, exit code {p.ExitCode}");
 	}
 }

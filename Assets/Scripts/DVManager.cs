@@ -33,7 +33,7 @@ public class DVManager : Singleton<DVManager> {
 		}
 
 		Frame++;
-		Time = (ulong)Math.Round(Frame * DVConfig.TimeScale / DVConfig.SimFPS);
+		Time = (ulong)Math.Round(Frame * DVConfig.timeScale / DVConfig.simFPS);
 	}
 
 	private void Start() {
@@ -84,7 +84,7 @@ public class DVManager : Singleton<DVManager> {
 		ClearAllSensorFrames();
 
 		Playing = true;
-		while (Time < SceneManager.Instance.CurrentSceneLengthSeconds * DVConfig.TimeScale) {
+		while (Time < SceneManager.Instance.CurrentSceneLengthSeconds * DVConfig.timeScale) {
 			if (Playing)
 				Tick();
 			else 

@@ -16,7 +16,7 @@ public class DVO_ConstTransform : DVObject {
 	}
 
 	public override void UpdateState(ulong time) {
-		float t = (float)time / DVConfig.TimeScale;
+		float t = (float)time / DVConfig.timeScale;
 
 		transform.position = initialPosition
 			+ constPositionRate * t

@@ -53,7 +53,7 @@ public class DVS : MonoBehaviour {
 	Vector2Int globalShaderGroups;
 
 	public void Init() {
-		cameraTarget = GenerateCameraRenTex(DVConfig.Resolution);
+		cameraTarget = GenerateCameraRenTex(DVConfig.resolution);
 
 		camera = GetComponent<Camera>();
 		camera.allowHDR = true;
@@ -68,16 +68,16 @@ public class DVS : MonoBehaviour {
 
 		ImperfectionShader = AssetDatabase.LoadAssetAtPath<ComputeShader>(ImperfectionAssetPath);
 		ThreshNoiseRateRT = GenerateNonDepthRenTex(RenderTextureFormat.ARGBFloat);
-		ThreshNRData = new NativeArray<Vector4>(DVConfig.Resolution.x * DVConfig.Resolution.y, Allocator.Persistent);
+		ThreshNRData = new NativeArray<Vector4>(DVConfig.resolution.x * DVConfig.resolution.y, Allocator.Persistent);
 
 		frameCapOut = GenerateNonDepthRenTex(RenderTextureFormat.ARGBFloat);
-		frameCapTexture = new Texture2D(DVConfig.Resolution.x, DVConfig.Resolution.y, TextureFormat.RGBAFloat, false);
+		frameCapTexture = new Texture2D(DVConfig.resolution.x, DVConfig.resolution.y, TextureFormat.RGBAFloat, false);
 
 		FrameCapShader = AssetDatabase.LoadAssetAtPath<ComputeShader>(FrameCapShaderAssetPath);
 		frameCapKernel = FrameCapShader.FindKernel("Main");
 
 		// wont change so you can precompute this
-		globalShaderGroups = Vector2Int.CeilToInt((Vector2)DVConfig.Resolution / 8f);
+		globalShaderGroups = Vector2Int.CeilToInt((Vector2)DVConfig.resolution / 8f);
 
 		events = new();
 		events.Setup(camera);
@@ -104,8 +104,8 @@ public class DVS : MonoBehaviour {
 
 	RenderTexture GenerateNonDepthRenTex(RenderTextureFormat format) {
 		RenderTexture tex = new(
-			DVConfig.Resolution.x,
-			DVConfig.Resolution.y,
+			DVConfig.resolution.x,
+			DVConfig.resolution.y,
 			0,
 			format
 		);
@@ -116,10 +116,12 @@ public class DVS : MonoBehaviour {
 	}
 
 	void SetupEventShader() {
-		EventShader.SetFloat("EventCountScale", DVConfig.EventCountScale);
-		EventShader.SetFloat("dtSecs", 1 / DVConfig.SimFPS);
+		EventShader.SetFloat("EventCountScale", DVConfig.eventCountScale);
+		EventShader.SetFloat("dtSecs", 1 / DVConfig.simFPS);
 		EventShader.SetFloat("tauOn", DVConfig.tauOn);
 		EventShader.SetFloat("tauOff", DVConfig.tauOff);
+		EventShader.SetFloat("leakRateHz", DVConfig.leakRateHz);
+		EventShader.SetFloat("leakJitterFraction", DVConfig.leakJitterFraction);
 
 		int imperfectInitKernel = ImperfectionShader.FindKernel("VariableThreshAndLeak");
 		ImperfectionShader.SetFloat("threshSigma", DVConfig.threshSigma);
@@ -130,7 +132,7 @@ public class DVS : MonoBehaviour {
 		ImperfectionShader.SetTexture(imperfectInitKernel, "VaryThreshsAndNoiseRate", ThreshNoiseRateRT);
 		ImperfectionShader.Dispatch(imperfectInitKernel, globalShaderGroups.x, globalShaderGroups.y, 1);
 
-		EventShader.SetTexture(imperfectInitKernel, "ThreshsAndNoiseRate", ThreshNoiseRateRT);
+		EventShader.SetTexture(imperfectInitKernel, "ThreshAndNoiseRate", ThreshNoiseRateRT);
 
 		AsyncGPUReadback.Request(ThreshNoiseRateRT, 0, TextureFormat.RGBAFloat,
 			req => {
@@ -169,6 +171,8 @@ public class DVS : MonoBehaviour {
 		//Debug.Log("tick");
 		camera.Render();
 
+		if (DVManager.Frame == 0)
+
 		EventShader.SetTexture(eventKernel, "Camera", cameraTarget);
 		EventShader.SetTexture(eventKernel, "State", sensorState);
 		EventShader.SetTexture(eventKernel, "Output", outputMap);
@@ -185,16 +189,16 @@ public class DVS : MonoBehaviour {
 			req => Readback(req, timeAtReq)
 		);
 
-		if (DVConfig.DoFrameCaptures && (DVManager.Frame % (DVConfig.SimFPS / DVConfig.FrameCapFPS)) < 1f)
+		if (DVConfig.doFrameCaptures && (DVManager.Frame % (DVConfig.simFPS / DVConfig.frameCapFPS)) < 1f)
 			TakeFrameCapture();
 	}
 
 	void Readback(AsyncGPUReadbackRequest request, ulong time) {
-		if ((double)time / DVConfig.TimeScale * DVConfig.SimFPS < DVConfig.CameraWarmupTimeFrames) return;
+		if ((double)time / DVConfig.timeScale * DVConfig.simFPS < DVConfig.cameraWarmupTimeFrames) return;
 		if (request.hasError) return;
 		if (!DVManager.Playing) return;
 
-		ulong dt = (ulong)math.round(DVConfig.TimeScale / DVConfig.SimFPS);
+		ulong dt = (ulong)math.round(DVConfig.timeScale / DVConfig.simFPS);
 
 		NativeArray<float> outputData = request.GetData<float>();
 
@@ -205,14 +209,14 @@ public class DVS : MonoBehaviour {
 			ThreshNoiseRateData = ThreshNRData,
 			Events = eventQueue.AsParallelWriter(),
 
-			Width = DVConfig.Resolution.x,
-			Height = DVConfig.Resolution.y,
+			Width = DVConfig.resolution.x,
+			Height = DVConfig.resolution.y,
 
 			Time = time,
 			Dt = dt,
 
-			EventCountScale = DVConfig.EventCountScale,
-			InterpolateTime = DVConfig.InterpolateTime
+			EventCountScale = DVConfig.eventCountScale,
+			InterpolateTime = DVConfig.interpolateTime
 		};
 
 		JobHandle handle = job.Schedule(outputData.Length, 128);
@@ -236,7 +240,7 @@ public class DVS : MonoBehaviour {
 		FrameCapShader.Dispatch(frameCapKernel, globalShaderGroups.x, globalShaderGroups.y, 1);
 
 		string permutationAtCall = string.Join('_', DVManager.CurrentPermutation);
-		int frameCapFrameAtCall = (int)(DVManager.Frame * DVConfig.FrameCapFPS / DVConfig.SimFPS);
+		int frameCapFrameAtCall = (int)(DVManager.Frame * DVConfig.frameCapFPS / DVConfig.simFPS);
 
 		AsyncGPUReadback.Request(
 			frameCapOut,
@@ -260,15 +264,15 @@ public class DVS : MonoBehaviour {
 
 		string location = Path.Combine(
 			Application.dataPath,
-			DVConfig.OutputFolder,
-			DVConfig.PermutationFolder,
+			DVConfig.outputFolder,
+			DVConfig.permutationFolder,
 			permutation,
 			camera.name,
-			DVConfig.FrameCapSubFolder);
+			DVConfig.frameCapSubFolder);
 
 		Directory.CreateDirectory(location);
 
-		string fullPath = Path.Combine(location, $"{frame:D5}.exr");
+		string fullPath = Path.Combine(location, $"{frame.ToString("D" + DVConfig.frameNumPadDigits)}.exr");
 
 		File.WriteAllBytes(fullPath, bytes);
 
@@ -279,11 +283,11 @@ public class DVS : MonoBehaviour {
 
 		string location = Path.Combine(
 			Application.dataPath,
-			DVConfig.OutputFolder,
-			DVConfig.PermutationFolder,
+			DVConfig.outputFolder,
+			DVConfig.permutationFolder,
 			permStr,
 			camera.name,
-			DVConfig.FrameCapSubFolder);
+			DVConfig.frameCapSubFolder);
 
 		if (Directory.Exists(location))
 			Directory.Delete(location, true);
@@ -333,7 +337,7 @@ public struct ReadbackJob : IJobParallelFor {
 				float alpha = crossing / diff;
 				t = Time + (ulong)math.round(alpha * Dt);
 
-				if (t < lastTime + DVConfig.RefractoryPeriod) continue;
+				if (t < lastTime + DVConfig.refractoryPeriod) continue;
 			}
 
 			lastTime = t;
