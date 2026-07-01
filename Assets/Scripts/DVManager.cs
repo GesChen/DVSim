@@ -1,9 +1,10 @@
-using System.Linq;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
+using System.Linq;
+using Unity.Mathematics;
 using UnityEditor;
-using System;
+using UnityEngine;
 
 public class DVManager : Singleton<DVManager> {
 	public static ulong Frame; 
@@ -39,6 +40,15 @@ public class DVManager : Singleton<DVManager> {
 	private void Start() {
 		Frame = 0;
 		Time = 0;
+
+		// Source - https://stackoverflow.com/a/17080161
+		// Posted by Jon Skeet, modified by community. See post 'Timeline' for change history
+		// Retrieved 2026-07-01, License - CC BY-SA 3.0
+
+		var random = new System.Random();
+		uint thirtyBits = (uint) random.Next(1 << 30);
+		uint twoBits = (uint) random.Next(1 << 2);
+		DVConfig.Seed = (thirtyBits << 2) | twoBits;
 
 		InitSensors();
 

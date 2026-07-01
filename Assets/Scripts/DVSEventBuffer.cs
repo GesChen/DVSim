@@ -58,8 +58,6 @@ public class DVSEventBuffer {
 
 				{ "projection", camera.orthographic ? "orthographic" : "perspective" },
 				{ "fov", camera.fieldOfView },
-
-				{ "resolution", new[] { camera.pixelWidth, camera.pixelHeight } },
 			}}
 		};
 

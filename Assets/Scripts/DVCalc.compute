@@ -8,10 +8,12 @@ Texture2D<float4> Camera; // HDR output
 // x=intensity reference y=low pass value
 RWTexture2D<float2> State;
 RWTexture2D<float> Output; // packed event value
+RWTexture2D<float4> Debug;
 
 bool firstFrame;
 
 // --- consts ---
+uint runSeed; // constant for an entire run
 int EventCountScale;
 float dtSecs; // explicitly "secs" because tau is as well
 float tauOn;
@@ -33,7 +35,7 @@ float luma(float4 col)
 
 float leakCurrent(uint3 id, float4 threshNoiseRate)
 {
-	uint4 seed = coord2seed(id);
+	uint4 seed = seededcoord2seed(id, runSeed);
 
 /* original from v2e
 	rand = torch.randn...

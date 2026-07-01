@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 public static class DVConfig {
+	public static uint Seed; // set by manager each run 
 
 	// --- Sensor Settings ---
 

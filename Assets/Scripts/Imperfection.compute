@@ -2,6 +2,8 @@
 
 #pragma kernel VariableThreshAndLeak
 
+uint runSeed;
+
 float threshSigma;
 float idealPosThresh;
 float idealNegThresh;
@@ -19,7 +21,7 @@ void VariableThreshAndLeak(uint3 id : SV_DispatchThreadID)
 	VaryThreshsAndNoiseRate.GetDimensions(width, height);
 	if (id.x >= width || id.y >= height) return;
 	
-	uint4 seed = coord2seed(id);
+	uint4 seed = seededcoord2seed(id, runSeed);
 	
 	// variate thresholds by normal distribution
 	float pos = idealPosThresh + threshSigma * boxMullerRandomNormal(seed);

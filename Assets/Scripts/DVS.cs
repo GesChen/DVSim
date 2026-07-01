@@ -31,6 +31,7 @@ public class DVS : MonoBehaviour {
 	RenderTexture cameraTarget;
 	RenderTexture sensorState;
 	RenderTexture outputMap;
+	RenderTexture debugOutput;
 
 	private const string EventShaderAssetPath = "Assets/Scripts/DVCalc.compute";
 	ComputeShader EventShader;
@@ -62,6 +63,7 @@ public class DVS : MonoBehaviour {
 
 		sensorState = GenerateNonDepthRenTex(RenderTextureFormat.RGFloat);
 		outputMap = GenerateNonDepthRenTex(RenderTextureFormat.RFloat);
+		debugOutput = GenerateNonDepthRenTex(RenderTextureFormat.ARGBFloat);
 
 		EventShader = AssetDatabase.LoadAssetAtPath<ComputeShader>(EventShaderAssetPath);
 		eventKernel = EventShader.FindKernel("Main");
@@ -116,6 +118,7 @@ public class DVS : MonoBehaviour {
 	}
 
 	void SetupEventShader() {
+		EventShader.SetFloat("runSeed", unchecked((int)DVConfig.Seed));
 		EventShader.SetFloat("EventCountScale", DVConfig.eventCountScale);
 		EventShader.SetFloat("dtSecs", 1 / DVConfig.simFPS);
 		EventShader.SetFloat("tauOn", DVConfig.tauOn);
@@ -124,6 +127,7 @@ public class DVS : MonoBehaviour {
 		EventShader.SetFloat("leakJitterFraction", DVConfig.leakJitterFraction);
 
 		int imperfectInitKernel = ImperfectionShader.FindKernel("VariableThreshAndLeak");
+		ImperfectionShader.SetFloat("runSeed", unchecked((int)DVConfig.Seed));
 		ImperfectionShader.SetFloat("threshSigma", DVConfig.threshSigma);
 		ImperfectionShader.SetFloat("idealPosThresh", DVConfig.idealPosThresh);
 		ImperfectionShader.SetFloat("idealNegThresh", DVConfig.idealNegThresh);
@@ -151,6 +155,7 @@ public class DVS : MonoBehaviour {
 		Release(cameraTarget);
 		Release(sensorState);
 		Release(outputMap);
+		Release(debugOutput);
 		Release(frameCapOut);
 		Destroy(frameCapTexture);
 		Release(ThreshNoiseRateRT);
@@ -176,6 +181,7 @@ public class DVS : MonoBehaviour {
 		EventShader.SetTexture(eventKernel, "Camera", cameraTarget);
 		EventShader.SetTexture(eventKernel, "State", sensorState);
 		EventShader.SetTexture(eventKernel, "Output", outputMap);
+		EventShader.SetTexture(eventKernel, "Debug", debugOutput);
 		EventShader.SetBool("firstFrame", DVManager.Frame == 0);
 
 		EventShader.Dispatch(eventKernel, globalShaderGroups.x, globalShaderGroups.y, 1);
