@@ -2,7 +2,7 @@
 
 #pragma kernel VariableThreshAndLeak
 
-uint runSeed;
+int runSeed;
 
 float threshSigma;
 float idealPosThresh;
@@ -35,5 +35,3 @@ void VariableThreshAndLeak(uint3 id : SV_DispatchThreadID)
 	
 	VaryThreshsAndNoiseRate[id.xy] = float4(pos, neg, noiseRate, 0); // extra float for something idk
 }
-
-	

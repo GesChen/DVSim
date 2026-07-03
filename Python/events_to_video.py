@@ -9,8 +9,9 @@ import get_data
 
 
 FPS = 60
-DATASET_PATH = r"E:\DVSim\Assets\.Output\Permutations\Main Camera_perm_0_0_0_0_0.npz"
+DATASET_PATH = r"E:\DVSim\Assets\.Output\Permutations\0_0_0_0_0\Main Camera\events.npz"
 RES = (1280, 720)
+OUTNAME = "toonoisyhuman"
 
 OUTPUT_DIR = Path(r"E:\DVSim\Assets\.Output\Videos")
 
@@ -78,7 +79,7 @@ def write_video():
     dataset_path = Path(DATASET_PATH)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    out_path = OUTPUT_DIR / f"{dataset_path.stem}.mp4"
+    out_path = OUTPUT_DIR / f"{OUTNAME}.avi"
 
     x, y, t, p = LOAD_FUNC(str(dataset_path))
     x, y, t, p = get_data.sortdata(x, y, t, p)
@@ -98,7 +99,7 @@ def write_video():
 
     writer = cv2.VideoWriter(
         str(out_path),
-        cv2.VideoWriter_fourcc(*"mp4v"),
+        cv2.VideoWriter_fourcc(*"FFV1"),
         FPS,
         RES
     )

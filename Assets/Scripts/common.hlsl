@@ -30,13 +30,14 @@ uint4 coord2seed(uint3 id) {
 		id.x * 1664525u + id.y * 1013904223u);
 }
 
-uint4 seededcoord2seed(uint3 id, uint seed)
+uint4 seededcoord2seed(uint3 id, int seed)
 {
+	uint useed = asuint(seed);
 	return uint4(
-		id.x ^ (seed * 0x9E3779B9u),
-		id.y ^ (seed * 0xBB67AE85u),
-		(id.x ^ id.y) ^ (seed * 0x3C6EF372u),
-		id.x * 1664525u + id.y * 1013904223u + seed * 0xA54FF53Au
+		id.x ^ (useed * 0x9E3779B9u),
+		id.y ^ (useed * 0xBB67AE85u),
+		(id.x ^ id.y) ^ (useed * 0x3C6EF372u),
+		id.x * 1664525u + id.y * 1013904223u + useed * 0xA54FF53Au
 	);
 }
 
@@ -44,7 +45,7 @@ uint4 seededcoord2seed(uint3 id, uint seed)
 // https://doi.org/10.1214/aoms/1177706645
 float boxMullerRandomNormal(inout uint4 s)
 {
-	float u1 = rand(s);
+	float u1 = max(rand(s), 1e-7);
 	float u2 = rand(s);
 
 	return sqrt(-2.0f * log(u1)) * cos(2.0f * PI * u2);

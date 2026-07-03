@@ -5,15 +5,18 @@
 // --- dynamically changing vals ---
 Texture2D<float4> Camera; // HDR output
 
-// x=intensity reference y=low pass value
-RWTexture2D<float2> State;
+// x = intensity reference
+// y = low pass value Lf
+// z = photoreceptor noise
+// w = might need it later
+RWTexture2D<float4> State;
 RWTexture2D<float> Output; // packed event value
 RWTexture2D<float4> Debug;
 
+int iterSeed; // constant for all pixels
 bool firstFrame;
 
 // --- consts ---
-uint runSeed; // constant for an entire run
 int EventCountScale;
 float dtSecs; // explicitly "secs" because tau is as well
 float tauOn;
@@ -22,6 +25,9 @@ float tauOff;
 //_imperfections_
 float leakRateHz;
 float leakJitterFraction;
+bool addPhotoAndShotNoise;
+float photoNoiseVoltage;
+float photoNoiseCutoffHz;
 
 Texture2D<float4> ThreshAndNoiseRate;
 
@@ -33,10 +39,8 @@ float luma(float4 col)
 		.0722 * max(0., col.b);
 }
 
-float leakCurrent(uint3 id, float4 threshNoiseRate)
+float leakCurrent(inout uint4 seed, float4 threshNoiseRate)
 {
-	uint4 seed = seededcoord2seed(id, runSeed);
-
 /* original from v2e
 	rand = torch.randn...
 	curr_leak_rate = leak_rate_hz*noise_rate_array*(1-leak_jitter_fraction*rand)
@@ -49,6 +53,22 @@ float leakCurrent(uint3 id, float4 threshNoiseRate)
 	return deltaLeak;
 }
 
+// v2e- emulator.py line 698
+float photoreceptorNoise(inout uint4 seed, float curPhotoNoise)
+{
+	if (!addPhotoAndShotNoise)
+		return 0;
+	
+	float noise = photoNoiseVoltage * boxMullerRandomNormal(seed);
+
+	// low_pass_filter(noise, self.photoreceptor_noise_arr, None, delta_time, self.cutoff_hz)
+	// based on exact discrete time solution to 1st order RC low pass filter 
+	float tau = 1 / (2 * PI * photoNoiseCutoffHz);
+	float eps = 1 - exp(-dtSecs / tau); // max=1, no clamp needed
+	
+	return lerp(curPhotoNoise, noise, eps);
+}
+
 [numthreads(8, 8, 1)]
 void Main(uint3 id : SV_DispatchThreadID)
 {
@@ -57,22 +77,24 @@ void Main(uint3 id : SV_DispatchThreadID)
 	if (id.x >= width || id.y >= height)
 		return;
 	int3 loc = int3(id.xy, 0);
+	uint4 seed = seededcoord2seed(id, iterSeed);
 
 	float I = luma(Camera.Load(loc)); // current luma
 	float L = log(max(I, 1e-4)); // linlog was designed for 8 bit color, HDR float color can use pure log
 	
 	if (firstFrame)
 	{
-		State[id.xy] = float2(L, L);
+		State[id.xy] = float4(L, L, 0, 0);
 		Output[id.xy] = 0;
 		return;
 	}
 
 	// get references
-	float2 state = State.Load(loc);
+	float4 state = State.Load(loc);
 	
-	float Lf = state.y; // Lf == low pass filtered L
 	float ref = state.x; // ref == base_log_frame
+	float Lf = state.y; // Lf == low pass filtered L
+	float curPhotoNoise = state.z; // cpn = current state of low passed photoreceptor noise 
 	
 	// low pass filter pixel "motion blur" simulation
 	float tau = (L > Lf) ? tauOn : tauOff;
@@ -82,10 +104,13 @@ void Main(uint3 id : SV_DispatchThreadID)
 	
 	// leak 
 	float4 threshNoiseRate = ThreshAndNoiseRate[id.xy];
-	float leak = leakCurrent(id, threshNoiseRate);
+	float leak = leakCurrent(seed, threshNoiseRate);
 	ref -= leak;
 	
-	float diff = Lf - ref;
+	// photo noise 
+	float photoNoise = photoreceptorNoise(seed, curPhotoNoise);
+	
+	float diff = Lf + photoNoise - ref;
 	
 	bool on = diff > 0;
 	int polarity = on ? 1 : -1;
@@ -99,6 +124,9 @@ void Main(uint3 id : SV_DispatchThreadID)
 	Output[id.xy] = sign(numEvents) * polarity * (numEvents * EventCountScale + abs(diff));
 	
 	// update state
+	// Lf and photoNoise are low passed
 	ref += polarity * numEvents * ContrastThreshold; 
-	State[id.xy] = float2(ref, Lf); // Lf was updated earlier
+	State[id.xy] = float4(ref, Lf, photoNoise, 0);
+	
+	Debug[id.xy] = float4(photoNoise, curPhotoNoise, 0, 0);
 }

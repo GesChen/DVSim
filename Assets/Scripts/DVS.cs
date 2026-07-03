@@ -53,6 +53,8 @@ public class DVS : MonoBehaviour {
 	// all shaders use the global texture, downscaling done in py post process
 	Vector2Int globalShaderGroups;
 
+	System.Random rng;
+
 	public void Init() {
 		cameraTarget = GenerateCameraRenTex(DVConfig.resolution);
 
@@ -61,7 +63,7 @@ public class DVS : MonoBehaviour {
 		camera.targetTexture = cameraTarget;
 		camera.depthTextureMode |= DepthTextureMode.Depth;
 
-		sensorState = GenerateNonDepthRenTex(RenderTextureFormat.RGFloat);
+		sensorState = GenerateNonDepthRenTex(RenderTextureFormat.ARGBFloat);
 		outputMap = GenerateNonDepthRenTex(RenderTextureFormat.RFloat);
 		debugOutput = GenerateNonDepthRenTex(RenderTextureFormat.ARGBFloat);
 
@@ -84,6 +86,8 @@ public class DVS : MonoBehaviour {
 		events = new();
 		events.Setup(camera);
 		events.Open();
+
+		rng = new(DVConfig.Seed);
 
 		SetupEventShader();
 	}
@@ -126,18 +130,42 @@ public class DVS : MonoBehaviour {
 		EventShader.SetFloat("leakRateHz", DVConfig.leakRateHz);
 		EventShader.SetFloat("leakJitterFraction", DVConfig.leakJitterFraction);
 
+		EventShader.SetBool("addPhotoAndShotNoise", DVConfig.doPhotoreceptorNoise);
+		float photoNoiseVolts;
+		if (DVConfig.doPhotoreceptorNoise)
+			photoNoiseVolts = ComputePhotoreceptorNoiseVoltage(
+				DVConfig.shotNoiseRateHz,
+				DVConfig.photoNoiseCutoffHz, // f3db == cutoff hz
+				DVConfig.simFPS,
+				DVConfig.idealPosThresh,
+				DVConfig.idealNegThresh,
+				DVConfig.threshSigma
+			);
+		else
+			photoNoiseVolts = 0;
+		EventShader.SetFloat("photoNoiseVoltage", photoNoiseVolts);
+		EventShader.SetFloat("photoNoiseCutoffHz", DVConfig.photoNoiseCutoffHz);
+
+		// precompute simulated imperfections
+		// this generates technically two textures,
+		// one variable threshold texture r g
+		// one leakrate texture b
+
 		int imperfectInitKernel = ImperfectionShader.FindKernel("VariableThreshAndLeak");
-		ImperfectionShader.SetFloat("runSeed", unchecked((int)DVConfig.Seed));
+		ImperfectionShader.SetInt("runSeed", DVConfig.Seed);
 		ImperfectionShader.SetFloat("threshSigma", DVConfig.threshSigma);
 		ImperfectionShader.SetFloat("idealPosThresh", DVConfig.idealPosThresh);
 		ImperfectionShader.SetFloat("idealNegThresh", DVConfig.idealNegThresh);
-		ImperfectionShader.SetBool ("doLeaking", DVConfig.doLeaking);
+		ImperfectionShader.SetBool ("doLeaking", DVConfig.leakRateHz > 0);
 		ImperfectionShader.SetFloat("noiseRateCovDecades", DVConfig.noiseRateCovDecades);
 		ImperfectionShader.SetTexture(imperfectInitKernel, "VaryThreshsAndNoiseRate", ThreshNoiseRateRT);
+		
 		ImperfectionShader.Dispatch(imperfectInitKernel, globalShaderGroups.x, globalShaderGroups.y, 1);
 
+		// give this imperfection data to the event shader- set once, it doesn't change later
 		EventShader.SetTexture(imperfectInitKernel, "ThreshAndNoiseRate", ThreshNoiseRateRT);
 
+		// copy the raw data to a nativearray for the burst job to use later 
 		AsyncGPUReadback.Request(ThreshNoiseRateRT, 0, TextureFormat.RGBAFloat,
 			req => {
 				if (req.hasError) return;
@@ -146,6 +174,110 @@ public class DVS : MonoBehaviour {
 
 				data.CopyTo(ThreshNRData);
 			});
+	}
+
+	// v2e- emulator_utils.py
+	public static float ComputePhotoreceptorNoiseVoltage(
+		float shotNoiseRateHz,
+		float f3db,
+		float sampleRateHz,
+		float posThr,
+		float negThr,
+		float sigmaThr) {
+
+		float ratePerBw = (shotNoiseRateHz / f3db) * 0.5f;
+
+		if (ratePerBw > 0.5f)
+			Debug.LogWarning($"shot noise rate per Hz bandwidth is large: rate={shotNoiseRateHz}, f3db={f3db}");
+
+		float x = Mathf.Log10(ratePerBw);
+
+		if (x < -5f)
+			Debug.LogWarning($"desired noise rate {shotNoiseRateHz} Hz is too low for accurate threshold estimation");
+		else if (x > 0f)
+			Debug.LogWarning($"desired noise rate {shotNoiseRateHz} Hz is too large for accurate threshold estimation");
+
+		const int N = 300;
+		float vnSum = 0f;
+
+		for (int i = 0; i < N; i++) {
+			float pos = posThr + sigmaThr * RandNormal();
+			float neg = negThr + sigmaThr * RandNormal();
+			float thr = Mathf.Min(pos, neg);
+
+			vnSum += ComputeVnFromLogRatePerHz(thr, x);
+		}
+
+		float vn = vnSum / N;
+
+		float tau = 1f / (f3db * 2f * Mathf.PI);
+		float dt = 1f / sampleRateHz;
+		float eps = dt / tau;
+
+		if (eps > 0.1f) {
+			Debug.LogWarning(
+				$"eps={eps:F3} for IIR lowpass is > 0.1. " +
+				$"Increase sample rate or decrease cutoff_hz. dt={dt:F6}s, cutoff={f3db:F3}Hz");
+		}
+
+		int len = Mathf.Max(2, Mathf.CeilToInt((1000f * tau) / dt));
+
+		float[] rin = new float[len];
+		float[] rout = new float[len];
+
+		for (int i = 0; i < len; i++)
+			rin[i] = vn * RandNormal();
+
+		float rmsIn = StdDev(rin);
+
+		rout[0] = 0f;
+		for (int i = 1; i < len; i++)
+			rout[i] = rout[i - 1] * (1f - eps) + rin[i] * eps;
+
+		float rmsOut = StdDev(rout);
+		float scale = rmsIn / rmsOut;
+		float vnScaled = scale * vn;
+
+		return vnScaled;
+	}
+
+	static float ComputeVnFromLogRatePerHz(float thr, float x) {
+		float x2 = x * x;
+		float x3 = x2 * x;
+
+		float y =
+			- 0.0026f * x3
+			- 0.036f * x2
+			- 0.1949f * x
+			+ 0.321f;
+
+		float thrPerVn = Mathf.Pow(10f, y);
+		return thr / thrPerVn;
+	}
+
+	// Box-Muller normal RNG, mean 0, std 1.
+	static float RandNormal() {
+		float u1 = Mathf.Max(UnityEngine.Random.value, 1e-7f);
+		float u2 = UnityEngine.Random.value;
+
+		return Mathf.Sqrt(-2f * Mathf.Log(u1)) *
+			   Mathf.Cos(2f * Mathf.PI * u2);
+	}
+
+	static float StdDev(float[] values) {
+		float mean = 0f;
+		for (int i = 0; i < values.Length; i++)
+			mean += values[i];
+
+		mean /= values.Length;
+
+		float var = 0f;
+		for (int i = 0; i < values.Length; i++) {
+			float d = values[i] - mean;
+			var += d * d;
+		}
+
+		return Mathf.Sqrt(var / values.Length);
 	}
 
 	public void Cleanup() {
@@ -176,7 +308,8 @@ public class DVS : MonoBehaviour {
 		//Debug.Log("tick");
 		camera.Render();
 
-		if (DVManager.Frame == 0)
+		//if (DVManager.Frame % 10 == 0)
+		//	RenderDoc.BeginCaptureRenderDoc(EditorWindow.focusedWindow);
 
 		EventShader.SetTexture(eventKernel, "Camera", cameraTarget);
 		EventShader.SetTexture(eventKernel, "State", sensorState);
@@ -184,23 +317,30 @@ public class DVS : MonoBehaviour {
 		EventShader.SetTexture(eventKernel, "Debug", debugOutput);
 		EventShader.SetBool("firstFrame", DVManager.Frame == 0);
 
+		var iterSeed = rng.Next(int.MinValue, int.MaxValue);
+		EventShader.SetInt("iterSeed", iterSeed);
+
 		EventShader.Dispatch(eventKernel, globalShaderGroups.x, globalShaderGroups.y, 1);
+		//if (DVManager.Frame == DVConfig.cameraWarmupTimeFrames)
+		//if (DVManager.Frame % 10 == 0)
+		//	RenderDoc.EndCaptureRenderDoc(EditorWindow.focusedWindow);
 
 		ulong timeAtReq = DVManager.Time;
+		ulong frameAtReq = DVManager.Frame;
 
 		AsyncGPUReadback.Request(
 			outputMap,
 			0,
 			TextureFormat.RFloat,
-			req => Readback(req, timeAtReq)
+			req => Readback(req, timeAtReq, frameAtReq)
 		);
 
 		if (DVConfig.doFrameCaptures && (DVManager.Frame % (DVConfig.simFPS / DVConfig.frameCapFPS)) < 1f)
 			TakeFrameCapture();
 	}
 
-	void Readback(AsyncGPUReadbackRequest request, ulong time) {
-		if ((double)time / DVConfig.timeScale * DVConfig.simFPS < DVConfig.cameraWarmupTimeFrames) return;
+	void Readback(AsyncGPUReadbackRequest request, ulong time, ulong frame) {
+		if (frame < DVConfig.cameraWarmupTimeFrames) return;
 		if (request.hasError) return;
 		if (!DVManager.Playing) return;
 

@@ -11,13 +11,7 @@ public class DVManager : Singleton<DVManager> {
 	public static ulong Time; // ns
 	public static bool Playing;
 
-	[Serializable]
-	public class PermutationGroup {
-		public string Category;
-		public List<DVObject> Objects;
-	}
-
-	public List<PermutationGroup> PermutationGroups;
+	public List<DVPermutationGroup> PermutationGroups;
 
 	public List<DVS> Sensors;
 	public List<DVObject> Objects;
@@ -41,14 +35,8 @@ public class DVManager : Singleton<DVManager> {
 		Frame = 0;
 		Time = 0;
 
-		// Source - https://stackoverflow.com/a/17080161
-		// Posted by Jon Skeet, modified by community. See post 'Timeline' for change history
-		// Retrieved 2026-07-01, License - CC BY-SA 3.0
-
 		var random = new System.Random();
-		uint thirtyBits = (uint) random.Next(1 << 30);
-		uint twoBits = (uint) random.Next(1 << 2);
-		DVConfig.Seed = (thirtyBits << 2) | twoBits;
+		DVConfig.Seed = random.Next(int.MinValue, int.MaxValue);
 
 		InitSensors();
 
@@ -77,7 +65,7 @@ public class DVManager : Singleton<DVManager> {
 
 		CurrentPermutation = permutation;
 
-		Objects = SceneManager.Instance.CreateSceneFromPermutations(permutation, PermutationGroups);
+		Objects = SceneManager.Instance.SetSceneFromPermutation(permutation, PermutationGroups);
 
 		// idk whether to put inits in here or start of simulate coroutine
 		foreach (var obj in Objects) {
@@ -85,7 +73,16 @@ public class DVManager : Singleton<DVManager> {
 		}
 
 		// bad code but oh well
-		var anim = SceneManager.Instance.AnimationContainer.GetComponentInChildren<DVO_PoseAnim>();
+		DVO_PoseAnim anim = null;
+		foreach (var obj in Objects) {
+			if (obj.TryGetComponent(out DVO_PoseAnim an))
+				anim = an;
+		}
+		if (anim == null) {
+			Debug.LogError("No animation found in the current permutation!");
+			return;
+		}
+		
 		SceneManager.Instance.CurrentSceneLengthSeconds = (double)anim.Animation.Poses.Length / anim.Animation.fps;
 	}
 

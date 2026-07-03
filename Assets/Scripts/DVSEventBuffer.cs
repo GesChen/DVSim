@@ -29,7 +29,7 @@ public class DVSEventBuffer {
 
 	Dictionary<string, object> outputMetadata;
 
-	static readonly string PostProcessPyFile = "Scripts/postprocessoutput_log.py";
+	static readonly string PostProcessPyFile = "Scripts\\postprocessoutput.py";
 
 	public void Setup(Camera sourceCam) {
 		camera = sourceCam;
@@ -151,7 +151,7 @@ public class DVSEventBuffer {
 		UnityEngine.Debug.Log("Eventbuffer finished closing. Post processing");
 
 		try {
-			_ = TriggerPythonPostProcessAsync(permAtClose);
+			TriggerPythonPostProcessAsync(permAtClose);
 		} catch (Exception e) {
 			UnityEngine.Debug.LogError(e);
 		}
@@ -222,7 +222,7 @@ public class DVSEventBuffer {
 					long delta = count - lastCount;
 					double rate = delta * 1000.0 / (ms - lastMs);
 
-					UnityEngine.Debug.Log($"Event write rate: {rate:N0}/s | total: {count:N0}");
+					//UnityEngine.Debug.Log($"Event write rate: {rate:N0}/s | total: {count:N0}");
 
 					lastCount = count;
 					lastMs = ms;
@@ -230,59 +230,36 @@ public class DVSEventBuffer {
 			}
 
 			double avgRate = count / Math.Max(sw.Elapsed.TotalSeconds, 1e-9);
-			UnityEngine.Debug.Log($"Event write finished: {count:N0} events | avg: {avgRate:N0}/s");
+			//UnityEngine.Debug.Log($"Event write finished: {count:N0} events | avg: {avgRate:N0}/s");
 		});
 	}
 
-	async Task TriggerPythonPostProcessAsync(int[] permutationAtClose) {
-		string script = Path.Combine(Application.dataPath, PostProcessPyFile)
-		.Replace('/', '\\');
-
+	void TriggerPythonPostProcessAsync(int[] permutationAtClose) {
 		GenerateMeta();
 
 		string jsonPath = Path.Combine(
-		Application.dataPath,
-		DVConfig.outputFolder,
-		DVConfig.permutationFolder,
-		string.Join('_', permutationAtClose),
-		camera.name,
-		"meta.json");
+			Application.dataPath,
+			DVConfig.outputFolder,
+			DVConfig.permutationFolder,
+			string.Join('_', permutationAtClose),
+			camera.name,
+			"meta.json")
+			.Replace('/', '\\');
 
 		string json = JsonConvert.SerializeObject(outputMetadata, Formatting.Indented);
 
-		await File.WriteAllTextAsync(jsonPath, json);
+		File.WriteAllText(jsonPath, json);
 
-		using var p = new Process();
+		var psi = new ProcessStartInfo {
+			FileName = "cmd.exe",
+			Arguments = $"/c \"py {PostProcessPyFile} \"{jsonPath}\"\"",
+			UseShellExecute = true,
+			CreateNoWindow = false,
+			WorkingDirectory = Application.dataPath
+		};
 
-		p.StartInfo.FileName = "py";
-		p.StartInfo.Arguments = $"\"{script}\" \"{jsonPath}\"";
-		p.StartInfo.UseShellExecute = false;
-		p.StartInfo.RedirectStandardOutput = true;
-		p.StartInfo.RedirectStandardError = true;
-		p.StartInfo.CreateNoWindow = true;
+		UnityEngine.Debug.Log($"calling {psi.FileName} {psi.Arguments}");
 
-		UnityEngine.Debug.Log($"calling py {p.StartInfo.Arguments}");
-
-		p.Start();
-
-		Task<string> stdoutTask = p.StandardOutput.ReadToEndAsync();
-		Task<string> stderrTask = p.StandardError.ReadToEndAsync();
-
-#if NET5_0_OR_GREATER
-    await p.WaitForExitAsync();
-#else
-		await Task.Run(() => p.WaitForExit());
-#endif
-
-		string stdout = await stdoutTask;
-		string stderr = await stderrTask;
-
-		if (!string.IsNullOrWhiteSpace(stdout))
-			UnityEngine.Debug.Log(stdout);
-
-		if (!string.IsNullOrWhiteSpace(stderr))
-			UnityEngine.Debug.LogError(stderr);
-
-		UnityEngine.Debug.Log($"done, exit code {p.ExitCode}");
+		Process.Start(psi);
 	}
 }

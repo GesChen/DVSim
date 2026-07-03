@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 public static class DVConfig {
-	public static uint Seed; // set by manager each run 
+	public static int Seed; // set by manager each run 
 
 	// --- Sensor Settings ---
 
@@ -20,17 +20,21 @@ public static class DVConfig {
 
 	public const int refractoryPeriod = 10000; // global timescale, this is ns
 
-	public const float tauOn = .005f;
+	// low pass filter settings 
+	public const float tauOn = .005f; // has to be in seconds 
 	public const float tauOff = .010f;
 
 	// v2e values
 	public const float threshSigma = .05f;
 	public const float idealPosThresh = .2f;
 	public const float idealNegThresh = .2f;
-	public const bool doLeaking = true;
 	public const float noiseRateCovDecades = .1f;
+	public const bool doLeaking = false;
 	public const float leakRateHz = .1f;
 	public const float leakJitterFraction = .1f;
+	public const bool doPhotoreceptorNoise = true; // includes shot noise 
+	public const float shotNoiseRateHz = 5f;
+	public const float photoNoiseCutoffHz = 300f; // for 1000fps, no longer v2e's
 
 	// --- Unity side config ---
 

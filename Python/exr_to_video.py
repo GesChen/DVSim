@@ -4,9 +4,9 @@ EDITOR_MODE = True
 
 INPUT_DIR = r"E:\DVSim\Assets\.Output\Permutations\0_0_0_0_0\Main Camera\frames"
 OUTPUT_DIR = r"E:\DVSim\Assets\.Output\Videos"
-OUTPUT_NAME = "video.mp4"
+OUTPUT_NAME = "highnoise.mp4"
 FPS = 60
-EXPOSURE = 1.0  # Larger = darker
+EXPOSURE = .5  # Larger = darker
 
 import os
 os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"
