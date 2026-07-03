@@ -1,14 +1,13 @@
 # exr_to_video.py
-# Configure here when running from VSCode/editor.
-EDITOR_MODE = True
 
 INPUT_DIR = r"E:\DVSim\Assets\.Output\Permutations\0_0_0_0_0\Main Camera\frames"
 OUTPUT_DIR = r"E:\DVSim\Assets\.Output\Videos"
 OUTPUT_NAME = "highnoise.mp4"
 FPS = 60
-EXPOSURE = .5  # Larger = darker
+EXPOSURE = 0.5  # Larger = darker
 
 import os
+import sys
 os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"
 
 from pathlib import Path
@@ -16,6 +15,7 @@ import argparse
 import cv2
 import numpy as np
 from tqdm import tqdm
+
 
 def render_exr_video(in_dir, out_dir, fps=30, exposure=10.0, name="out.mp4"):
     in_dir = Path(in_dir)
@@ -44,7 +44,6 @@ def render_exr_video(in_dir, out_dir, fps=30, exposure=10.0, name="out.mp4"):
         elif img.shape[2] == 4:
             img = img[:, :, :3]
 
-        # Simple exposure adjustment
         img = np.clip(img / exposure, 0.0, 1.0)
         img = (img * 255).astype(np.uint8)
 
@@ -54,7 +53,7 @@ def render_exr_video(in_dir, out_dir, fps=30, exposure=10.0, name="out.mp4"):
 
 
 if __name__ == "__main__":
-    if EDITOR_MODE:
+    if len(sys.argv) == 1:
         render_exr_video(
             INPUT_DIR,
             OUTPUT_DIR,

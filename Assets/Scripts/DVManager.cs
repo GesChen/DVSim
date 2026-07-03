@@ -24,7 +24,8 @@ public class DVManager : Singleton<DVManager> {
 		}
 
 		foreach (var sensor in Sensors) {
-			sensor.Tick();
+			if (sensor.gameObject.activeSelf)
+				sensor.Tick();
 		}
 
 		Frame++;
@@ -53,7 +54,8 @@ public class DVManager : Singleton<DVManager> {
 
 	void InitSensors() {
 		foreach (var sensor in Sensors) {
-			sensor.Init();
+			if (sensor.gameObject.activeSelf)
+				sensor.Init();
 		}
 	}
 
@@ -107,12 +109,14 @@ public class DVManager : Singleton<DVManager> {
 
 	void ClearAllSensorFrames() {
 		foreach (var sensor in Sensors) {
-			sensor.ClearFrameCaptures(CurrentPermutation);
+			if (sensor.gameObject.activeSelf)
+				sensor.ClearFrameCaptures(CurrentPermutation);
 		}
 	}
 
 	void CleanupCurrentScene() {
 		foreach (var sensor in Sensors)
-			sensor.Cleanup();
+			if (sensor.gameObject.activeSelf)
+				sensor.Cleanup();
 	}
 }

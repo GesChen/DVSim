@@ -3,6 +3,7 @@ using UnityEngine;
 public class DVO_PoseAnim : DVObject {
 	public string AnimObjAssetPath; // fbx
 	public float Scale;
+	public Vector3 Offset;
 
 	public Poses.PoseAnimation Animation { get; private set; }
 
@@ -22,5 +23,7 @@ public class DVO_PoseAnim : DVObject {
 		var pose = Animation.Sample(time);
 
 		Poses.CopyPose(pose, target);
+
+		target.position = Offset;
 	}
 }

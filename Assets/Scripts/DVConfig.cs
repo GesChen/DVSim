@@ -29,12 +29,12 @@ public static class DVConfig {
 	public const float idealPosThresh = .2f;
 	public const float idealNegThresh = .2f;
 	public const float noiseRateCovDecades = .1f;
-	public const bool doLeaking = false;
+	public const bool doLeaking = true;
 	public const float leakRateHz = .1f;
 	public const float leakJitterFraction = .1f;
 	public const bool doPhotoreceptorNoise = true; // includes shot noise 
 	public const float shotNoiseRateHz = 5f;
-	public const float photoNoiseCutoffHz = 300f; // for 1000fps, no longer v2e's
+	public const float photoNoiseCutoffHz = 200f; // for 1000fps 100-300, no longer v2e's
 
 	// --- Unity side config ---
 

@@ -58,7 +58,8 @@ public class DVSEventBuffer {
 
 				{ "projection", camera.orthographic ? "orthographic" : "perspective" },
 				{ "fov", camera.fieldOfView },
-			}}
+			}},
+			{ "absoluteassetpath", Application.dataPath }
 		};
 
 		outputMetadata["config"] = StaticClassToJObject(typeof(DVConfig));
@@ -72,6 +73,7 @@ public class DVSEventBuffer {
 
 		static object ProcessUnserializables(object obj) {
 			if (obj is Vector3Int v3i) return (S_Vector3)(Vector3)v3i;
+			if (obj is Vector2Int v2i) return (S_Vector2)(Vector2)v2i;
 			return obj;
 		}
 

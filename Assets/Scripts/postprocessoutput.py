@@ -91,6 +91,9 @@ def processbin(jsonpath):
 
     outfile = path / "events.npz"
     np.savez_compressed(outfile, data)
+    
+    # TODO: frame rescaling based on a value from config json
+    # dont need yet     
 
     print("done")
 

@@ -8,47 +8,60 @@ import numpy as np
 import get_data
 
 
+COLOR_MODE = "col"  # "col" or "bw"
+
 FPS = 60
-DATASET_PATH = r"E:\DVSim\Assets\.Output\Permutations\0_0_0_0_0\Main Camera\events.npz"
+DATASET_PATH = r"E:\DVSim\Assets\.Output\Permutations\0_0_0_0_0\camera 2\events.npz"
 RES = (1280, 720)
-OUTNAME = "toonoisyhuman"
+OUTNAME = "eventvideo"
 
 OUTPUT_DIR = Path(r"E:\DVSim\Assets\.Output\Videos")
 
-# Manual override here. Must return: x, y, t, p
 LOAD_FUNC = get_data.load_unity_dataset
 
 
+if COLOR_MODE not in ("col", "bw"):
+    raise ValueError('COLOR_MODE must be "col" or "bw"')
+
 def apply_cli_args():
-    global FPS, DATASET_PATH, RES
+    global COLOR_MODE, FPS, DATASET_PATH, RES
 
     args = sys.argv[1:]
 
     if len(args) >= 1:
-        FPS = int(args[0])
+        COLOR_MODE = args[0]
 
     if len(args) >= 2:
-        DATASET_PATH = args[1]
+        FPS = int(args[1])
 
-    if len(args) >= 4:
-        RES = (int(args[2]), int(args[3]))
+    if len(args) >= 3:
+        DATASET_PATH = args[2]
+
+    if len(args) >= 5:
+        RES = (int(args[3]), int(args[4]))
+
+    if COLOR_MODE not in ("col", "bw"):
+        raise ValueError('COLOR_MODE must be "col" or "bw"')
 
 
 def infer_time_scale(t):
     duration = float(t.max() - t.min())
 
     if duration > 1e9:
-        return 1e9      # ns
+        return 1e9
     if duration > 1e6:
-        return 1e6      # us
+        return 1e6
     if duration > 1e3:
-        return 1e3      # ms
+        return 1e3
 
-    return 1.0          # seconds
+    return 1.0
 
 
 def make_frame(x, y, p, lo, hi, res):
-    img = np.zeros((res[1], res[0], 3), dtype=np.uint8)
+    if COLOR_MODE == "col":
+        img = np.zeros((res[1], res[0], 3), dtype=np.uint8)
+    else:
+        img = np.full((res[1], res[0], 3), 127, dtype=np.uint8)
 
     xs = x[lo:hi]
     ys = y[lo:hi]
@@ -67,8 +80,12 @@ def make_frame(x, y, p, lo, hi, res):
     neg = ~pos
 
     # OpenCV BGR
-    img[ys[pos], xs[pos]] = (0, 0, 255)
-    img[ys[neg], xs[neg]] = (255, 0, 0)
+    if COLOR_MODE == "col":
+        img[ys[pos], xs[pos]] = (0, 0, 255)
+        img[ys[neg], xs[neg]] = (255, 0, 0)
+    else:
+        img[ys[pos], xs[pos]] = (255, 255, 255)
+        img[ys[neg], xs[neg]] = (0, 0, 0)
 
     return cv2.flip(img, 0)
 
@@ -79,7 +96,17 @@ def write_video():
     dataset_path = Path(DATASET_PATH)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    out_path = OUTPUT_DIR / f"{OUTNAME}.avi"
+    base_name = f"{OUTNAME}_{COLOR_MODE}"
+    out_path = OUTPUT_DIR / f"{base_name}.avi"
+
+    if out_path.exists():
+        i = 1
+        while True:
+            candidate = OUTPUT_DIR / f"{base_name}_{i}.avi"
+            if not candidate.exists():
+                out_path = candidate
+                break
+            i += 1
 
     x, y, t, p = LOAD_FUNC(str(dataset_path))
     x, y, t, p = get_data.sortdata(x, y, t, p)
@@ -119,6 +146,7 @@ def write_video():
     writer.release()
 
     print(f"Wrote video: {out_path}")
+    print(f"color_mode={COLOR_MODE}")
     print(f"fps={FPS}")
     print(f"res={RES}")
     print(f"frames={frame_count}")

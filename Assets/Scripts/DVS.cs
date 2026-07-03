@@ -55,6 +55,9 @@ public class DVS : MonoBehaviour {
 
 	System.Random rng;
 
+	public Action OnInit;
+	public Action<double> OnTick;
+
 	public void Init() {
 		cameraTarget = GenerateCameraRenTex(DVConfig.resolution);
 
@@ -90,6 +93,8 @@ public class DVS : MonoBehaviour {
 		rng = new(DVConfig.Seed);
 
 		SetupEventShader();
+
+		OnInit?.Invoke();
 	}
 
 	RenderTexture GenerateCameraRenTex(Vector2Int res) {
@@ -305,6 +310,8 @@ public class DVS : MonoBehaviour {
 	}
 
 	public void Tick() {
+		OnTick?.Invoke(DVManager.Time / (double)DVConfig.timeScale);
+
 		//Debug.Log("tick");
 		camera.Render();
 
