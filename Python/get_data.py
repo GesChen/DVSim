@@ -113,7 +113,7 @@ def load_unity_dataset(path):
 def load_v2e_dataset(path):
     print('loading dataset...')
     
-    data = np.load(path)['arr_0']
+    data = np.load(path)['events']
 
     t = data[:, 0].astype(np.float64)
     x = data[:, 1].astype(np.int32)

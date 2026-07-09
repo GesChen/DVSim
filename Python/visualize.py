@@ -2,75 +2,102 @@ import get_data
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button
-import time
+import cv2
 
 COLOR_MODE = "col"  # "col" or "bw"
 
-res = (1280, 720)
+USE_VIDEO_BACKGROUND = False
+SOURCE_VIDEO_PATH = r"D:\Downloads\ytdlp\output.mp4"
 
-(x, y, t, p) = get_data.load_umd_dataset(r'E:\DVSim\Python\data\from umd\events\sequence_haowen1_SIDE_DYNAMIC_DARK_bottle\proc\events')
-# (x, y, t, p) = get_data.load_unity_dataset(r'E:\DVSim\Assets\.Output\Permutations\0_0_0_0_0\camera 2\events.npz')
-# (x, y, t, p) = get_data.load_v2e_dataset(r'E:\DVSim\Python\v2e-master\v2ecore\output\testout.npz')
+# EVENT_RES = (1920, 1080)  # input event coordinate scale
+EVENT_RES = (1280, 720)  # input event coordinate scale
+
+# (x, y, t, p) = get_data.load_v2e_dataset(r"E:\DVSim\Python\v2e-master\v2ecore\output\output.npz")
+(x, y, t, p) = get_data.load_unity_dataset(r"E:\DVSim\Assets\.Output\Permutations\0_0_0_0_0\Main Camera\events.npz")
 
 (x, y, t, p) = get_data.sortdata(x, y, t, p)
 
 if COLOR_MODE not in ("col", "bw"):
     raise ValueError('COLOR_MODE must be "col" or "bw"')
 
-def event_colors():
-    if COLOR_MODE == "col":
-        return np.where(p == 1, "red", "blue")
-    else:
-        return np.where(p == 1, "white", "black")
-
-def visualize_3d():
-    print("loading 3d graph...")
-    fig = plt.figure()
-    ax = fig.add_subplot(projection="3d")
-
-    ax.scatter(x, t, y, marker=".", c=event_colors(), s=1)
-    ax.set_xlabel("x")
-    ax.set_ylabel("t")
-    ax.set_zlabel("y")
-
-    plt.show()
 
 playing = False
 
+
 def visualize_slice():
+    global playing
+
+    cap = None
+    video_fps = 30.0
+    video_frame_count = 0
+    out_res = EVENT_RES
+
+    if USE_VIDEO_BACKGROUND:
+        cap = cv2.VideoCapture(SOURCE_VIDEO_PATH)
+        if not cap.isOpened():
+            raise RuntimeError(f"Could not open video: {SOURCE_VIDEO_PATH}")
+
+        video_fps = cap.get(cv2.CAP_PROP_FPS)
+        video_frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+        vid_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        vid_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        out_res = (vid_w, vid_h)
+
+        if video_fps <= 0:
+            raise RuntimeError("Invalid video FPS.")
+
+    sx = out_res[0] / EVENT_RES[0]
+    sy = out_res[1] / EVENT_RES[1]
+
+    def get_video_frame(center_t):
+        frame_idx = int(round(center_t * video_fps))
+
+        if video_frame_count > 0:
+            frame_idx = np.clip(frame_idx, 0, video_frame_count - 1)
+
+        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
+
+        ok, frame = cap.read()
+        if not ok:
+            return np.zeros((out_res[1], out_res[0], 3), dtype=np.uint8)
+
+        return cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
     fig, ax = plt.subplots()
     plt.subplots_adjust(bottom=0.42)
 
-    ax.set_xlim(0, res[0])
-    ax.set_ylim(0, res[1])
+    ax.set_xlim(0, out_res[0])
+    ax.set_ylim(out_res[1], 0)
 
-    timeslice = t[0]
+    timeslice = float(t[0])
     tslicewidth = 0.01
 
     ax_time = plt.axes([0.25, 0.25, 0.65, 0.03])
     slider_slice = Slider(ax_time, "Time Slice", t.min(), t.max(), valinit=timeslice)
 
     ax_fine = plt.axes([0.25, 0.20, 0.65, 0.03])
-    slider_fine = Slider(
-        ax_fine,
-        "Fine Offset",
-        -tslicewidth / 2,
-        tslicewidth / 2,
-        valinit=0.0
-    )
+    slider_fine = Slider(ax_fine, "Fine Offset", -tslicewidth / 2, tslicewidth / 2, valinit=0.0)
 
     ax_width = plt.axes([0.25, 0.15, 0.65, 0.03])
-    slider_width = Slider(ax_width, "Slice Width", 0.0, .10, valinit=tslicewidth)
+    slider_width = Slider(ax_width, "Slice Width", 0.0, 0.10, valinit=tslicewidth)
 
     ax_button = plt.axes([0.45, 0.05, 0.15, 0.06])
     button_play = Button(ax_button, "Play")
 
-    img = np.zeros((res[1], res[0], 3), dtype=np.uint8)
+    count_text = fig.text(
+        0.5,
+        0.34,
+        "",
+        ha="center",
+        va="center"
+    )
 
-    im = ax.imshow(img, origin="lower", interpolation="nearest")
+    img = np.zeros((out_res[1], out_res[0], 3), dtype=np.uint8)
+    im = ax.imshow(img, interpolation="nearest")
     ax.set_axis_off()
 
-    dt = 0.038
+    dt = 1.0 / video_fps
 
     def redraw(_=None):
         center_t = slider_slice.val + slider_fine.val
@@ -79,19 +106,32 @@ def visualize_slice():
         lo = np.searchsorted(t, center_t - width / 2)
         hi = np.searchsorted(t, center_t + width / 2)
 
-        xs = x[lo:hi]
-        ys = y[lo:hi]
+        event_count = hi - lo
+        count_text.set_text(f"Events in slice: {event_count:,}")
+
+        xs = (x[lo:hi] * sx).astype(np.int64)
+        ys = (y[lo:hi] * sy).astype(np.int64)
         ps = p[lo:hi]
+
+        valid = (xs >= 0) & (xs < out_res[0]) & (ys >= 0) & (ys < out_res[1])
+        xs = xs[valid]
+        ys = ys[valid]
+        ps = ps[valid]
+
+        if USE_VIDEO_BACKGROUND:
+            img = get_video_frame(center_t)
+        else:
+            img = np.zeros((out_res[1], out_res[0], 3), dtype=np.uint8)
+            if COLOR_MODE != "col":
+                img.fill(127)
 
         pos = ps == 1
         neg = ~pos
 
         if COLOR_MODE == "col":
-            img.fill(0)
             img[ys[pos], xs[pos]] = [255, 0, 0]
             img[ys[neg], xs[neg]] = [0, 0, 255]
         else:
-            img.fill(127)
             img[ys[pos], xs[pos]] = [255, 255, 255]
             img[ys[neg], xs[neg]] = [0, 0, 0]
 
@@ -119,23 +159,33 @@ def visualize_slice():
 
         new_t = slider_slice.val + dt
 
-        if new_t > t.max():
-            new_t = t.min()
+        if USE_VIDEO_BACKGROUND:
+            max_video_t = (video_frame_count - 1) / video_fps
+            max_t = min(float(t.max()), max_video_t)
+        else:
+            max_t = float(t.max())
+
+        if new_t > max_t:
+            new_t = float(t.min())
 
         slider_slice.set_val(new_t)
 
-    timer = fig.canvas.new_timer(interval=30)
+    timer = fig.canvas.new_timer(interval=int(1000 / video_fps))
     timer.add_callback(timer_step)
     timer.start()
 
     def toggle_play(event):
         global playing
-
         playing = not playing
         button_play.label.set_text("Pause" if playing else "Play")
 
-    button_play.on_clicked(toggle_play)
+    def on_close(_):
+        if cap is not None:
+            cap.release()
 
+    fig.canvas.mpl_connect("close_event", on_close)
+
+    button_play.on_clicked(toggle_play)
     slider_slice.on_changed(redraw)
     slider_fine.on_changed(redraw)
     slider_width.on_changed(update_fine_range)
@@ -143,5 +193,5 @@ def visualize_slice():
     redraw()
     plt.show()
 
+
 visualize_slice()
-# visualize_3d()

@@ -1,10 +1,10 @@
 # exr_to_video.py
 
-INPUT_DIR = r"E:\DVSim\Assets\.Output\Permutations\0_0_0_0_0\Main Camera\frames"
+INPUT_DIR = r"E:\DVSim\Assets\.Output\Permutations\0_0_0_0_0\camera 2\frames"
 OUTPUT_DIR = r"E:\DVSim\Assets\.Output\Videos"
-OUTPUT_NAME = "highnoise.mp4"
+OUTPUT_NAME = "blank.mp4"
 FPS = 60
-EXPOSURE = 0.5  # Larger = darker
+EXPOSURE = .3  # Larger = darker
 
 import os
 import sys
