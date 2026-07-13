@@ -127,3 +127,5 @@ InitTestScene*.unity*
 /Python/room generation/ReplicaCAD_dataset
 *.fbx.meta
 /Python/room generation/Replica-Dataset
+/Python/room generation/habitat-sim-master
+/Python/room generation/ptexutils
