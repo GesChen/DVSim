@@ -125,7 +125,7 @@ InitTestScene*.unity*
 *.fbx
 /Python/room generation/ReplicaCAD_baked_lighting
 /Python/room generation/ReplicaCAD_dataset
-*.fbx.meta
 /Python/room generation/Replica-Dataset
 /Python/room generation/habitat-sim-master
 /Python/room generation/ptexutils
+*.blend
