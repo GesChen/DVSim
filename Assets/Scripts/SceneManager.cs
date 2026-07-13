@@ -4,11 +4,15 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class SceneManager : Singleton<SceneManager> {
-	public Transform Armature;
+	public Transform ArmatureGroup;
+	public DVO_Armature[] Armatures;
+	public DVO_Armature ArmatureInUse;
 
 	public double CurrentSceneLengthSeconds;
 
 	public List<DVObject> SetSceneFromPermutation(int[] permutation, List<DVPermutationGroup> groups) {
+		Armatures = ArmatureGroup.GetComponentsInChildren<DVO_Armature>();
+
 		List<DVObject> newObjs = new();
 
 		for (int i = 0; i < permutation.Length; i++) {
@@ -19,10 +23,25 @@ public class SceneManager : Singleton<SceneManager> {
 				obj.gameObject.SetActive(false);
 			}
 
-			g.Objects[permutation[i]].gameObject.SetActive(true);
+			var desired = g.Objects[permutation[i]].gameObject;
+			desired.SetActive(true);
 			newObjs.Add(g.Objects[permutation[i]]);
+
+			if (desired.TryGetComponent(out DVO_PoseAnim anim)) {
+				// find armature type from the animation
+				string tatype = anim.TargetArmatureType;
+				ArmatureInUse = Armatures.First(a => a.Type == tatype);
+			}
 		}
 
 		return newObjs;
+	}
+
+	public void InitializeHumanModel(List<DVObject> objs) {
+		foreach (var obj in objs) {
+			if (obj.TryGetComponent<DVO_HumanModel>(out DVO_HumanModel model)) {
+				model.SetToCurArmature();
+			}
+		}
 	}
 }

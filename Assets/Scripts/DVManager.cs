@@ -74,6 +74,8 @@ public class DVManager : Singleton<DVManager> {
 			obj.Init();
 		}
 
+		SceneManager.Instance.InitializeHumanModel(Objects);
+
 		// bad code but oh well
 		DVO_PoseAnim anim = null;
 		foreach (var obj in Objects) {

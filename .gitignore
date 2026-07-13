@@ -120,3 +120,10 @@ InitTestScene*.unity*
 /Python/MotionBERT
 /Python/V2CE-Toolbox-master
 /Python/video to fbx/input
+/Python/room generation/replica
+/Python/room generation/habitat_sim
+*.fbx
+/Python/room generation/ReplicaCAD_baked_lighting
+/Python/room generation/ReplicaCAD_dataset
+*.fbx.meta
+/Python/room generation/Replica-Dataset

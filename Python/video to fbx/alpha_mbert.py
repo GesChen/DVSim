@@ -46,6 +46,7 @@ ap_out = ap_wd / "output" / "alphapose-results.json"
 # 1. AlphaPose inference
 if not args.skip_alphapose:
 	cprint("1. alphapose")
+	print(f'running in {ap_wd}')
 
 	subprocess.run(
 		[
@@ -60,10 +61,12 @@ if not args.skip_alphapose:
 			str(input_path),
 			"--outdir",
 			"output",
+			# '--save_video'
 		],
 		cwd=str(ap_wd),
 		check=True,
 	)
+
 
 
 # 2. MotionBERT

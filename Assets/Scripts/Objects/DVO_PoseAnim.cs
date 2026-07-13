@@ -4,13 +4,14 @@ public class DVO_PoseAnim : DVObject {
 	public string AnimObjAssetPath; // fbx
 	public float Scale;
 	public Vector3 Offset;
+	public string TargetArmatureType;
 
 	public Poses.PoseAnimation Animation { get; private set; }
 
 	Transform target;
 
 	public override void Init() {
-		target = SceneManager.Instance.Armature;
+		target = SceneManager.Instance.ArmatureInUse.transform;
 
 		Poses.LoadFBX(AnimObjAssetPath, out var model, out var clip);
 

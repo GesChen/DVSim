@@ -124,9 +124,21 @@ def append_armature(blend_path, object_name, collection):
     collection.objects.link(armature)
     return armature
 
-
-def pose_bone_to_target(pb, target_tail):
+def pose_bone_to_target(pb, target_tail, is_root):
     force_update()
+
+    if is_root:
+        # pb.head / pb.tail are in armature/object pose space.
+        # Move the root pose matrix so its evaluated head lands on target_head.
+        head = pb.head.copy()
+        delta = target_tail - head
+
+        m = pb.matrix.copy()
+        m.translation += delta
+        pb.matrix = m
+        # pb.scale = (0.0, 0.0, 0.0)
+        force_update()
+        return
 
     head = pb.head.copy()
     tail = pb.tail.copy()
@@ -156,8 +168,7 @@ def pose_bone_to_target(pb, target_tail):
 
     pb.matrix = scale_about_head @ rot_about_head @ m
     force_update()
-
-
+    
 def load_mapping(path):
     if path is None:
         return DEFAULT_BONE_TARGETS
@@ -278,7 +289,7 @@ def main():
             target_tail_world = Vector(frame_positions[tail_i])
             target_tail_local = arm_inv @ target_tail_world
 
-            pose_bone_to_target(pb, target_tail_local)
+            pose_bone_to_target(pb, target_tail_local, 'root' in pb.name.lower())
 
             pb.keyframe_insert(data_path="location", frame=frame)
             pb.keyframe_insert(data_path="rotation_quaternion", frame=frame)
