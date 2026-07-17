@@ -129,3 +129,26 @@ InitTestScene*.unity*
 /Python/room generation/habitat-sim-master
 /Python/room generation/ptexutils
 *.blend
+/Python/events/data/from umd
+/Python/events/data/IROS_Dataset-2018-independent-motion
+/Python/events/V2CE-Toolbox-master
+/Python/events/v2e-master
+/Python/exterior/AdditionalMaps_0.9.15
+/Python/exterior/CARLA_0.9.15
+/Python/interior/ig_dataset
+/Python/motion/AlphaPose-master
+/Python/motion/freemocap_test_data_processed_with_v1.8.0
+/Python/motion/mmpose-dev-1.x
+/Python/motion/video to fbx/input
+/Python/motion/VideoPose3D-main
+/Python/events/data
+/Python/interior/3D-Front
+/Python/motion/MotionBERT
+/Python/exterior/urbanscene3d/ArtSci_fine
+/Python/exterior/urbanscene3d/PolyTech_fine
+*.zip
+/Python/exterior/urbanscene3d/Simulator
+/Python/exterior/custom blender
+/Python/exterior/infinigen
+/Python/exterior/infinigen source
+/Python/motion/captury/input
