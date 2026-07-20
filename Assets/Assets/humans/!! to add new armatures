@@ -1,0 +1,8 @@
+1. import the rigged mesh + armature into unity (copy the file, named accordingly, into this folder (the humans folder))
+2. drag the the object into the scene
+3. unpack the prefab
+4. drag the skeleton gameobject into the Armatures group
+5. delete the original gameobject + mesh objects that you just dragged in
+6. add a DVO_Armature component to the new skeleton gameobject
+7. set fields accordingly
+8. update human models with the new armature type (gameobjects in the Human Model group)

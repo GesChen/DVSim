@@ -1,0 +1,4 @@
+all armatures must have ONLY ONE bone at the root of the armature structure,
+at the very root, all bones must be connected to a singular pelvis bone. 
+
+this may imply having to modify input files if they dont come exported with correct armatures.

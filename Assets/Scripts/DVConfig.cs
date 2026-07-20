@@ -9,6 +9,8 @@ public static class DVConfig {
 	// global resolution for sim
 	public static readonly Vector2Int resolution = new(1280, 720);
 
+	public const float DefaultStereoSpacing = .065f; // 65 mm, typical spacing
+
 	// simulated fps 10k-100k realistic.
 	// make it 1m if you have all the time in the world i guess.
 	// higher = better temporal precision, more realistic

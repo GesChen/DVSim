@@ -28,6 +28,11 @@ public class DVS : MonoBehaviour {
 	public Camera camera;
 	public DVSEventBuffer events;
 
+	public bool Stereo;
+	public float StereoSpacing = DVConfig.DefaultStereoSpacing;
+	private DVS StereoLeft;
+	private DVS StereoRight;
+
 	RenderTexture cameraTarget;
 	RenderTexture sensorState;
 	RenderTexture outputMap;
@@ -59,6 +64,11 @@ public class DVS : MonoBehaviour {
 	public Action<double> OnTick;
 
 	public void Init() {
+		if (Stereo) {
+			InitStereo();
+			return;
+		}
+
 		cameraTarget = GenerateCameraRenTex(DVConfig.resolution);
 
 		camera = GetComponent<Camera>();
@@ -95,6 +105,29 @@ public class DVS : MonoBehaviour {
 		SetupEventShader();
 
 		OnInit?.Invoke();
+	}
+
+	void InitStereo() {
+		// disable this camera first in case it does any background processing
+		camera.enabled = false;
+		
+		// generate stereo cameras in entirety
+		StereoLeft
+
+		// copy init to them
+
+		// invoke init
+	}
+
+	DVS GenerateStereoSide(bool left) {
+		GameObject obj = new(camera.name + (left ? "_left" : "_right"));
+		Transform objt = obj.transform;
+		objt.SetParent(transform);
+
+		objt.SetLocalPositionAndRotation(Vector3.right * (left ? -1 : 1) * StereoSpacing, Quaternion.identity);
+
+		DVS dvs = obj.AddComponent<DVS>();
+
 	}
 
 	RenderTexture GenerateCameraRenTex(Vector2Int res) {
