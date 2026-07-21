@@ -12,42 +12,58 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 
-public class DVSEventBuffer {
-	public readonly ConcurrentQueue<Event> queue = new();
+public class DVSMemory {
+	// -- EVENTS --
+	public readonly ConcurrentQueue<Event> eventQueue = new();
 
-	string outFilePath;
+	string eOutFilePath;
 
 	bool fileAvailable = true;
 	bool isOpen;
 
-	FileStream stream;
-	BinaryWriter writer;
+	FileStream eStream;
+	BinaryWriter eWriter;
 	CancellationTokenSource flushCts;
 	Task flushTask;
 
+	// -- SCENE DATA --
 	Camera camera;
+	string name;
 
+	List<(ulong t, Vector3 pos, Quaternion rot)> cameraRoute = new();
 	Dictionary<string, object> outputMetadata;
 
 	static readonly string PostProcessPyFile = "Scripts\\postprocessoutput.py";
 
+	void Log(object content) {
+		UnityEngine.Debug.Log($"[{name}] {content}");
+	}
+	void LogError(object content) {
+		UnityEngine.Debug.LogError($"[{name}] {content}");
+	}
+
 	public void Setup(Camera sourceCam) {
 		camera = sourceCam;
+		name = camera.name;
 
-		outFilePath = Path.Combine(
+		eOutFilePath = Path.Combine(
 			Application.dataPath,
 			DVConfig.outputFolder,
 			camera.name + ".bin");
 
-		Directory.CreateDirectory(Path.GetDirectoryName(outFilePath));
+		Directory.CreateDirectory(Path.GetDirectoryName(eOutFilePath));
 
 		isOpen = false;
-
 	}
 
-	void GenerateMeta() {
+	public void Clear() {
+		eventQueue.Clear();
+		cameraRoute.Clear();
+	}
+
+	public void GenerateMeta() {
 		outputMetadata = new() {
-			{ "outfilepath", outFilePath },
+			{ "outfilepath", eOutFilePath },
 			{ "permutation", DVManager.CurrentPermutation },
 
 			{ "config", null},
@@ -98,22 +114,24 @@ public class DVSEventBuffer {
 			return;
 
 		try {
-			stream = new FileStream(
-				outFilePath,
+			eStream = new FileStream(
+				eOutFilePath,
 				FileMode.Create,
 				FileAccess.Write,
 				FileShare.Read,
 				bufferSize: 1024 * 1024);
 
-			writer = new BinaryWriter(stream);
+			eWriter = new BinaryWriter(eStream);
 
 			flushCts = new CancellationTokenSource();
 			flushTask = ConstantFlushLoop(flushCts.Token);
 
 			isOpen = true;
 			fileAvailable = true;
+
+			Log($"Successfully opened {eOutFilePath}");
 		} catch {
-			UnityEngine.Debug.LogError($"Error opening {outFilePath}. File output will be disabled.");
+			LogError($"Error opening {eOutFilePath}. File output will be disabled.");
 			fileAvailable = false;
 			isOpen = false;
 		}
@@ -125,42 +143,49 @@ public class DVSEventBuffer {
 
 		var permAtClose = DVManager.CurrentPermutation.ToArray();
 
-		UnityEngine.Debug.Log("Closing eventbuffer, awaiting flushtask");
+		Log("Closing eventbuffer, awaiting flushtask");
+		await CloseEventBuffer();
 
+		try {
+			Log("Saving camera route");
+			if (DVConfig.recordCameraRoute)
+				SaveCameraRoute(permAtClose);
+
+			Log("Post processing");
+			TriggerPythonPostProcess(permAtClose);
+		} catch (Exception e) {
+			LogError(e);
+		}
+	}
+
+	private async Task CloseEventBuffer() {
 		flushCts.Cancel();
 
 		try {
 			await flushTask;
-		} catch (OperationCanceledException) {
+		} catch (OperationCanceledException) { // ignore the cancelled 
+		} catch (Exception e) { // alert of other error
+			LogError(e);
 		}
-
-		UnityEngine.Debug.Log("Final drain and flush");
+		Log("Final drain and flush");
 
 		await DrainOnce();
-		writer.Flush();
-		await stream.FlushAsync();
+		eWriter.Flush();
+		await eStream.FlushAsync();
 
-		writer.Dispose();
-		writer = null;
-		stream = null;
+		eWriter.Dispose();
+		eWriter = null;
+		eStream = null;
 
 		flushCts.Dispose();
 		flushCts = null;
 		flushTask = null;
 
 		isOpen = false;
-
-		UnityEngine.Debug.Log("Eventbuffer finished closing. Post processing");
-
-		try {
-			TriggerPythonPostProcessAsync(permAtClose);
-		} catch (Exception e) {
-			UnityEngine.Debug.LogError(e);
-		}
 	}
 
 	public void NewEvent(int x, int y, ulong time, bool polarity) {
-		queue.Enqueue(new Event {
+		eventQueue.Enqueue(new Event {
 			x = x,
 			y = y,
 			t = time,
@@ -169,32 +194,32 @@ public class DVSEventBuffer {
 	}
 
 	public async Task ForceFlush() {
-		if (!fileAvailable || writer == null)
+		if (!fileAvailable || eWriter == null)
 			return;
 
 		await DrainOnce();
-		writer.Flush();
+		eWriter.Flush();
 
-		if (stream != null)
-			await stream.FlushAsync();
+		if (eStream != null)
+			await eStream.FlushAsync();
 	}
 
 	private async Task ConstantFlushLoop(CancellationToken token) {
 		while (!token.IsCancellationRequested) {
 			await DrainOnce();
 
-			if (writer != null)
-				writer.Flush();
+			if (eWriter != null)
+				eWriter.Flush();
 
-			if (stream != null)
-				await stream.FlushAsync(token);
+			if (eStream != null)
+				await eStream.FlushAsync(token);
 
 			await Task.Delay(DVConfig.eventFlushIntervalMs, token);
 		}
 	}
 
 	private Task DrainOnce() {
-		if (!fileAvailable || writer == null)
+		if (!fileAvailable || eWriter == null)
 			return Task.CompletedTask;
 
 		return Task.Run(() => {
@@ -204,7 +229,7 @@ public class DVSEventBuffer {
 			long lastCount = 0;
 			long lastMs = 0;
 
-			while (queue.TryDequeue(out var e)) {
+			while (eventQueue.TryDequeue(out var e)) {
 				// Binary layout per event:
 				// int x      = 4 bytes
 				// int y      = 4 bytes
@@ -212,10 +237,10 @@ public class DVSEventBuffer {
 				// byte p     = 1 byte, 1 = ON, 0 = OFF
 				// total      = 17 bytes/event
 
-				writer.Write(e.x);
-				writer.Write(e.y);
-				writer.Write(e.t);
-				writer.Write((byte)(e.p ? 1 : 0));
+				eWriter.Write(e.x);
+				eWriter.Write(e.y);
+				eWriter.Write(e.t);
+				eWriter.Write((byte)(e.p ? 1 : 0));
 
 				count++;
 
@@ -224,7 +249,7 @@ public class DVSEventBuffer {
 					long delta = count - lastCount;
 					double rate = delta * 1000.0 / (ms - lastMs);
 
-					//UnityEngine.Debug.Log($"Event write rate: {rate:N0}/s | total: {count:N0}");
+					//Log($"Event write rate: {rate:N0}/s | total: {count:N0}");
 
 					lastCount = count;
 					lastMs = ms;
@@ -232,20 +257,18 @@ public class DVSEventBuffer {
 			}
 
 			double avgRate = count / Math.Max(sw.Elapsed.TotalSeconds, 1e-9);
-			//UnityEngine.Debug.Log($"Event write finished: {count:N0} events | avg: {avgRate:N0}/s");
+			//Log($"Event write finished: {count:N0} events | avg: {avgRate:N0}/s");
 		});
 	}
 
-	void TriggerPythonPostProcessAsync(int[] permutationAtClose) {
-		GenerateMeta();
-
+	void TriggerPythonPostProcess(int[] permutationAtClose) {
 		string jsonPath = Path.Combine(
 			Application.dataPath,
 			DVConfig.outputFolder,
 			DVConfig.permutationFolder,
 			string.Join('_', permutationAtClose),
-			camera.name,
-			"meta.json")
+			name,
+			DVConfig.metadataFileName)
 			.Replace('/', '\\');
 
 		string json = JsonConvert.SerializeObject(outputMetadata, Formatting.Indented);
@@ -260,8 +283,33 @@ public class DVSEventBuffer {
 			WorkingDirectory = Application.dataPath
 		};
 
-		UnityEngine.Debug.Log($"calling {psi.FileName} {psi.Arguments}");
+		Log($"calling {psi.FileName} {psi.Arguments}");
 
 		Process.Start(psi);
+	}
+
+	public void LogCameraRoute(ulong time) {
+		cameraRoute.Add((time, camera.transform.position, camera.transform.rotation));
+	}
+
+	void SaveCameraRoute(int[] permutationAtClose) {
+		string jsonPath = Path.Combine(
+			Application.dataPath,
+			DVConfig.outputFolder,
+			DVConfig.permutationFolder,
+			string.Join('_', permutationAtClose),
+			name,
+			DVConfig.camRouteFileName)
+			.Replace('/', '\\');
+
+		List<object>[] convertedRoute =
+			cameraRoute.Select(p => new List<object> {
+				p.t,
+				new float[] { p.pos.x, p.pos.y, p.pos.z },
+				new float[] { p.rot.x, p.rot.y, p.rot.z, p.rot.w, } }).ToArray();
+
+		string json = JsonConvert.SerializeObject(convertedRoute, Formatting.None);
+
+		File.WriteAllText(jsonPath, json);
 	}
 }

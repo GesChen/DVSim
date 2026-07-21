@@ -12,7 +12,7 @@ event_dtype = np.dtype([
     ("x", np.uint16),
     ("y", np.uint16),
     ("t", np.uint64),
-    ("p", np.bool),
+    ("p", bool),
 ], align=False)
 
 # kept for reference, not likely to be used again

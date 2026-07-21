@@ -92,7 +92,7 @@ public class DVManager : Singleton<DVManager> {
 
 	IEnumerator SimulateCurrentScene() {
 		Frame = 0;
-		ClearAllSensorFrames();
+		PrepareAllSensors();
 
 		Playing = true;
 		while (Time < SceneManager.Instance.CurrentSceneLengthSeconds * DVConfig.timeScale) {
@@ -106,19 +106,35 @@ public class DVManager : Singleton<DVManager> {
 		}
 		Playing = false;
 
-		CleanupCurrentScene();
+		CleanupSensors();
 	}
 
-	void ClearAllSensorFrames() {
+	private void OnDisable() {
+		CleanupSensors();
+	}
+
+	protected override void OnDestroy() {
+		CleanupSensors();
+
+		base.OnDestroy();
+	}
+
+	private void OnApplicationQuit() {
+		CleanupSensors();
+	}
+
+	void CleanupSensors() {
 		foreach (var sensor in Sensors) {
+			if (sensor == null) continue;
+
 			if (sensor.gameObject.activeSelf)
-				sensor.ClearFrameCaptures(CurrentPermutation);
+				sensor.Cleanup();
 		}
 	}
 
-	void CleanupCurrentScene() {
+	void PrepareAllSensors() {
 		foreach (var sensor in Sensors)
 			if (sensor.gameObject.activeSelf)
-				sensor.Cleanup();
+				sensor.Prepare(CurrentPermutation);
 	}
 }

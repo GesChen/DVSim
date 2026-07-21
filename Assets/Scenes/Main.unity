@@ -410,6 +410,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVS
   camera: {fileID: 0}
+  Stereo: 0
+  StereoSpacing: 0.065
 --- !u!1 &473641385
 GameObject:
   m_ObjectHideFlags: 0
@@ -891,6 +893,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVS
   camera: {fileID: 0}
+  Stereo: 0
+  StereoSpacing: 0.065
 --- !u!114 &1982064166
 MonoBehaviour:
   m_ObjectHideFlags: 0

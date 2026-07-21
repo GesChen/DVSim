@@ -26,7 +26,7 @@ public struct Event {
 [DisallowMultipleComponent]
 public class DVS : MonoBehaviour {
 	public Camera camera;
-	public DVSEventBuffer events;
+	public DVSMemory memory;
 
 	public bool Stereo;
 	public float StereoSpacing = DVConfig.DefaultStereoSpacing;
@@ -63,7 +63,11 @@ public class DVS : MonoBehaviour {
 	public Action OnInit;
 	public Action<double> OnTick;
 
+	bool hot;
+
 	public void Init() {
+		camera = GetComponent<Camera>();
+
 		if (Stereo) {
 			InitStereo();
 			return;
@@ -71,7 +75,6 @@ public class DVS : MonoBehaviour {
 
 		cameraTarget = GenerateCameraRenTex(DVConfig.resolution);
 
-		camera = GetComponent<Camera>();
 		camera.allowHDR = true;
 		camera.targetTexture = cameraTarget;
 		camera.depthTextureMode |= DepthTextureMode.Depth;
@@ -96,27 +99,31 @@ public class DVS : MonoBehaviour {
 		// wont change so you can precompute this
 		globalShaderGroups = Vector2Int.CeilToInt((Vector2)DVConfig.resolution / 8f);
 
-		events = new();
-		events.Setup(camera);
-		events.Open();
+		memory = new();
+		memory.Setup(camera);
+		memory.Open();
 
 		rng = new(DVConfig.Seed);
 
 		SetupEventShader();
 
 		OnInit?.Invoke();
+
+		hot = true;
+		Debug.Log($"DVS \"{camera.name}\" ready");
 	}
 
 	void InitStereo() {
 		// disable this camera first in case it does any background processing
 		camera.enabled = false;
-		
-		// generate stereo cameras in entirety
-		StereoLeft
 
-		// copy init to them
+		// generate stereo cameras in entirety
+		StereoLeft = GenerateStereoSide(true);
+		StereoRight = GenerateStereoSide(false);
 
 		// invoke init
+		StereoLeft.Init();
+		StereoRight.Init();
 	}
 
 	DVS GenerateStereoSide(bool left) {
@@ -124,10 +131,17 @@ public class DVS : MonoBehaviour {
 		Transform objt = obj.transform;
 		objt.SetParent(transform);
 
-		objt.SetLocalPositionAndRotation(Vector3.right * (left ? -1 : 1) * StereoSpacing, Quaternion.identity);
+		var cam = obj.AddComponent<Camera>();
+		cam.CopyFrom(camera);
+
+		objt.SetLocalPositionAndRotation((left ? -1 : 1) * StereoSpacing * Vector3.right, Quaternion.identity);
 
 		DVS dvs = obj.AddComponent<DVS>();
+		dvs.OnInit = OnInit;
+		dvs.OnTick = OnTick;
+		dvs.Stereo = false;
 
+		return dvs;
 	}
 
 	RenderTexture GenerateCameraRenTex(Vector2Int res) {
@@ -256,6 +270,8 @@ public class DVS : MonoBehaviour {
 			Debug.LogWarning(
 				$"eps={eps:F3} for IIR lowpass is > 0.1. " +
 				$"Increase sample rate or decrease cutoff_hz. dt={dt:F6}s, cutoff={f3db:F3}Hz");
+			Debug.LogWarning(
+				"THIS MAY CAUSE NO OUTPUT!!! >10 does not!!!");
 		}
 
 		int len = Mathf.Max(2, Mathf.CeilToInt((1000f * tau) / dt));
@@ -318,7 +334,29 @@ public class DVS : MonoBehaviour {
 		return Mathf.Sqrt(var / values.Length);
 	}
 
+	// occurs after init, prepare for a new permutation
+	public void Prepare(int[] perm) {
+		if (Stereo) {
+			StereoLeft.Prepare(perm);
+			StereoRight.Prepare(perm);
+			return;
+		}
+
+		ClearFrameCaptures(perm);
+		memory.Clear();
+		memory.GenerateMeta();
+	}
+
 	public void Cleanup() {
+		if (Stereo) {
+			StereoLeft.Cleanup();
+			StereoRight.Cleanup();
+			return;
+		}
+
+		if (!hot) return;
+		hot = false;
+
 		if (camera != null)
 			camera.targetTexture = null;
 
@@ -331,7 +369,7 @@ public class DVS : MonoBehaviour {
 		Release(ThreshNoiseRateRT);
 		ThreshNRData.Dispose();
 
-		_ = events.Close();
+		_ = memory.Close();
 	}
 
 	private void Release(RenderTexture rt) {
@@ -343,6 +381,12 @@ public class DVS : MonoBehaviour {
 	}
 
 	public void Tick() {
+		if (Stereo) {
+			StereoLeft.Tick();
+			StereoRight.Tick();
+			return;
+		}
+
 		OnTick?.Invoke(DVManager.Time / (double)DVConfig.timeScale);
 
 		//Debug.Log("tick");
@@ -375,8 +419,11 @@ public class DVS : MonoBehaviour {
 			req => Readback(req, timeAtReq, frameAtReq)
 		);
 
-		if (DVConfig.doFrameCaptures && (DVManager.Frame % (DVConfig.simFPS / DVConfig.frameCapFPS)) < 1f)
+		if (DVConfig.doFrameCaptures && (frameAtReq % (DVConfig.simFPS / DVConfig.frameCapFPS)) < 1f)
 			TakeFrameCapture();
+
+		if (DVConfig.recordCameraRoute && (frameAtReq % (DVConfig.simFPS / DVConfig.camRouteSampleRate)) < 1f)
+			memory.LogCameraRoute(timeAtReq);
 	}
 
 	void Readback(AsyncGPUReadbackRequest request, ulong time, ulong frame) {
@@ -408,8 +455,10 @@ public class DVS : MonoBehaviour {
 		JobHandle handle = job.Schedule(outputData.Length, 128);
 		handle.Complete();
 
+		//Debug.Log($"generated {eventQueue.Count} event");
+
 		while (eventQueue.TryDequeue(out Event e)) {
-			events.NewEvent(e.x, e.y, e.t, e.p);
+			memory.NewEvent(e.x, e.y, e.t, e.p);
 		}
 
 		eventQueue.Dispose();
@@ -461,10 +510,15 @@ public class DVS : MonoBehaviour {
 		string fullPath = Path.Combine(location, $"{frame.ToString("D" + DVConfig.frameNumPadDigits)}.exr");
 
 		File.WriteAllBytes(fullPath, bytes);
-
 	}
 
 	public void ClearFrameCaptures(int[] permutation) {
+		if (Stereo) {
+			StereoLeft.ClearFrameCaptures(permutation);
+			StereoRight.ClearFrameCaptures(permutation);
+			return;
+		}
+
 		string permStr = string.Join('_', permutation);
 
 		string location = Path.Combine(

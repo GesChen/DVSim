@@ -14,7 +14,7 @@ public static class DVConfig {
 	// simulated fps 10k-100k realistic.
 	// make it 1m if you have all the time in the world i guess.
 	// higher = better temporal precision, more realistic
-	public const float simFPS = 100;
+	public const float simFPS = 1000;
 
 	public const int timeScale = 1_000_000_000;
 
@@ -55,6 +55,12 @@ public static class DVConfig {
 	// event output folder
 	public const string outputFolder = ".Output";
 	public const string permutationFolder = "Permutations";
+
+	public const string metadataFileName = "meta.json";
+
+	public const bool recordCameraRoute = true;
+	public const int camRouteSampleRate = 100;
+	public const string camRouteFileName = "cameraroute.json";
 
 	// ------- frame captures ------
 	public const bool doFrameCaptures = true;
