@@ -11,9 +11,7 @@ using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
-using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
-using UnityEditorInternal;
 
 public struct Event {
 	public int x;
@@ -38,11 +36,11 @@ public class DVS : MonoBehaviour {
 	RenderTexture outputMap;
 	RenderTexture debugOutput;
 
-	private const string EventShaderAssetPath = "Assets/Scripts/DVCalc.compute";
+	private const string EventShaderAssetPath = "Assets/Scripts/Shaders/DVCalc.compute";
 	ComputeShader EventShader;
 	int eventKernel;
 
-	private const string ImperfectionAssetPath = "Assets/Scripts/Imperfection.compute";
+	private const string ImperfectionAssetPath = "Assets/Scripts/Shaders/Imperfection.compute";
 	ComputeShader ImperfectionShader;
 	RenderTexture ThreshNoiseRateRT;
 	NativeArray<Vector4> ThreshNRData;
@@ -51,7 +49,7 @@ public class DVS : MonoBehaviour {
 	RenderTexture frameCapOut;
 	Texture2D frameCapTexture;
 
-	private const string FrameCapShaderAssetPath = "Assets/Scripts/FrameCapture.compute";
+	private const string FrameCapShaderAssetPath = "Assets/Scripts/Shaders/FrameCapture.compute";
 	ComputeShader FrameCapShader;
 	int frameCapKernel;
 
@@ -467,9 +465,9 @@ public class DVS : MonoBehaviour {
 
 	void TakeFrameCapture() {
 		FrameCapShader.SetTexture(frameCapKernel, "Color", cameraTarget);
-		Texture depth = Shader.GetGlobalTexture("_CameraDepthTexture"); // TODO: fix this.. 
+		//Texture depth = Shader.GetGlobalTexture("_CameraDepthTexture"); // TODO: fix this.. 
 		// weird unity 6 new rendering system makes this no longer work. 
-		FrameCapShader.SetTexture(frameCapKernel, "Depth", depth);
+		//FrameCapShader.SetTexture(frameCapKernel, "Depth", depth);
 		FrameCapShader.SetTexture(frameCapKernel, "Result", frameCapOut);
 
 		FrameCapShader.Dispatch(frameCapKernel, globalShaderGroups.x, globalShaderGroups.y, 1);
