@@ -24,7 +24,7 @@ Shader "Hidden/ObjectIdDepth"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
             CBUFFER_START(UnityPerMaterial)
-                uint _ObjectId;
+                uint _ID;
             CBUFFER_END
 
             struct Attributes
@@ -60,7 +60,7 @@ Shader "Hidden/ObjectIdDepth"
             FragmentOutput Frag(Varyings input)
             {
                 FragmentOutput output;
-                output.objectId = _ObjectId;
+                output.objectId = _ID;
                 output.depth = input.eyeDepth;
                 return output;
             }

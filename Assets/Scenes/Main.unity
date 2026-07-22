@@ -269,6 +269,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac525f420e4b0f44799b5e216cb8a6af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PoseAnimObj
+  ID: 0
   AnimObjAssetPath: Assets/Assets/freemocap/fm_test.fbx
   Scale: 1
   Offset: {x: 0, y: 0.5, z: 0}
@@ -472,55 +473,6 @@ MonoBehaviour:
   Armatures: []
   ArmatureInUse: {fileID: 0}
   CurrentSceneLengthSeconds: 0
---- !u!1 &832575517
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 832575519}
-  - component: {fileID: 832575518}
-  m_Layer: 0
-  m_Name: Global Volume
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!114 &832575518
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 832575517}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_IsGlobal: 1
-  priority: 0
-  blendDistance: 0
-  weight: 1
-  sharedProfile: {fileID: 11400000, guid: 10fc4df2da32a41aaa32d77bc913491c, type: 2}
---- !u!4 &832575519
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 832575517}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1112438144
 GameObject:
   m_ObjectHideFlags: 0
@@ -597,8 +549,8 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 8837305366271902580}
   - {fileID: 5338768569568202563}
+  - {fileID: 8837305366271902580}
   m_Father: {fileID: 473641386}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1171441058
@@ -729,7 +681,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: -177.908, z: 0}
 --- !u!114 &1912218704
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -753,7 +705,7 @@ MonoBehaviour:
     m_Bits: 1
   m_VolumeTrigger: {fileID: 0}
   m_VolumeFrameworkUpdateModeOption: 2
-  m_RenderPostProcessing: 1
+  m_RenderPostProcessing: 0
   m_Antialiasing: 0
   m_AntialiasingQuality: 2
   m_StopNaN: 0
@@ -1058,6 +1010,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac525f420e4b0f44799b5e216cb8a6af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PoseAnimObj
+  ID: 0
   AnimObjAssetPath: Assets/Assets/MotionBERT/skeleton-walk3.fbx
   Scale: 1
   Offset: {x: 0, y: 0.94, z: 0}
@@ -1106,6 +1059,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac525f420e4b0f44799b5e216cb8a6af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PoseAnimObj
+  ID: 0
   AnimObjAssetPath: Assets/Assets/captury/1.fbx
   Scale: 1
   Offset: {x: 0, y: 1, z: 0}
@@ -1419,6 +1373,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e6c4d1b687068c74789532db5ea9281d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_HumanModel
+  ID: 0
   Models:
   - TargetArmatureType: BVH
     SourceAsset: {fileID: 919132149155446097, guid: 05d84dd0341737f449f1125b73392402,
@@ -1879,7 +1834,7 @@ SkinnedMeshRenderer:
   m_SortingOrder: 0
   serializedVersion: 2
   m_Quality: 0
-  m_UpdateWhenOffscreen: 0
+  m_UpdateWhenOffscreen: 1
   m_SkinnedMotionVectors: 1
   m_Mesh: {fileID: -6114827839126832337, guid: 3cf977041e8ead14288f951850fa93bc, type: 3}
   m_Bones:
@@ -3153,6 +3108,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c21f63e64c9f00e4ea45917c6ea1e875, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_Lighting
+  ID: 0
 --- !u!1 &1091157331278587514
 GameObject:
   m_ObjectHideFlags: 0
@@ -3907,6 +3863,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac525f420e4b0f44799b5e216cb8a6af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PoseAnimObj
+  ID: 0
   AnimObjAssetPath: Assets/Assets/BVH/01_01.fbx
   Scale: 0.07
   Offset: {x: 0, y: -0.07, z: 0}
@@ -3956,6 +3913,7 @@ GameObject:
   - component: {fileID: 7201146063029379534}
   - component: {fileID: 5731971498580594919}
   - component: {fileID: 2744145877824981279}
+  - component: {fileID: 7201146063029379535}
   m_Layer: 0
   m_Name: Cube (1)
   m_TagString: Untagged
@@ -4879,6 +4837,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad52b4920b9f506499ecd9b09cb0818d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_Rotator
+  ID: 0
   axes: {x: 0, y: 0, z: 20}
 --- !u!4 &3052410454447541753
 Transform:
@@ -5755,6 +5714,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68d31b0fa4fcf854b922a6fadde7f29e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_Armature
+  ID: 0
   Type: MBERT
   RootBoneTransform: {fileID: 162786508521796014}
 --- !u!1 &3956630621946950403
@@ -5785,6 +5745,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f778bd6dc8af20f4fb63019366df052e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_Environment
+  ID: 0
 --- !u!1 &4002016547019783940
 GameObject:
   m_ObjectHideFlags: 0
@@ -6124,7 +6085,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!1 &4361878641178809160
 GameObject:
   m_ObjectHideFlags: 0
@@ -7283,6 +7244,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68d31b0fa4fcf854b922a6fadde7f29e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_Armature
+  ID: 0
   Type: FMC
   RootBoneTransform: {fileID: 252425126598450837}
 --- !u!1 &5833306985199803559
@@ -7329,6 +7291,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68d31b0fa4fcf854b922a6fadde7f29e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_Armature
+  ID: 0
   Type: BVH
   RootBoneTransform: {fileID: 1862925670447674312}
 --- !u!1 &5850543037258661067
@@ -8019,6 +7982,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68d31b0fa4fcf854b922a6fadde7f29e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_Armature
+  ID: 0
   Type: CPTY
   RootBoneTransform: {fileID: 7354220205329165117}
 --- !u!1 &6466334912742073180
@@ -8467,6 +8431,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e6c4d1b687068c74789532db5ea9281d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_HumanModel
+  ID: 0
   Models:
   - TargetArmatureType: BVH
     SourceAsset: {fileID: 919132149155446097, guid: 5f6cb8bbb8c45b942abffb0c45f3a3b0,
@@ -8574,6 +8539,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7cf6a4b58f947b5488203e57d6f92ae1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_ObjectGroup
+  ID: 0
   Objects: []
 --- !u!4 &7017891198105632980
 Transform:
@@ -8764,6 +8730,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 20ae3d657126d7143b43bf236472ddf9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_ConstTransform
+  ID: 0
   constPositionRate: {x: 0, y: 0, z: 0}
   sinPositionAmount: {x: 3, y: 0, z: 0}
   sinPositionRate: {x: 1, y: 0, z: 0}
@@ -8808,6 +8775,19 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1977401096272433186}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &7201146063029379535
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1977401096272433186}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 41d88e188a6d0b04ab922ce09ba007fe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ID: 0
 --- !u!4 &7206081862371659465
 Transform:
   m_ObjectHideFlags: 0
@@ -9260,7 +9240,7 @@ Light:
   m_Type: 2
   m_Shape: 0
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 0.7
+  m_Intensity: 5
   m_Range: 30
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -9678,8 +9658,8 @@ Light:
   m_Type: 2
   m_Shape: 0
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 2.1
-  m_Range: 8.39
+  m_Intensity: 8.46
+  m_Range: 14.53
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
@@ -9782,9 +9762,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7cf6a4b58f947b5488203e57d6f92ae1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_ObjectGroup
+  ID: 0
   Objects:
   - {fileID: 3048249453040569769}
   - {fileID: 7164588604623088745}
+  - {fileID: 7201146063029379535}
 --- !u!1 &8089097335425325991
 GameObject:
   m_ObjectHideFlags: 0
@@ -10678,7 +10660,6 @@ GameObject:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 832575519}
   - {fileID: 1912218703}
   - {fileID: 120236687}
   - {fileID: 473641386}

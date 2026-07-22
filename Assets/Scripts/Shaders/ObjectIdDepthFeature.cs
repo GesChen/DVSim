@@ -20,8 +20,15 @@ public sealed class ObjectIdDepthFeature : ScriptableRendererFeature {
 	public override void AddRenderPasses(
 		ScriptableRenderer renderer,
 		ref RenderingData renderingData) {
-		pass.SetCameraDepthTarget(renderer.cameraDepthTargetHandle);
 		renderer.EnqueuePass(pass);
+	}
+
+	public override void SetupRenderPasses(
+		ScriptableRenderer renderer,
+		in RenderingData renderingData) {
+
+		//pass.SetCameraDepthTarget(renderer.cameraDepthTargetHandle);
+
 	}
 
 	protected override void Dispose(bool disposing) {
@@ -47,16 +54,18 @@ public sealed class ObjectIdDepthFeature : ScriptableRendererFeature {
 			this.material = material;
 		}
 
-		public void SetCameraDepthTarget(RTHandle cameraDepthTarget) {
-			depthBuffer = cameraDepthTarget;
-		}
+		//public void SetCameraDepthTarget(RTHandle cameraDepthTarget) {
+		//	depthBuffer = cameraDepthTarget;
+		//}
 
 		public override void OnCameraSetup(
-			CommandBuffer cmd,
-			ref RenderingData renderingData) {
+	CommandBuffer cmd,
+	ref RenderingData renderingData) {
 			RenderTextureDescriptor descriptor =
-				renderingData.cameraData.cameraTargetDescriptor;
+		renderingData.cameraData.cameraTargetDescriptor;
 
+			descriptor.width = renderingData.cameraData.camera.pixelWidth;
+			descriptor.height = renderingData.cameraData.camera.pixelHeight;
 			descriptor.msaaSamples = 1;
 			descriptor.depthBufferBits = 0;
 
@@ -78,36 +87,39 @@ public sealed class ObjectIdDepthFeature : ScriptableRendererFeature {
 				TextureWrapMode.Clamp,
 				name: "_ObjectLinearDepthTexture");
 
+			// Dedicated hardware depth attachment.
+			descriptor.graphicsFormat = GraphicsFormat.None;
+			descriptor.depthStencilFormat = GraphicsFormat.D32_SFloat;
+			descriptor.depthBufferBits = 32;
+
+			RenderingUtils.ReAllocateIfNeeded(
+				ref depthBuffer,
+				descriptor,
+				FilterMode.Point,
+				TextureWrapMode.Clamp,
+				name: "_ObjectIdDepthBuffer");
+
 			colorAttachments[0] = idTexture;
 			colorAttachments[1] = depthTexture;
 
 			ConfigureTarget(colorAttachments, depthBuffer);
-
-			ConfigureClear(
-				ClearFlag.Color,
-				Color.clear);
+			ConfigureClear(ClearFlag.All, Color.clear);
 		}
 
 		public override void Execute(
-			ScriptableRenderContext context,
-			ref RenderingData renderingData) {
-			CommandBuffer cmd =
-				CommandBufferPool.Get("Object ID and Depth");
+	ScriptableRenderContext context,
+	ref RenderingData renderingData) {
+			CommandBuffer cmd = CommandBufferPool.Get();
 
-			using (new ProfilingScope(
-					   cmd,
-					   new ProfilingSampler("Object ID and Depth"))) {
-				context.ExecuteCommandBuffer(cmd);
-				cmd.Clear();
-
+			try {
 				SortingCriteria sortingCriteria =
-					renderingData.cameraData.defaultOpaqueSortFlags;
+			renderingData.cameraData.defaultOpaqueSortFlags;
 
 				DrawingSettings drawingSettings =
-					CreateDrawingSettings(
-						shaderTagId,
-						ref renderingData,
-						sortingCriteria);
+			CreateDrawingSettings(
+				shaderTagId,
+				ref renderingData,
+				sortingCriteria);
 
 				drawingSettings.overrideMaterial = material;
 				drawingSettings.overrideMaterialPassIndex = 0;
@@ -117,17 +129,16 @@ public sealed class ObjectIdDepthFeature : ScriptableRendererFeature {
 					ref drawingSettings,
 					ref filteringSettings);
 
-				cmd.SetGlobalTexture(
-					"_ObjectIdTexture",
-					idTexture);
-
+				cmd.SetGlobalTexture("_ObjectIdTexture", idTexture);
 				cmd.SetGlobalTexture(
 					"_ObjectLinearDepthTexture",
 					depthTexture);
-			}
 
-			context.ExecuteCommandBuffer(cmd);
-			CommandBufferPool.Release(cmd);
+				context.ExecuteCommandBuffer(cmd);
+			} finally {
+				cmd.Clear();
+				CommandBufferPool.Release(cmd);
+			}
 		}
 
 		public override void OnCameraCleanup(CommandBuffer cmd) {
@@ -136,6 +147,7 @@ public sealed class ObjectIdDepthFeature : ScriptableRendererFeature {
 		public void Dispose() {
 			idTexture?.Release();
 			depthTexture?.Release();
+			depthBuffer?.Release();
 		}
 	}
 }

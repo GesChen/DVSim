@@ -34,7 +34,20 @@ public class SceneManager : Singleton<SceneManager> {
 			}
 		}
 
+		foreach (var obj in newObjs) {
+			GenID(obj);
+		}
+
 		return newObjs;
+	}
+
+	void GenID(DVObject obj) {
+		if (obj is DVO_ObjectGroup group) {
+			foreach (var sub in group.Objects)
+				GenID(sub);
+		}
+
+		obj.GenerateID();
 	}
 
 	public void InitializeHumanModel(List<DVObject> objs) {

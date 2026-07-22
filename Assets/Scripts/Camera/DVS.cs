@@ -2,16 +2,20 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEditor;
+using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
+using static UnityEngine.Rendering.DebugUI;
 
 public struct Event {
 	public int x;
@@ -46,8 +50,11 @@ public class DVS : MonoBehaviour {
 	NativeArray<Vector4> ThreshNRData;
 
 	// frame capture -------
-	RenderTexture frameCapOut;
-	Texture2D frameCapTexture;
+	GraphicsBuffer frameCapOut;
+	Texture2D frameCapColorTexture;
+	Texture2D frameCapDataTexture;
+	NativeArray<Vector4> fcColorPixels;
+	NativeArray<Vector4> fcDataPixels;
 
 	private const string FrameCapShaderAssetPath = "Assets/Scripts/Shaders/FrameCapture.compute";
 	ComputeShader FrameCapShader;
@@ -86,13 +93,22 @@ public class DVS : MonoBehaviour {
 
 		ImperfectionShader = AssetDatabase.LoadAssetAtPath<ComputeShader>(ImperfectionAssetPath);
 		ThreshNoiseRateRT = GenerateNonDepthRenTex(RenderTextureFormat.ARGBFloat);
-		ThreshNRData = new NativeArray<Vector4>(DVConfig.resolution.x * DVConfig.resolution.y, Allocator.Persistent);
-
-		frameCapOut = GenerateNonDepthRenTex(RenderTextureFormat.ARGBFloat);
-		frameCapTexture = new Texture2D(DVConfig.resolution.x, DVConfig.resolution.y, TextureFormat.RGBAFloat, false);
+		ThreshNRData = GenerateNativeArray();
 
 		FrameCapShader = AssetDatabase.LoadAssetAtPath<ComputeShader>(FrameCapShaderAssetPath);
 		frameCapKernel = FrameCapShader.FindKernel("Main");
+
+		frameCapOut = new GraphicsBuffer(
+			GraphicsBuffer.Target.Structured,
+			DVConfig.resolution.x * DVConfig.resolution.y,
+			24); // stride comes from float4 + float + float = 24 bytes
+
+		frameCapColorTexture = GenerateTex2d();
+		frameCapDataTexture = GenerateTex2d();
+
+		fcColorPixels = GenerateNativeArray();
+		fcDataPixels = GenerateNativeArray();
+
 
 		// wont change so you can precompute this
 		globalShaderGroups = Vector2Int.CeilToInt((Vector2)DVConfig.resolution / 8f);
@@ -109,6 +125,14 @@ public class DVS : MonoBehaviour {
 
 		hot = true;
 		Debug.Log($"DVS \"{camera.name}\" ready");
+	}
+
+	private static Texture2D GenerateTex2d() {
+		return new Texture2D(DVConfig.resolution.x, DVConfig.resolution.y, TextureFormat.RGBAFloat, false);
+	}
+
+	private static NativeArray<Vector4> GenerateNativeArray() {
+		return new NativeArray<Vector4>(DVConfig.resolution.x * DVConfig.resolution.y, Allocator.Persistent);
 	}
 
 	void InitStereo() {
@@ -362,8 +386,9 @@ public class DVS : MonoBehaviour {
 		Release(sensorState);
 		Release(outputMap);
 		Release(debugOutput);
-		Release(frameCapOut);
-		Destroy(frameCapTexture);
+		frameCapOut?.Release();
+		Destroy(frameCapColorTexture);
+		Destroy(frameCapDataTexture);
 		Release(ThreshNoiseRateRT);
 		ThreshNRData.Dispose();
 
@@ -435,7 +460,7 @@ public class DVS : MonoBehaviour {
 
 		var eventQueue = new NativeQueue<Event>(Allocator.TempJob);
 
-		var job = new ReadbackJob {
+		new EventReadbackJob {
 			OutputData = outputData,
 			ThreshNoiseRateData = ThreshNRData,
 			Events = eventQueue.AsParallelWriter(),
@@ -448,10 +473,7 @@ public class DVS : MonoBehaviour {
 
 			EventCountScale = DVConfig.eventCountScale,
 			InterpolateTime = DVConfig.interpolateTime
-		};
-
-		JobHandle handle = job.Schedule(outputData.Length, 128);
-		handle.Complete();
+		}.Schedule(outputData.Length, 256).Complete();
 
 		//Debug.Log($"generated {eventQueue.Count} event");
 
@@ -463,39 +485,56 @@ public class DVS : MonoBehaviour {
 		outputData.Dispose();
 	}
 
+	[StructLayout(LayoutKind.Sequential)]
+	struct FCPixelData {
+		public Vector4 color;
+		public float depth;
+		public float idBits;
+	}
+
 	void TakeFrameCapture() {
+		Texture depthTex = Shader.GetGlobalTexture( "_ObjectLinearDepthTexture" );
+		Texture idTex = Shader.GetGlobalTexture( "_ObjectIdTexture" );
+		
+		//RenderDoc.BeginCaptureRenderDoc(EditorWindow.focusedWindow);
+
 		FrameCapShader.SetTexture(frameCapKernel, "Color", cameraTarget);
-		//Texture depth = Shader.GetGlobalTexture("_CameraDepthTexture"); // TODO: fix this.. 
-		// weird unity 6 new rendering system makes this no longer work. 
-		//FrameCapShader.SetTexture(frameCapKernel, "Depth", depth);
-		FrameCapShader.SetTexture(frameCapKernel, "Result", frameCapOut);
+		FrameCapShader.SetTexture(frameCapKernel, "Depth", depthTex);
+		FrameCapShader.SetTexture(frameCapKernel, "IDSegMap", idTex);
+		FrameCapShader.SetBuffer(frameCapKernel, "Output", frameCapOut);
 
 		FrameCapShader.Dispatch(frameCapKernel, globalShaderGroups.x, globalShaderGroups.y, 1);
+		//RenderDoc.EndCaptureRenderDoc(EditorWindow.focusedWindow);
 
 		string permutationAtCall = string.Join('_', DVManager.CurrentPermutation);
 		int frameCapFrameAtCall = (int)(DVManager.Frame * DVConfig.frameCapFPS / DVConfig.simFPS);
 
 		AsyncGPUReadback.Request(
 			frameCapOut,
-			0,
-			TextureFormat.RGBAFloat,
 			req => FrameCapReadback(req, permutationAtCall, frameCapFrameAtCall)
 		);
 	}
 
 	void FrameCapReadback(AsyncGPUReadbackRequest req, string permutation, int frame) {
-		if (req.hasError)
-			return;
-		if (frameCapTexture == null) return; 
+		if (frameCapDataTexture == null) return;
+		if (req.hasError) return;
+		if (!DVManager.Playing) return;
+		
+		var source = req.GetData<FCPixelData>();
 
-		var data = req.GetData<Vector4>(); // or Color32 / float / half-compatible struct
+		new FrameCapUnpackJob {
+			source = source,
+			color = fcColorPixels,
+			data = fcDataPixels
+		}.Schedule(source.Length, 256).Complete();
 
-		frameCapTexture.SetPixelData(data, 0);
-		frameCapTexture.Apply(false);
+		frameCapColorTexture.SetPixelData(fcColorPixels, 0);
+		frameCapDataTexture.SetPixelData(fcDataPixels, 0);
 
-		byte[] bytes = frameCapTexture.EncodeToEXR(); // HDR-safe
+		frameCapColorTexture.Apply(false, false);
+		frameCapDataTexture.Apply(false, false);
 
-		string location = Path.Combine(
+		string frameFolder = Path.Combine(
 			Application.dataPath,
 			DVConfig.outputFolder,
 			DVConfig.permutationFolder,
@@ -503,11 +542,25 @@ public class DVS : MonoBehaviour {
 			camera.name,
 			DVConfig.frameCapSubFolder);
 
-		Directory.CreateDirectory(location);
+		Directory.CreateDirectory(frameFolder);
 
-		string fullPath = Path.Combine(location, $"{frame.ToString("D" + DVConfig.frameNumPadDigits)}.exr");
+		File.WriteAllBytes(
+			Path.Combine(frameFolder, $"{frame.ToString("D" + DVConfig.frameNumPadDigits)}.exr"), 
+			frameCapColorTexture.EncodeToEXR());
 
-		File.WriteAllBytes(fullPath, bytes);
+		string dataFolder = Path.Combine(
+			Application.dataPath,
+			DVConfig.outputFolder,
+			DVConfig.permutationFolder,
+			permutation,
+			camera.name,
+			DVConfig.frameCapDataSubFolder);
+
+		Directory.CreateDirectory(dataFolder);
+
+		File.WriteAllBytes(
+			Path.Combine(dataFolder, $"{frame.ToString("D" + DVConfig.frameNumPadDigits)}.exr"),
+			frameCapDataTexture.EncodeToEXR(Texture2D.EXRFlags.OutputAsFloat));
 	}
 
 	public void ClearFrameCaptures(int[] permutation) {
@@ -531,61 +584,79 @@ public class DVS : MonoBehaviour {
 			Directory.Delete(location, true);
 		Directory.CreateDirectory(location);
 	}
-}
 
-[BurstCompile]
-public struct ReadbackJob : IJobParallelFor {
-	[ReadOnly] public NativeArray<float> OutputData;
-	[ReadOnly] public NativeArray<Vector4> ThreshNoiseRateData;
+	[BurstCompile]
+	struct EventReadbackJob : IJobParallelFor {
+		[ReadOnly] public NativeArray<float> OutputData;
+		[ReadOnly] public NativeArray<Vector4> ThreshNoiseRateData;
 
-	public NativeQueue<Event>.ParallelWriter Events;
+		[WriteOnly] public NativeQueue<Event>.ParallelWriter Events;
 
-	public int Width;
-	public int Height;
+		public int Width;
+		public int Height;
 
-	public ulong Time;
-	public ulong Dt;
+		public ulong Time;
+		public ulong Dt;
 
-	public int EventCountScale;
-	public bool InterpolateTime;
+		public int EventCountScale;
+		public bool InterpolateTime;
 
-	public void Execute(int index) {
-		float data = OutputData[index];
+		public void Execute(int index) {
+			float data = OutputData[index];
 
-		if (data == 0) return;
+			if (data == 0) return;
 
-		int numEvents = (int)math.floor(math.abs(data) / EventCountScale);
+			int numEvents = (int)math.floor(math.abs(data) / EventCountScale);
 
-		int x = index % Width;
-		int y = index / Width;
+			int x = index % Width;
+			int y = index / Width;
 
-		bool on = data > 0f;
-		int polarity = on ? 1 : -1;
-		float diff = polarity * (math.abs(data) - numEvents * EventCountScale);
+			bool on = data > 0f;
+			int polarity = on ? 1 : -1;
+			float diff = polarity * (math.abs(data) - numEvents * EventCountScale);
 
-		Vector4 threshData = ThreshNoiseRateData[index];
-		float ContrastThreshold = on ? threshData.x : threshData.y;
+			Vector4 threshData = ThreshNoiseRateData[index];
+			float ContrastThreshold = on ? threshData.x : threshData.y;
 
-		ulong lastTime = Time;
-		ulong t = Time;
-		for (int n = 0; n < numEvents; n++) {
+			ulong lastTime = Time;
+			ulong t = Time;
+			for (int n = 0; n < numEvents; n++) {
 
-			if (InterpolateTime) {
-				float crossing = polarity * (n + 1) * ContrastThreshold;
-				float alpha = crossing / diff;
-				t = Time + (ulong)math.round(alpha * Dt);
+				if (InterpolateTime) {
+					float crossing = polarity * (n + 1) * ContrastThreshold;
+					float alpha = crossing / diff;
+					t = Time + (ulong)math.round(alpha * Dt);
 
-				if (t < lastTime + DVConfig.refractoryPeriod) continue;
+					if (t < lastTime + DVConfig.refractoryPeriod) continue;
+				}
+
+				lastTime = t;
+
+				Events.Enqueue(new Event {
+					x = x,
+					y = y,
+					t = t,
+					p = on
+				});
 			}
+		}
+	}
 
-			lastTime = t;
+	[BurstCompile]
+	struct FrameCapUnpackJob : IJobParallelFor {
+		[ReadOnly] public NativeArray<FCPixelData> source;
+		[WriteOnly] public NativeArray<Vector4> color;
+		[WriteOnly] public NativeArray<Vector4> data;
 
-			Events.Enqueue(new Event {
-				x = x,
-				y = y,
-				t = t,
-				p = on
-			});
+		public void Execute(int i) {
+			FCPixelData p = source[i];
+
+			color[i] = p.color;
+			data[i] = new Vector4(
+				p.depth,
+				p.idBits,
+				0,
+				0);
 		}
 	}
 }

@@ -8,7 +8,6 @@ public class DVO_Armature : DVObject {
 	public Transform RootBoneTransform;
 
 	public override void Init() {
-		
 	}
 
 	public override void UpdateState(ulong time) {

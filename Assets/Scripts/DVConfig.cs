@@ -68,5 +68,6 @@ public static class DVConfig {
 	public const float frameCapFPS = 60;
 
 	public const string frameCapSubFolder = "frames";
+	public const string frameCapDataSubFolder = "framedata";
 	public const int frameNumPadDigits = 5;
 }
