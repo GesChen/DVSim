@@ -13,7 +13,6 @@ event_dtype = np.dtype([
     ("y", np.uint16),
     ("t", np.uint64),
     ("p", bool),
-    ("s", np.uint16),
 ], align=False)
 
 # kept for reference, not likely to be used again
@@ -81,7 +80,6 @@ def processbin(jsonpath):
         ("y", "<i4"),
         ("t", "<u8"),
         ("p", "u1"),
-        ("s", "<i4"),
     ])
 
     data = np.fromfile(camfilepath, dtype=raw_event_dtype)
@@ -98,8 +96,6 @@ def processbin(jsonpath):
     # dont need yet     
 
     print("done")
-
-# def 
 
 if __name__ == "__main__":
     jsonpath = sys.argv[1]

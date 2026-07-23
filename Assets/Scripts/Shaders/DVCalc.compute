@@ -5,19 +5,16 @@
 // --- dynamically changing vals ---
 Texture2D<float4> Camera; // HDR output
 
-Texture2D<uint> IDMapNow; // camera segmentation map
-RWTexture2D<uint> IDMapPast; // 1 frame delayed
-
 // x = intensity reference
 // y = low pass value Lf
 // z = photoreceptor noise
 // w = might need it later
 RWTexture2D<float4> State;
-RWTexture2D<float2> Output; // packed event value
+RWTexture2D<float> Output; // packed event value
 RWTexture2D<float4> Debug;
 
 int iterSeed; // constant for all pixels
-uint2 frame; // split ulong in half
+bool firstFrame;
 
 // --- consts ---
 int EventCountScale;
@@ -85,7 +82,7 @@ void Main(uint3 id : SV_DispatchThreadID)
 	float I = luma(Camera.Load(loc)); // current luma
 	float L = log(max(I, 1e-4)); // linlog was designed for 8 bit color, HDR float color can use pure log
 	
-	if (frame.x == 0u && frame.y == 0u)
+	if (firstFrame)
 	{
 		State[id.xy] = float4(L, L, 0, 0);
 		Output[id.xy] = 0;
@@ -124,23 +121,7 @@ void Main(uint3 id : SV_DispatchThreadID)
 	int numEvents = floor(polarity * diff / ContrastThreshold);
 	
 	// pack polarity, events, diff into one float
-	// TODO: make this more easy to read 
-	float event = sign(numEvents) * polarity * (numEvents * EventCountScale + abs(diff));
-	
-	// event source ; 0-noise event
-	bool even = (frame.x & 1u) == 0;
-	uint lastID = IDMapPast[id.xy]; 
-	uint curID = IDMapNow[id.xy];
-	//IDMapPast[id.xy] = IDMapNow[id.xy];
-	
-	uint srcID = on ? curID : lastID; 
-	
-	if (!(diff - photoNoise + leak > ContrastThreshold)) // did noise current cause this event?
-		// ! would there have been an event if leak and noise were 0?
-		srcID = 0;
-		
-	float meta = asfloat(srcID);
-	Output[id.xy] = float2(event, meta);
+	Output[id.xy] = sign(numEvents) * polarity * (numEvents * EventCountScale + abs(diff));
 	
 	// update state
 	// Lf and photoNoise are low passed

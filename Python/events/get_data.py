@@ -10,12 +10,6 @@ def sortdata(x, y, t, p):
     print('sorted')
     return x[order], y[order], t[order], p[order]
 
-def sortdvsimdata(x, y, t, p, s):
-    print('sorting...')
-    order = np.argsort(t, kind='stable')
-    print('sorted')
-    return x[order], y[order], t[order], p[order], s[order]
-
 def load_occlusions_dataset():
     print('loading occlusions ds...')
 
@@ -128,18 +122,3 @@ def load_v2e_dataset(path):
 
     print('loaded')
     return (x, y, t, p)
-
-def load_dvsim_dataset(path):
-    print('loading dataset...')
-    
-    data = np.load(path)['arr_0']
-    
-    x = data['x'].astype(np.int32)
-    y = data['y'].astype(np.int32)
-    t = data['t'].astype(np.float64) / 1e9
-    p = data['p'].astype(bool)
-    p = np.where(p, 1, -1)
-    s = data['s'].astype(np.int32)
-
-    print('loaded')
-    return (x, y, t, p, s)

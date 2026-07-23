@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button
 import cv2
 
-COLOR_MODE = "col"  # "col", "rb", or "bw"
+COLOR_MODE = "col"  # "col" or "bw"
 
 USE_VIDEO_BACKGROUND = False
 SOURCE_VIDEO_PATH = r"D:\Downloads\ytdlp\output.mp4"
@@ -13,33 +13,12 @@ SOURCE_VIDEO_PATH = r"D:\Downloads\ytdlp\output.mp4"
 EVENT_RES = (1280, 720)  # input event coordinate scale
 
 # (x, y, t, p) = get_data.load_v2e_dataset(r"E:\DVSim\Python\v2e-master\v2ecore\output\output.npz")
-# (x, y, t, p) = get_data.load_unity_dataset(r"E:\DVSim\Assets\.Output\Permutations\0_0_0_0_0\Main Camera\events.npz")
-(x, y, t, p, s) = get_data.load_dvsim_dataset(r"E:\DVSim\Assets\.Output\Permutations\0_0_0_0_0\camera 2\events.npz")
+(x, y, t, p) = get_data.load_unity_dataset(r"E:\DVSim\Assets\.Output\Permutations\0_0_0_0_0\Main Camera\events.npz")
 
-# (x, y, t, p) = get_data.sortdata(x, y, t, p)
-(x, y, t, p, s) = get_data.sortdvsimdata(x, y, t, p, s)
+(x, y, t, p) = get_data.sortdata(x, y, t, p)
 
-if COLOR_MODE not in ("col", "rb", "bw"):
-    raise ValueError('COLOR_MODE must be "col", "rb", or "bw"')
-
-
-def uint_to_rgb(ids: np.ndarray) -> np.ndarray:
-    x = ids.astype(np.uint32).copy()
-
-    x ^= x >> np.uint32(16)
-    x *= np.uint32(0x7FEB352D)
-    x ^= x >> np.uint32(15)
-    x *= np.uint32(0x846CA68B)
-    x ^= x >> np.uint32(16)
-
-    return np.stack(
-        (
-            (x >> 16) & 255,
-            (x >> 8) & 255,
-            x & 255,
-        ),
-        axis=-1,
-    ).astype(np.uint8)
+if COLOR_MODE not in ("col", "bw"):
+    raise ValueError('COLOR_MODE must be "col" or "bw"')
 
 
 playing = False
@@ -133,29 +112,23 @@ def visualize_slice():
         xs = (x[lo:hi] * sx).astype(np.int64)
         ys = (y[lo:hi] * sy).astype(np.int64)
         ps = p[lo:hi]
-        ss = s[lo:hi]
 
         valid = (xs >= 0) & (xs < out_res[0]) & (ys >= 0) & (ys < out_res[1])
         xs = xs[valid]
         ys = ys[valid]
         ps = ps[valid]
-        ss = ss[valid]
 
         if USE_VIDEO_BACKGROUND:
             img = get_video_frame(center_t)
         else:
             img = np.zeros((out_res[1], out_res[0], 3), dtype=np.uint8)
-            if COLOR_MODE == "bw":
+            if COLOR_MODE != "col":
                 img.fill(127)
 
         pos = ps == 1
         neg = ~pos
 
         if COLOR_MODE == "col":
-            colors = uint_to_rgb(ss)
-            colors[ss == 0] = 0
-            img[ys, xs] = colors
-        elif COLOR_MODE == "rb":
             img[ys[pos], xs[pos]] = [255, 0, 0]
             img[ys[neg], xs[neg]] = [0, 0, 255]
         else:
