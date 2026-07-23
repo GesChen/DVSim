@@ -184,13 +184,8 @@ public class DVSMemory {
 		isOpen = false;
 	}
 
-	public void NewEvent(int x, int y, ulong time, bool polarity) {
-		eventQueue.Enqueue(new Event {
-			x = x,
-			y = y,
-			t = time,
-			p = polarity
-		});
+	public void NewEvent(Event e) {
+		eventQueue.Enqueue(e);
 	}
 
 	public async Task ForceFlush() {
@@ -231,16 +226,18 @@ public class DVSMemory {
 
 			while (eventQueue.TryDequeue(out var e)) {
 				// Binary layout per event:
-				// int x      = 4 bytes
-				// int y      = 4 bytes
-				// ulong t    = 8 bytes
-				// byte p     = 1 byte, 1 = ON, 0 = OFF
-				// total      = 17 bytes/event
+				// int x		= 4 bytes
+				// int y		= 4 bytes
+				// ulong t		= 8 bytes
+				// byte p		= 1 byte, 1 = ON, 0 = OFF
+				// uint src		= 4 bytes
+				// total		= 21 bytes/event
 
 				eWriter.Write(e.x);
 				eWriter.Write(e.y);
 				eWriter.Write(e.t);
 				eWriter.Write((byte)(e.p ? 1 : 0));
+				eWriter.Write(e.src);
 
 				count++;
 

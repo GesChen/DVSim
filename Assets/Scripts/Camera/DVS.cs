@@ -22,6 +22,7 @@ public struct Event {
 	public int y;
 	public ulong t; // ns
 	public bool p; // true = on, false = off
+	public uint src;
 }
 
 
@@ -36,6 +37,7 @@ public class DVS : MonoBehaviour {
 	private DVS StereoRight;
 
 	RenderTexture cameraTarget;
+	RenderTexture idMapPast;
 	RenderTexture sensorState;
 	RenderTexture outputMap;
 	RenderTexture debugOutput;
@@ -84,8 +86,9 @@ public class DVS : MonoBehaviour {
 		camera.targetTexture = cameraTarget;
 		camera.depthTextureMode |= DepthTextureMode.Depth;
 
+		idMapPast = GenerateNonDepthRenTex(GraphicsFormat.R32_UInt);
 		sensorState = GenerateNonDepthRenTex(RenderTextureFormat.ARGBFloat);
-		outputMap = GenerateNonDepthRenTex(RenderTextureFormat.RFloat);
+		outputMap = GenerateNonDepthRenTex(RenderTextureFormat.RGFloat);
 		debugOutput = GenerateNonDepthRenTex(RenderTextureFormat.ARGBFloat);
 
 		EventShader = AssetDatabase.LoadAssetAtPath<ComputeShader>(EventShaderAssetPath);
@@ -183,6 +186,18 @@ public class DVS : MonoBehaviour {
 	}
 
 	RenderTexture GenerateNonDepthRenTex(RenderTextureFormat format) {
+		RenderTexture tex = new(
+			DVConfig.resolution.x,
+			DVConfig.resolution.y,
+			0,
+			format
+		);
+		tex.enableRandomWrite = true;
+		tex.Create();
+
+		return tex;
+	}
+	RenderTexture GenerateNonDepthRenTex(GraphicsFormat format) {
 		RenderTexture tex = new(
 			DVConfig.resolution.x,
 			DVConfig.resolution.y,
@@ -383,6 +398,7 @@ public class DVS : MonoBehaviour {
 			camera.targetTexture = null;
 
 		Release(cameraTarget);
+		Release(idMapPast);
 		Release(sensorState);
 		Release(outputMap);
 		Release(debugOutput);
@@ -417,12 +433,23 @@ public class DVS : MonoBehaviour {
 
 		//if (DVManager.Frame % 10 == 0)
 		//	RenderDoc.BeginCaptureRenderDoc(EditorWindow.focusedWindow);
+		if (DVManager.Frame == 0) {
+			EventShader.SetTexture(eventKernel, "Camera", cameraTarget);
 
-		EventShader.SetTexture(eventKernel, "Camera", cameraTarget);
-		EventShader.SetTexture(eventKernel, "State", sensorState);
-		EventShader.SetTexture(eventKernel, "Output", outputMap);
-		EventShader.SetTexture(eventKernel, "Debug", debugOutput);
-		EventShader.SetBool("firstFrame", DVManager.Frame == 0);
+			Texture idTex = Shader.GetGlobalTexture( "_ObjectIdTexture" );
+			EventShader.SetTexture(eventKernel, "IDMapNow", idTex);
+			EventShader.SetTexture(eventKernel, "IDMapPast", idMapPast);
+
+			EventShader.SetTexture(eventKernel, "State", sensorState);
+			EventShader.SetTexture(eventKernel, "Output", outputMap);
+			EventShader.SetTexture(eventKernel, "Debug", debugOutput);
+		}
+		
+		static int[] splitulong(ulong l) => new int[]{
+			unchecked((int)(uint)l),          // low 32 bits
+			unchecked((int)(uint)(l >> 32))   // high 32 bits
+		};
+		EventShader.SetInts("frame", splitulong(DVManager.Frame));
 
 		var iterSeed = rng.Next(int.MinValue, int.MaxValue);
 		EventShader.SetInt("iterSeed", iterSeed);
@@ -438,7 +465,7 @@ public class DVS : MonoBehaviour {
 		AsyncGPUReadback.Request(
 			outputMap,
 			0,
-			TextureFormat.RFloat,
+			TextureFormat.RGFloat,
 			req => Readback(req, timeAtReq, frameAtReq)
 		);
 
@@ -456,7 +483,7 @@ public class DVS : MonoBehaviour {
 
 		ulong dt = (ulong)math.round(DVConfig.timeScale / DVConfig.simFPS);
 
-		NativeArray<float> outputData = request.GetData<float>();
+		NativeArray<Vector2> outputData = request.GetData<Vector2>();
 
 		var eventQueue = new NativeQueue<Event>(Allocator.TempJob);
 
@@ -478,7 +505,7 @@ public class DVS : MonoBehaviour {
 		//Debug.Log($"generated {eventQueue.Count} event");
 
 		while (eventQueue.TryDequeue(out Event e)) {
-			memory.NewEvent(e.x, e.y, e.t, e.p);
+			memory.NewEvent(e);
 		}
 
 		eventQueue.Dispose();
@@ -587,7 +614,7 @@ public class DVS : MonoBehaviour {
 
 	[BurstCompile]
 	struct EventReadbackJob : IJobParallelFor {
-		[ReadOnly] public NativeArray<float> OutputData;
+		[ReadOnly] public NativeArray<Vector2> OutputData;
 		[ReadOnly] public NativeArray<Vector4> ThreshNoiseRateData;
 
 		[WriteOnly] public NativeQueue<Event>.ParallelWriter Events;
@@ -602,18 +629,23 @@ public class DVS : MonoBehaviour {
 		public bool InterpolateTime;
 
 		public void Execute(int index) {
-			float data = OutputData[index];
+			float eventData = OutputData[index].x;
+			float srcFloat = OutputData[index].y;
+			uint source;
+			unsafe {
+				source = *((uint*)(&srcFloat));
+			}
 
-			if (data == 0) return;
+			if (eventData == 0) return;
 
-			int numEvents = (int)math.floor(math.abs(data) / EventCountScale);
+			int numEvents = (int)math.floor(math.abs(eventData) / EventCountScale);
 
 			int x = index % Width;
 			int y = index / Width;
 
-			bool on = data > 0f;
+			bool on = eventData > 0f;
 			int polarity = on ? 1 : -1;
-			float diff = polarity * (math.abs(data) - numEvents * EventCountScale);
+			float diff = polarity * (math.abs(eventData) - numEvents * EventCountScale);
 
 			Vector4 threshData = ThreshNoiseRateData[index];
 			float ContrastThreshold = on ? threshData.x : threshData.y;
@@ -636,7 +668,8 @@ public class DVS : MonoBehaviour {
 					x = x,
 					y = y,
 					t = t,
-					p = on
+					p = on,
+					src = source
 				});
 			}
 		}
