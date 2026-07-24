@@ -16,14 +16,14 @@ public abstract class DVObject : MonoBehaviour {
 		var propertyBlock = new MaterialPropertyBlock();
 
 		if (renderer == null) {
-			Debug.LogWarning($"{gameObject.name} has no renderer, will not get ID mpb");
+			//Debug.LogWarning($"{gameObject.name} has no renderer, will not get ID mpb");
 			return; // still has an id just not renderable one 
 		}
 
 		renderer.GetPropertyBlock(propertyBlock);
 		propertyBlock.SetInteger("_ID", unchecked((int)ID));
 		renderer.SetPropertyBlock(propertyBlock);
-		Debug.Log($"registered id property for {gameObject.name}");
+		//Debug.Log($"registered id property for {gameObject.name}");
 	}
 
 	// stable string hash, gethashcode is not

@@ -364,7 +364,7 @@ public class DVS : MonoBehaviour {
 			return;
 		}
 
-		ClearFrameCaptures(perm);
+		ClearFrameFiles(perm);
 		memory.Clear();
 		memory.GenerateMeta();
 	}
@@ -545,7 +545,7 @@ public class DVS : MonoBehaviour {
 		Directory.CreateDirectory(frameFolder);
 
 		File.WriteAllBytes(
-			Path.Combine(frameFolder, $"{frame.ToString("D" + DVConfig.frameNumPadDigits)}.exr"), 
+			Path.Combine(frameFolder, $"{frame.ToString("D" + DVConfig.frameNumDigits)}.exr"), 
 			frameCapColorTexture.EncodeToEXR());
 
 		string dataFolder = Path.Combine(
@@ -559,20 +559,20 @@ public class DVS : MonoBehaviour {
 		Directory.CreateDirectory(dataFolder);
 
 		File.WriteAllBytes(
-			Path.Combine(dataFolder, $"{frame.ToString("D" + DVConfig.frameNumPadDigits)}.exr"),
+			Path.Combine(dataFolder, $"{frame.ToString("D" + DVConfig.frameNumDigits)}.exr"),
 			frameCapDataTexture.EncodeToEXR(Texture2D.EXRFlags.OutputAsFloat));
 	}
 
-	public void ClearFrameCaptures(int[] permutation) {
+	public void ClearFrameFiles(int[] permutation) {
 		if (Stereo) {
-			StereoLeft.ClearFrameCaptures(permutation);
-			StereoRight.ClearFrameCaptures(permutation);
+			StereoLeft.ClearFrameFiles(permutation);
+			StereoRight.ClearFrameFiles(permutation);
 			return;
 		}
 
 		string permStr = string.Join('_', permutation);
 
-		string location = Path.Combine(
+		string colordir = Path.Combine(
 			Application.dataPath,
 			DVConfig.outputFolder,
 			DVConfig.permutationFolder,
@@ -580,9 +580,21 @@ public class DVS : MonoBehaviour {
 			camera.name,
 			DVConfig.frameCapSubFolder);
 
-		if (Directory.Exists(location))
-			Directory.Delete(location, true);
-		Directory.CreateDirectory(location);
+		if (Directory.Exists(colordir))
+			Directory.Delete(colordir, true);
+		Directory.CreateDirectory(colordir);
+
+		string datadir = Path.Combine(
+			Application.dataPath,
+			DVConfig.outputFolder,
+			DVConfig.permutationFolder,
+			permStr,
+			camera.name,
+			DVConfig.frameCapDataSubFolder);
+
+		if (Directory.Exists(datadir))
+			Directory.Delete(datadir, true);
+		Directory.CreateDirectory(datadir);
 	}
 
 	[BurstCompile]

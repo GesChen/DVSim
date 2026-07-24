@@ -23,9 +23,11 @@ public class SceneManager : Singleton<SceneManager> {
 				obj.gameObject.SetActive(false);
 			}
 
-			var desired = g.Objects[permutation[i]].gameObject;
-			desired.SetActive(true);
-			newObjs.Add(g.Objects[permutation[i]]);
+			var desired = g.Objects[permutation[i]];
+			desired.gameObject.SetActive(true);
+			newObjs.Add(desired);
+			if (desired is DVO_ObjectGroup subgroup) 
+				newObjs.AddRange(subgroup.Objects);
 
 			if (desired.TryGetComponent(out DVO_PoseAnim anim)) {
 				// find armature type from the animation
@@ -35,19 +37,10 @@ public class SceneManager : Singleton<SceneManager> {
 		}
 
 		foreach (var obj in newObjs) {
-			GenID(obj);
+			obj.GenerateID();
 		}
 
 		return newObjs;
-	}
-
-	void GenID(DVObject obj) {
-		if (obj is DVO_ObjectGroup group) {
-			foreach (var sub in group.Objects)
-				GenID(sub);
-		}
-
-		obj.GenerateID();
 	}
 
 	public void InitializeHumanModel(List<DVObject> objs) {

@@ -26,7 +26,7 @@ public static class DVConfig {
 	public const float tauOn = .005f; // has to be in seconds 
 	public const float tauOff = .010f;
 
-	// v2e values
+	// v2e noise values
 	public const float threshSigma = .05f;
 	public const float idealPosThresh = .2f;
 	public const float idealNegThresh = .2f;
@@ -36,24 +36,16 @@ public static class DVConfig {
 	public const float leakJitterFraction = .1f;
 	public const bool doPhotoreceptorNoise = true; // includes shot noise 
 	public const float shotNoiseRateHz = 5f;
+	// this value is REALLY finnicky. try to figure it out better. 
 	public const float photoNoiseCutoffHz = 200f; // for 1000fps 100-300, no longer v2e's
 
 	// --- Unity side config ---
-
-	// scene warmup time frames
-	public const int cameraWarmupTimeFrames = 50;
-
-	// buffer initial capacity
-	public const int eventBufferInitCap = 100000;
-
-	// buffer flush interval
-	public const int eventFlushIntervalMs = 10;
-
-	// coefficient for event count in the packed float output from compute
-	public const int eventCountScale = 100;
-
-	// event output folder
-	public const string outputFolder = ".Output";
+	public const int cameraWarmupTimeFrames = 50; // scene warmup time frames
+	public const int eventBufferInitCap = 100000; // buffer initial capacity
+	public const int eventFlushIntervalMs = 10; // buffer flush interval
+	public const int eventCountScale = 100; // coefficient for event count in the packed float output from compute
+	
+	public const string outputFolder = ".Output"; // event output folder
 	public const string permutationFolder = "Permutations";
 
 	public const string metadataFileName = "meta.json";
@@ -64,10 +56,10 @@ public static class DVConfig {
 
 	// ------- frame captures ------
 	public const bool doFrameCaptures = true;
-
 	public const float frameCapFPS = 60;
 
 	public const string frameCapSubFolder = "frames";
-	public const string frameCapDataSubFolder = "framedata";
-	public const int frameNumPadDigits = 5;
+	public const string frameCapDataSubFolder = "data";
+	public const int frameNumDigits = 5;
+	public const bool deleteFrameCapsAfterPostProcess = true;
 }

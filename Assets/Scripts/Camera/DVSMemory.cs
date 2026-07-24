@@ -61,12 +61,14 @@ public class DVSMemory {
 		cameraRoute.Clear();
 	}
 
-	public void GenerateMeta() {
+	public void GenerateMeta() { // for a new permutation
 		outputMetadata = new() {
-			{ "outfilepath", eOutFilePath },
 			{ "permutation", DVManager.CurrentPermutation },
+			{ "uniqueids", null },
 
-			{ "config", null},
+			{ "outfilepath", eOutFilePath },
+			{ "absoluteassetpath", Application.dataPath },
+
 
 			{ "camera", new Dictionary<string, object> {
 				{ "position", (S_Vector3)camera.transform.position },
@@ -75,10 +77,13 @@ public class DVSMemory {
 				{ "projection", camera.orthographic ? "orthographic" : "perspective" },
 				{ "fov", camera.fieldOfView },
 			}},
-			{ "absoluteassetpath", Application.dataPath }
+
+			{ "config", null}
 		};
 
 		outputMetadata["config"] = StaticClassToJObject(typeof(DVConfig));
+
+		outputMetadata["uniqueids"] = DVManager.Instance.Objects.Select(o => o.ID.ToString()).ToArray();
 	}
 
 	public static JObject StaticClassToJObject(Type staticClass) {
