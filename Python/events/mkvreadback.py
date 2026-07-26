@@ -127,7 +127,13 @@ def grayscale_to_rgb(video: np.ndarray) -> np.ndarray:
     if video.ndim != 3:
         raise ValueError("video must have shape (frames, height, width)")
 
-    return np.repeat(video[..., None], 3, axis=-1)
+    return np.repeat(video[..., None], 3, axis=-1).astype(np.float32)
+
+def depth_to_rgb(video):
+    print('converting depth to rgb.. ')
+    maxdepth = np.max(video.flatten())
+    scaled = video.astype(np.float32) / maxdepth
+    return grayscale_to_rgb(scaled)
 
 def hashes_to_rgb(hashes: np.ndarray) -> np.ndarray:
     """
@@ -159,7 +165,7 @@ def hashes_to_rgb(hashes: np.ndarray) -> np.ndarray:
 
 data = read_ffv1_mkv(r"E:\DVSim\Assets\.Output\Permutations\0_0_0_0_0\camera 2\data.mkv")
 
-rgb = grayscale_to_rgb(data[..., 0])
+# rgb = depth_to_rgb(data[..., 0])
 rgb = hashes_to_rgb(data[..., 1])
 
 play_video(rgb, 60)

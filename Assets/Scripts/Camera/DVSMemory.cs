@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using UnityEditor;
 using UnityEngine;
 
 public class DVSMemory {
@@ -31,6 +32,19 @@ public class DVSMemory {
 	string name;
 
 	List<(ulong t, Vector3 pos, Quaternion rot)> cameraRoute = new();
+
+	public struct BBox {
+		public string label;
+		public uint ID;
+		public ulong time;
+		public S_Vector2 min;
+		public S_Vector2 max;
+		public float distance;
+		public bool visible;
+		public bool rendered;
+	}
+	List<BBox[]> bboxHistory = new();
+
 	Dictionary<string, object> outputMetadata;
 
 	static readonly string PostProcessPyFile = "Scripts\\postprocessoutput.py";
@@ -152,12 +166,22 @@ public class DVSMemory {
 		await CloseEventBuffer();
 
 		try {
-			Log("Saving camera route");
+			string dataPath = Path.Combine(
+				Application.dataPath,
+				DVConfig.outputFolder,
+				DVConfig.permutationFolder,
+				string.Join('_', permAtClose),
+				name)
+				.Replace('/', '\\');
+
 			if (DVConfig.recordCameraRoute)
-				SaveCameraRoute(permAtClose);
+				SaveCameraRoute(dataPath);
+
+			if (DVConfig.recordBboxes)
+				SaveBboxes(dataPath);
 
 			Log("Post processing");
-			TriggerPythonPostProcess(permAtClose);
+			TriggerPythonPostProcess(dataPath);
 		} catch (Exception e) {
 			LogError(e);
 		}
@@ -266,15 +290,8 @@ public class DVSMemory {
 		});
 	}
 
-	void TriggerPythonPostProcess(int[] permutationAtClose) {
-		string jsonPath = Path.Combine(
-			Application.dataPath,
-			DVConfig.outputFolder,
-			DVConfig.permutationFolder,
-			string.Join('_', permutationAtClose),
-			name,
-			DVConfig.metadataFileName)
-			.Replace('/', '\\');
+	void TriggerPythonPostProcess(string dataPath) {
+		string jsonPath = Path.Combine(dataPath, DVConfig.metadataFileName);
 
 		string json = JsonConvert.SerializeObject(outputMetadata, Formatting.Indented);
 
@@ -285,7 +302,8 @@ public class DVSMemory {
 			Arguments = $"/c \"py {PostProcessPyFile} \"{jsonPath}\"\"",
 			UseShellExecute = true,
 			CreateNoWindow = false,
-			WorkingDirectory = Application.dataPath
+			WorkingDirectory = Application.dataPath,
+			WindowStyle = ProcessWindowStyle.Maximized
 		};
 
 		Log($"calling {psi.FileName} {psi.Arguments}");
@@ -293,19 +311,21 @@ public class DVSMemory {
 		Process.Start(psi);
 	}
 
-	public void LogCameraRoute(ulong time) {
+	public void LogExtraData(ulong time) {
+		if (DVConfig.recordCameraRoute)
+			LogCameraRoute(time);
+
+		if (DVConfig.recordBboxes)
+			LogBboxes(time);
+	}
+
+	void LogCameraRoute(ulong time) {
 		cameraRoute.Add((time, camera.transform.position, camera.transform.rotation));
 	}
 
-	void SaveCameraRoute(int[] permutationAtClose) {
-		string jsonPath = Path.Combine(
-			Application.dataPath,
-			DVConfig.outputFolder,
-			DVConfig.permutationFolder,
-			string.Join('_', permutationAtClose),
-			name,
-			DVConfig.camRouteFileName)
-			.Replace('/', '\\');
+	void SaveCameraRoute(string dataPath) {
+		Log("Saving camera route");
+		string jsonPath = Path.Join(dataPath, DVConfig.camRouteFileName);
 
 		List<object>[] convertedRoute =
 			cameraRoute.Select(p => new List<object> {
@@ -314,6 +334,31 @@ public class DVSMemory {
 				new float[] { p.rot.x, p.rot.y, p.rot.z, p.rot.w, } }).ToArray();
 
 		string json = JsonConvert.SerializeObject(convertedRoute, Formatting.None);
+
+		File.WriteAllText(jsonPath, json);
+	}
+
+	void LogBboxes(ulong time) {
+		var bboxes = new BBox[DVManager.Instance.Objects.Count];
+		for (int i = 0; i < DVManager.Instance.Objects.Count; i++) {
+			DVObject obj = DVManager.Instance.Objects[i];
+
+			BBox bbox = obj.GenerateBBoxExact(camera);
+			bbox.label = obj.Label;
+			bbox.ID = obj.ID;
+			bbox.time = time;
+
+			bboxes[i] = bbox;
+		}
+
+		bboxHistory.Add(bboxes);
+	}
+
+	void SaveBboxes(string dataPath) {
+		Log("Saving bboxes");
+		string jsonPath = Path.Join(dataPath, DVConfig.bboxFileName);
+
+		string json = JsonConvert.SerializeObject(bboxHistory, Formatting.None);
 
 		File.WriteAllText(jsonPath, json);
 	}

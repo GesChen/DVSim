@@ -15,10 +15,17 @@ import re
 import cv2
 import subprocess
 
+# global consts
+meta = {}
+config = {}
+path = Path()
+
+eventsout = 'events.npz'
 outsubfolder = "Permutations"
 idremapfile = 'allids.json'
 colorvidout = 'color.mp4'
 datavidout = 'data.mkv'
+bboxesout = 'bboxes.json'
 depthscale = 1000
 
 event_dtype = np.dtype([
@@ -28,7 +35,7 @@ event_dtype = np.dtype([
 	("p", bool),
 ], align=False)
 
-def processbin(meta, path):
+def processbin():
 	camfilepath = meta['outfilepath']
 
 	print("reading bin...")
@@ -47,7 +54,7 @@ def processbin(meta, path):
 
 	print("saving as npz...")
 
-	outfile = path / "events.npz"
+	outfile = path / eventsout
 	np.savez_compressed(outfile, data)
 	
 	# TODO: frame rescaling based on a value from config json
@@ -55,7 +62,7 @@ def processbin(meta, path):
 
 	print("done")
 
-def load_exr(path: Path) -> np.ndarray:
+def load_exr(path) -> np.ndarray:
 	exr = OpenEXR.InputFile(str(path))
 	dw = exr.header()["dataWindow"]
 
@@ -72,7 +79,7 @@ def load_exr(path: Path) -> np.ndarray:
 
 	return np.stack(channels, axis=-1)
 
-def loadexrfolder(path, channel=None) -> np.ndarray:
+def loadexrfolder(path: Path, channel=None) -> np.ndarray:
 	print(f'loading exrs in \'{path.parts[-1]}\' {f"channel {channel}" if channel is not None else ''}')
 
 	files = sorted(
@@ -105,9 +112,9 @@ def find_exposure(exrs, percentile=99.5, target=0.9) -> float:
 	scene_level = np.percentile(lum, percentile)
 	return scene_level / target
 
-def processcolorframes(meta, path):
+def processcolorframes():
 	print('calculating exposure')
-	exrvideo = loadexrfolder(path / "frames")
+	exrvideo = loadexrfolder(path / config["frameCapSubFolder"])
 	if exrvideo is None:
 		print('no color frames in folder')
 		return
@@ -119,7 +126,7 @@ def processcolorframes(meta, path):
 	writer = cv2.VideoWriter(
 		str(path / colorvidout),
 		cv2.VideoWriter_fourcc(*"mp4v"),
-		meta['config']['frameCapFPS'],
+		config['frameCapFPS'],
 		(w, h)
 	)
 
@@ -133,11 +140,8 @@ def processcolorframes(meta, path):
 		writer.write(img)
 
 	writer.release()
-
-	if meta['config']['deleteFrameCapsAfterPostProcess']:
-		shutil.rmtree(str(path / 'frames'))
-
-def resolveIDremapping(meta, path : Path): 
+	
+def resolveIDremapping(): 
 	remappath = path.parent.parent.parent / idremapfile
 	uniqueids = meta['uniqueids']
 
@@ -155,19 +159,23 @@ def resolveIDremapping(meta, path : Path):
 
 	return existing
 	
-def processdataframes(meta, path):
+def processdataframes():
 	print('processing data frames...')
 
-	remap = resolveIDremapping(meta, path)
+	remap = resolveIDremapping()
 
 	files = sorted(
-		(path / 'data').glob("*.exr"),
+		(path / config["frameCapDataSubFolder"]).glob("*.exr"),
 		key=lambda p: int(p.stem),
 	)
 
+	if len(files) == 0:
+		print('no data files, skipping..')
+		return;
+
 	first = load_exr(files[0])
 	h, w = first.shape[:2]
-	fps = meta['config']['frameCapFPS']
+	fps = config['frameCapFPS']
 
 	ffmpeg = subprocess.Popen(
 		[
@@ -186,7 +194,6 @@ def processdataframes(meta, path):
 		],
 		stdin=subprocess.PIPE,
 	)
-
 	
 	def convert_r(channel):
 		return np.clip(channel * depthscale, 0, 65535).astype(np.uint16)
@@ -218,14 +225,91 @@ def processdataframes(meta, path):
 		if ffmpeg.wait() != 0:
 			raise RuntimeError("FFmpeg encoding failed")
 
-	if meta['config']['deleteFrameCapsAfterPostProcess']:
-		shutil.rmtree(str(path / 'data'))
+viscompute_segframe = None
+vc_df_time = -1
+
+def loadviscompDF(time):
+	global viscompute_segframe
+	global vc_df_time
+
+	dataindex = int(time * config['frameCapFPS'])
+	vc_df_time = time
+	exrpath = path / config["frameCapDataSubFolder"] \
+		/ (f'%0{config["frameNumDigits"]}d.exr' % dataindex)
+	
+	exr = load_exr(exrpath)
+	viscompute_segframe = exr[..., 1].view(np.uint32)
+
+def computevisibility(bbobj):
+	id = bbobj['ID']
+	time = bbobj['time'] / config['timeScale']
+
+	if viscompute_segframe is None or vc_df_time != time:
+		loadviscompDF(time)
+
+	return bool(np.any(viscompute_segframe == id))
+
+def processbboxes():
+	print('processing bboxes..')
+	if not config['recordBboxes']: 
+		print('bboxes not recorded, skipped')
+		return
+	
+	if not (path / config["frameCapDataSubFolder"]).exists():
+		print('frame captures are required for bbox visibility checking, cannot process bboxes')
+		return
+	
+	data = json.loads((path / config['bboxFileName']).read_text())
+
+	'''
+	structure:
+		[
+		{time:
+		bboxes:[
+			{
+			id: label:
+			min:[] max:[]
+			dist: visible:
+			}
+		]} -- remove non rendered
+		]
+	'''
+	out = []
+
+	for frame in tqdm(data, 'frame'):
+		if len(frame) == 0: continue
+
+		bbs = []
+		for o in frame:
+			if not o['rendered']: continue
+
+			visible = computevisibility(o)
+			bb = {
+				'id' : o['ID'], 'label' : o['label'],
+				'min' : [o['min']['x'], o['min']['y']],
+				'max' : [o['max']['x'], o['max']['y']],
+				'dist' : o['distance'],
+				'visible' : visible
+			}
+
+			bbs.append(bb)
+
+		item = {
+			'time' : frame[0]['time'],
+			'bboxes' : bbs
+		}
+		out.append(item)
+
+	with (path / bboxesout).open('w') as w:
+		json.dump(out, w)
+	
 
 if __name__ == "__main__":
 	jsonpath = sys.argv[1]
 
 	with open(jsonpath, "r") as f:
 		meta = json.load(f)
+	config = meta['config']
 
 	camfilepath = meta['outfilepath']
 	camname = Path(camfilepath).stem
@@ -236,8 +320,14 @@ if __name__ == "__main__":
 	path = Path(camfilepath).parent / outsubfolder / permfoldername / camname
 	path.mkdir(parents=True, exist_ok=True)
 
-	processbin(meta, path)
+	processbin()
 
-	processcolorframes(meta, path)
+	processcolorframes()
 
-	processdataframes(meta, path)
+	processdataframes()
+
+	processbboxes()
+
+	if config['deleteFrameCapsAfterPostProcess']:
+		shutil.rmtree(str(path / config["frameCapSubFolder"]), ignore_errors=True)
+		shutil.rmtree(str(path / config["frameCapDataSubFolder"]), ignore_errors=True)

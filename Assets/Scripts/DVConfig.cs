@@ -11,15 +11,12 @@ public static class DVConfig {
 
 	public const float DefaultStereoSpacing = .065f; // 65 mm, typical spacing
 
-	// simulated fps 10k-100k realistic.
+	// simulated fps 10k-100k most realistic.
 	// make it 1m if you have all the time in the world i guess.
 	// higher = better temporal precision, more realistic
-	public const float simFPS = 1000;
-
+	public const float simFPS = 1000; 
 	public const int timeScale = 1_000_000_000;
-
 	public const bool interpolateTime = true;
-
 	public const int refractoryPeriod = 10000; // global timescale, this is ns
 
 	// low pass filter settings 
@@ -44,15 +41,24 @@ public static class DVConfig {
 	public const int eventBufferInitCap = 100000; // buffer initial capacity
 	public const int eventFlushIntervalMs = 10; // buffer flush interval
 	public const int eventCountScale = 100; // coefficient for event count in the packed float output from compute
-	
+	public const bool doAutoGrounding = true;
+
+	// --- output ---
 	public const string outputFolder = ".Output"; // event output folder
 	public const string permutationFolder = "Permutations";
 
 	public const string metadataFileName = "meta.json";
 
+	// -- extra data --
+	public const float extraDataSampleRate = 100;
 	public const bool recordCameraRoute = true;
-	public const int camRouteSampleRate = 100;
 	public const string camRouteFileName = "cameraroute.json";
+
+	//public const bool recordSkeleton = true;
+	//public const string skeletonFileName = "skeleton.json";
+
+	public const bool recordBboxes = true;
+	public const string bboxFileName = "bboxes_raw.json";
 
 	// ------- frame captures ------
 	public const bool doFrameCaptures = true;
@@ -61,5 +67,5 @@ public static class DVConfig {
 	public const string frameCapSubFolder = "frames";
 	public const string frameCapDataSubFolder = "data";
 	public const int frameNumDigits = 5;
-	public const bool deleteFrameCapsAfterPostProcess = true;
+	public const bool deleteFrameCapsAfterPostProcess = false;
 }

@@ -80,8 +80,8 @@ public class DebugExtra {
 		bool drawGame = false) {
 
 		// honestly an empty probably looks better 
-		DrawEmpty(pos, size, color, duration, drawScene, drawGame);
-		return;
+		//DrawEmpty(pos, size, color, duration, drawScene, drawGame);
+		//return;
 
 		Vector3 px = pos + size * Vector3.right;
 		Vector3 nx = pos + size * Vector3.left;
@@ -376,9 +376,10 @@ public class DebugExtra {
 			DrawLine(points[^1], points[0], col, duration, drawScene, drawGame);
 	}
 
-	public static void DrawRect2D(
+	public static void DrawRectSS(
 		Vector2 cornerA,
 		Vector2 cornerB,
+		Camera camera,
 		Color? color = null,
 		float duration = 0,
 		bool drawScene = true,
@@ -386,10 +387,10 @@ public class DebugExtra {
 
 		Color col = color ?? Color.white;
 
-		Vector3 a = new(cornerA.x, cornerA.y, 0);
-		Vector3 b = new(cornerB.x, cornerA.y, 0);
-		Vector3 c = new(cornerB.x, cornerB.y, 0);
-		Vector3 d = new(cornerA.x, cornerB.y, 0);
+		Vector3 a = camera.ScreenToWorldPoint(new(cornerA.x, cornerA.y, .2f));
+		Vector3 b = camera.ScreenToWorldPoint(new(cornerB.x, cornerA.y, .2f));
+		Vector3 c = camera.ScreenToWorldPoint(new(cornerB.x, cornerB.y, .2f));
+		Vector3 d = camera.ScreenToWorldPoint(new(cornerA.x, cornerB.y, .2f));
 
 		DrawLine(a, b, col, duration, drawScene, drawGame);
 		DrawLine(b, c, col, duration, drawScene, drawGame);

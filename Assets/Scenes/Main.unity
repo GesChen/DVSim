@@ -269,10 +269,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac525f420e4b0f44799b5e216cb8a6af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PoseAnimObj
+  LabelOverride: 
   ID: 0
   AnimObjAssetPath: Assets/Assets/freemocap/fm_test.fbx
   Scale: 1
   Offset: {x: 0, y: 0.5, z: 0}
+  useCustomOffset: 0
   TargetArmatureType: FMC
 --- !u!1 &330585543
 GameObject:
@@ -473,6 +475,160 @@ MonoBehaviour:
   Armatures: []
   ArmatureInUse: {fileID: 0}
   CurrentSceneLengthSeconds: 0
+--- !u!1 &571607387
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 571607388}
+  - component: {fileID: 571607392}
+  - component: {fileID: 571607391}
+  - component: {fileID: 571607390}
+  - component: {fileID: 571607389}
+  m_Layer: 0
+  m_Name: moving cube (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &571607388
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 571607387}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.815, y: 1.35, z: -13.58}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5338768569568202563}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &571607389
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 571607387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 20ae3d657126d7143b43bf236472ddf9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DVO_ConstTransform
+  LabelOverride: 
+  ID: 0
+  constPositionRate: {x: 0, y: 0, z: 0}
+  sinPositionAmount: {x: 3, y: 0, z: 0}
+  sinPositionRate: {x: 1, y: 0, z: 0}
+--- !u!65 &571607390
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 571607387}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!23 &571607391
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 571607387}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 55c9f0e641aa3864e8170a02747e1ab1, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &571607392
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 571607387}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1004727693
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1004727694}
+  m_Layer: 0
+  m_Name: vertpick
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1004727694
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1004727693}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.61, y: -0.41, z: 1.0008}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6496623489792243750}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1112438144
 GameObject:
   m_ObjectHideFlags: 0
@@ -660,6 +816,7 @@ GameObject:
   - component: {fileID: 1912218704}
   - component: {fileID: 1912218708}
   - component: {fileID: 1912218707}
+  - component: {fileID: 1912218709}
   m_Layer: 0
   m_Name: Main Camera (1)
   m_TagString: MainCamera
@@ -802,6 +959,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   Target: {fileID: 1982064167}
+--- !u!114 &1912218709
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1912218702}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b6f2db1182aa7d4394fe2c0a6d56773, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  draw: 1
+  color: {r: 1, g: 1, b: 1, a: 0.15686275}
+  size: 0.05
 --- !u!1 &1982064163
 GameObject:
   m_ObjectHideFlags: 0
@@ -1010,10 +1182,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac525f420e4b0f44799b5e216cb8a6af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PoseAnimObj
+  LabelOverride: 
   ID: 0
   AnimObjAssetPath: Assets/Assets/MotionBERT/skeleton-walk3.fbx
   Scale: 1
   Offset: {x: 0, y: 0.94, z: 0}
+  useCustomOffset: 0
   TargetArmatureType: MBERT
 --- !u!1 &2059133966
 GameObject:
@@ -1041,7 +1215,7 @@ Transform:
   m_GameObject: {fileID: 2059133966}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -0.08, y: 0.08, z: -0.99}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1059,10 +1233,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac525f420e4b0f44799b5e216cb8a6af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PoseAnimObj
+  LabelOverride: 
   ID: 0
   AnimObjAssetPath: Assets/Assets/captury/1.fbx
   Scale: 1
   Offset: {x: 0, y: 1, z: 0}
+  useCustomOffset: 0
   TargetArmatureType: CPTY
 --- !u!1 &2077162538
 GameObject:
@@ -1373,6 +1549,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e6c4d1b687068c74789532db5ea9281d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_HumanModel
+  LabelOverride: 
   ID: 0
   Models:
   - TargetArmatureType: BVH
@@ -3108,6 +3285,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c21f63e64c9f00e4ea45917c6ea1e875, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_Lighting
+  LabelOverride: 
   ID: 0
 --- !u!1 &1091157331278587514
 GameObject:
@@ -3166,7 +3344,7 @@ Transform:
   m_GameObject: {fileID: 6457640963949963661}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071069, y: -0, z: -0, w: 0.7071067}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 2.276, y: 0, z: 0}
   m_LocalScale: {x: 0.1, y: 0.10000002, z: 0.099999994}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -3863,10 +4041,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac525f420e4b0f44799b5e216cb8a6af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PoseAnimObj
+  LabelOverride: 
   ID: 0
   AnimObjAssetPath: Assets/Assets/BVH/01_01.fbx
   Scale: 0.07
   Offset: {x: 0, y: -0.07, z: 0}
+  useCustomOffset: 0
   TargetArmatureType: BVH
 --- !u!1 &1955770841113479860
 GameObject:
@@ -4837,6 +5017,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad52b4920b9f506499ecd9b09cb0818d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_Rotator
+  LabelOverride: 
   ID: 0
   axes: {x: 0, y: 0, z: 20}
 --- !u!4 &3052410454447541753
@@ -5714,6 +5895,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68d31b0fa4fcf854b922a6fadde7f29e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_Armature
+  LabelOverride: 
   ID: 0
   Type: MBERT
   RootBoneTransform: {fileID: 162786508521796014}
@@ -5745,6 +5927,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f778bd6dc8af20f4fb63019366df052e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_Environment
+  LabelOverride: 
   ID: 0
 --- !u!1 &4002016547019783940
 GameObject:
@@ -6085,7 +6268,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &4361878641178809160
 GameObject:
   m_ObjectHideFlags: 0
@@ -6840,6 +7023,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8258925398208214142}
+  - {fileID: 571607388}
   - {fileID: 1555730901969133386}
   - {fileID: 1165719854911136187}
   m_Father: {fileID: 1171441057}
@@ -7057,7 +7241,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 55c9f0e641aa3864e8170a02747e1ab1, type: 2}
+  - {fileID: 2100000, guid: 7e53064687c42274aaff505a09087a69, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -7225,7 +7409,7 @@ Transform:
   m_GameObject: {fileID: 3917091861416045826}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: -0, z: -0, w: 0.7071067}
-  m_LocalPosition: {x: 0, y: 0.16769361, z: -0.057084117}
+  m_LocalPosition: {x: 2.229, y: 0.902, z: -0.057}
   m_LocalScale: {x: 96.29496, y: 96.29496, z: 96.29496}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -7244,6 +7428,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68d31b0fa4fcf854b922a6fadde7f29e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_Armature
+  LabelOverride: 
   ID: 0
   Type: FMC
   RootBoneTransform: {fileID: 252425126598450837}
@@ -7272,7 +7457,7 @@ Transform:
   m_GameObject: {fileID: 5444961225847020113}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: -0, z: -0, w: 0.7071067}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -2.63, y: -0.08, z: 0}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -7291,6 +7476,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68d31b0fa4fcf854b922a6fadde7f29e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_Armature
+  LabelOverride: 
   ID: 0
   Type: BVH
   RootBoneTransform: {fileID: 1862925670447674312}
@@ -7982,6 +8168,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68d31b0fa4fcf854b922a6fadde7f29e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_Armature
+  LabelOverride: 
   ID: 0
   Type: CPTY
   RootBoneTransform: {fileID: 7354220205329165117}
@@ -8028,9 +8215,10 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: -0, z: -0, w: 0.7071067}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 100, y: 100, z: 100}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1004727694}
   m_Father: {fileID: 121486008}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &6503902805111589931
@@ -8412,6 +8600,7 @@ GameObject:
   - component: {fileID: 6496623489792243750}
   - component: {fileID: 653379682536425650}
   - component: {fileID: 6886237193213891966}
+  - component: {fileID: 6886237193213891967}
   m_Layer: 0
   m_Name: SMPLX-mesh-neutral
   m_TagString: Untagged
@@ -8431,6 +8620,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e6c4d1b687068c74789532db5ea9281d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_HumanModel
+  LabelOverride: 
   ID: 0
   Models:
   - TargetArmatureType: BVH
@@ -8449,6 +8639,25 @@ MonoBehaviour:
     SourceAsset: {fileID: 919132149155446097, guid: 0fa7013eef8a6764ab9b11c268b14a01,
       type: 3}
     BoneStructure: []
+--- !u!114 &6886237193213891967
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6886237193213891965}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4ead20f30e9f85c4d85d9f49c1456e50, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  vertexIndex: 0
+  vertexIndices: 3d0c0000fa0b00008e0c0000030a000090230000051100003e1d000054240000b4200000a01a000002130000732100000a0f000069150000c21500009a1f0000890f0000951100009a280000e0240000f31a0000b314000017140000941700002b1000005c1e0000581c00002c280000d6200000841a0000cd030000dc0b00003d160000bf12000016120000b2150000df1e000029100000c1240000391b000056240000c1110000170f0000701f0000
+  target: {fileID: 1004727693}
+  previewSize: -0.03
+  currentColor: {r: 1, g: 0, b: 0, a: 1}
+  serializedColor: {r: 0, g: 1, b: 0, a: 1}
+  closestColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
 --- !u!4 &6915256703295841418
 Transform:
   m_ObjectHideFlags: 0
@@ -8539,6 +8748,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7cf6a4b58f947b5488203e57d6f92ae1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_ObjectGroup
+  LabelOverride: 
   ID: 0
   Objects: []
 --- !u!4 &7017891198105632980
@@ -8730,6 +8940,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 20ae3d657126d7143b43bf236472ddf9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_ConstTransform
+  LabelOverride: 
   ID: 0
   constPositionRate: {x: 0, y: 0, z: 0}
   sinPositionAmount: {x: 3, y: 0, z: 0}
@@ -8787,6 +8998,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 41d88e188a6d0b04ab922ce09ba007fe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  LabelOverride: 
   ID: 0
 --- !u!4 &7206081862371659465
 Transform:
@@ -9762,11 +9974,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7cf6a4b58f947b5488203e57d6f92ae1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_ObjectGroup
+  LabelOverride: 
   ID: 0
   Objects:
   - {fileID: 3048249453040569769}
   - {fileID: 7164588604623088745}
   - {fileID: 7201146063029379535}
+  - {fileID: 571607389}
 --- !u!1 &8089097335425325991
 GameObject:
   m_ObjectHideFlags: 0

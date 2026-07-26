@@ -246,7 +246,8 @@ public class DVS : MonoBehaviour {
 				
 				var data = req.GetData<Vector4>();
 
-				data.CopyTo(ThreshNRData);
+				if (ThreshNRData.IsCreated)
+					data.CopyTo(ThreshNRData);
 			});
 	}
 
@@ -442,11 +443,15 @@ public class DVS : MonoBehaviour {
 			req => Readback(req, timeAtReq, frameAtReq)
 		);
 
-		if (DVConfig.doFrameCaptures && (frameAtReq % (DVConfig.simFPS / DVConfig.frameCapFPS)) < 1f)
+		bool triggerOtherFPSEvent(float otherfps) =>
+			Mathf.Floor(frameAtReq * otherfps / DVConfig.simFPS)
+			!= Mathf.Floor((frameAtReq - 1) * otherfps / DVConfig.simFPS);
+
+		if (DVConfig.doFrameCaptures && triggerOtherFPSEvent(DVConfig.frameCapFPS))
 			TakeFrameCapture();
 
-		if (DVConfig.recordCameraRoute && (frameAtReq % (DVConfig.simFPS / DVConfig.camRouteSampleRate)) < 1f)
-			memory.LogCameraRoute(timeAtReq);
+		if (triggerOtherFPSEvent(DVConfig.extraDataSampleRate))
+			memory.LogExtraData(timeAtReq);
 	}
 
 	void Readback(AsyncGPUReadbackRequest request, ulong time, ulong frame) {

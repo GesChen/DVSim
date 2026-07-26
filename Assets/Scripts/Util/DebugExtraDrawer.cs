@@ -15,6 +15,8 @@ public class DebugExtraDrawer : Singleton<DebugExtraDrawer> {
 	}
 
 	private void RenderPipelineManager_endCameraRendering(ScriptableRenderContext context, Camera camera) {
+		if (camera.cameraType != CameraType.Game) return;
+
 		OnPostRender();
 	}
 
