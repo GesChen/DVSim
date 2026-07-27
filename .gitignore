@@ -154,3 +154,5 @@ InitTestScene*.unity*
 /Python/motion/captury/input
 /Python/exterior/carla
 /Python/human/SMPLitex-textures
+/Assets/Materials/human skins/SMPLitex-textures
+/Assets/Materials

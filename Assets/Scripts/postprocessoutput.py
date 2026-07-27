@@ -90,38 +90,85 @@ def loadexrfolder(path: Path, channel=None) -> np.ndarray:
 	if not files:
 		return None
 
-	frames = []
+	# preallocate one ndarray instead of list temporary -> stack = double allocate
+	first = load_exr(files[0])
 
-	for f in tqdm(files):
+	if channel is not None:
+		first = first[..., channel]
+
+	frames = np.empty((len(files), *first.shape), dtype=first.dtype)
+	frames[0] = first
+
+	for i, f in enumerate(tqdm(files[1:]), start=1):
 		img = load_exr(f)
 
 		if channel is not None:
 			img = img[..., channel]
 
-		frames.append(img)
+		frames[i] = img
 
-	return np.stack(frames, axis=0)
+	return frames
 
-def find_exposure(exrs, percentile=99.5, target=0.9) -> float:
-	lum = (
-		0.2126 * exrs[..., 0] +
-		0.7152 * exrs[..., 1] +
-		0.0722 * exrs[..., 2] 
+
+def getexrfiles(path: Path) -> list[Path]:
+	return sorted(
+		path.glob("*.exr"),
+		key=lambda p: int(re.search(r"\d+", p.stem).group())
 	)
 
-	scene_level = np.percentile(lum, percentile)
-	return scene_level / target
+
+def calculate_exposure(
+	files: list[Path],
+	n_samples=16,
+	percentile=99.5,
+	target=0.9
+) -> float:
+	print(f'finding exposure from {min(n_samples, len(files))} representative frames')
+
+	# Evenly distribute samples across the entire sequence.
+	indices = np.linspace(
+		0,
+		len(files) - 1,
+		min(n_samples, len(files)),
+		dtype=int
+	)
+
+	luminance_samples = []
+
+	for i in tqdm(indices, desc='exposure samples'):
+		img = load_exr(files[i])[..., :3]
+
+		lum = (
+			0.2126 * img[..., 0] +
+			0.7152 * img[..., 1] +
+			0.0722 * img[..., 2]
+		)
+
+		luminance_samples.append(lum.ravel())
+
+	scene_level = np.percentile(
+		np.concatenate(luminance_samples),
+		percentile
+	)
+
+	return max(scene_level / target, np.finfo(np.float32).eps)
 
 def processcolorframes():
-	print('calculating exposure')
-	exrvideo = loadexrfolder(path / config["frameCapSubFolder"])
-	if exrvideo is None:
+	frame_path = path / config["frameCapSubFolder"]
+	files = getexrfiles(frame_path)
+
+	if not files:
 		print('no color frames in folder')
 		return
 
-	exposure = find_exposure(exrvideo)
+	exposure = calculate_exposure(
+		files,
+		n_samples=16
+	)
 
-	h, w = exrvideo.shape[1:3]
+	first = load_exr(files[0])
+	h, w = first.shape[:2]
+	del first
 
 	writer = cv2.VideoWriter(
 		str(path / colorvidout),
@@ -130,16 +177,22 @@ def processcolorframes():
 		(w, h)
 	)
 
+	if not writer.isOpened():
+		raise RuntimeError('failed to open video writer')
+
 	print('processing color frames...')
-	for img in tqdm(exrvideo):
-		img = img[:, :, :3] # has alpha channel
 
-		img = np.clip(img / exposure, 0.0, 1.0)
-		img = (img * 255).astype(np.uint8)
+	try:
+		for file in tqdm(files):
+			img = load_exr(file)[..., :3]
 
-		writer.write(img)
+			img = np.clip(img / exposure, 0.0, 1.0)
+			img = (img * 255).astype(np.uint8)
 
-	writer.release()
+			# EXR is RGB; OpenCV VideoWriter expects BGR.
+			writer.write(img[..., ::-1])
+	finally:
+		writer.release()
 	
 def resolveIDremapping(): 
 	remappath = path.parent.parent.parent / idremapfile
@@ -149,6 +202,13 @@ def resolveIDremapping():
 		with remappath.open('r') as f:
 			existing = json.load(f)
 	else: existing = []
+
+	# force sky to 0
+	if '0' not in existing:
+		existing.insert(0, '0')
+	elif existing[0] != '0':
+		existing.remove('0')
+		existing.insert(0, '0')
 
 	for id in uniqueids:
 		if id not in existing:

@@ -6,6 +6,7 @@ using UnityEngine;
 public class DVO_Armature : DVObject {
 	public string Type;
 	public Transform RootBoneTransform;
+	public Vector3 groundingOffset;
 
 	public override void Init() {
 	}

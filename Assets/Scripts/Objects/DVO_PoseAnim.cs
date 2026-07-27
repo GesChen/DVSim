@@ -10,10 +10,14 @@ public class DVO_PoseAnim : DVObject {
 
 	public Poses.PoseAnimation Animation { get; private set; }
 
+	DVO_Armature targetArm;
 	Transform target;
+	Quaternion targetInitRot;
 
 	public override void Init() {
+		targetArm = SceneManager.Instance.ArmatureInUse;
 		target = SceneManager.Instance.ArmatureInUse.transform;
+		targetInitRot = target.rotation;
 
 		LoadFBX(AnimObjAssetPath, out var model, out var clip);
 
@@ -50,7 +54,7 @@ public class DVO_PoseAnim : DVObject {
 				&& (ground == Vector3.zero || (ground != Vector3.zero && hit2.point.y < ground.y)))
 				ground = hit2.point;
 
-			Offset = ground - feetAvg;
+			Offset = ground - feetAvg + targetArm.groundingOffset;
 
 			//DebugExtra.DrawPoint(ground, MoreColors.Red);
 			//DebugExtra.DrawPoint(feetAvg, MoreColors.Green);
@@ -63,6 +67,6 @@ public class DVO_PoseAnim : DVObject {
 
 		CopyPose(pose, target);
 
-		target.position = Offset;
+		target.SetPositionAndRotation(Offset, transform.rotation * targetInitRot);
 	}
 }
