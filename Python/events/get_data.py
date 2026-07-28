@@ -4,6 +4,8 @@ import h5py
 import hdf5plugin
 from pathlib import Path
 
+
+
 def sortdata(x, y, t, p):
     print('sorting...')
     order = np.argsort(t, kind='stable')
@@ -104,7 +106,7 @@ def load_unity_dataset(path):
     x = data['x'].astype(np.int32)
     y = data['y'].astype(np.int32)
     t = data['t'].astype(np.float64) / 1e9
-    p = data['p'].astype(np.bool)
+    p = data['p'].astype(bool)
     p = np.where(p, 1, -1)
 
     print('loaded')

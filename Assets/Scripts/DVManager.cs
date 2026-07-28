@@ -41,7 +41,7 @@ public class DVManager : Singleton<DVManager> {
 
 		InitSensors();
 
-		LoadPermutation(new int[] { 0, 0, 0, 0, 0 });
+		LoadPermutation(new int[] { 0, 0, 0, 0, 0, 0});
 
 		StartCoroutine(SimulateCurrentScene());
 

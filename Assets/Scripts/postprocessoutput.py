@@ -250,6 +250,7 @@ def processdataframes():
 			"-coder", "1",
 			"-context", "1",
 			"-slicecrc", "1",
+			'-hide_banner',
 			str(path / datavidout),
 		],
 		stdin=subprocess.PIPE,

@@ -5,12 +5,21 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python Debugger: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
+        {
             "name": "debug postprocessoutput",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["E:\\DVSim\\Assets\\.Output\\Permutations\\0_0_0_0_0\\camera 2\\meta.json"],
+            "args": [
+                "E:\\DVSim\\Assets\\.Output\\Permutations\\0_0_0_0_0_0\\camera 2\\meta.json"
+            ],
             "justMyCode": false
         }
     ]

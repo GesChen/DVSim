@@ -49,6 +49,10 @@ public class HandheldTremor : MonoBehaviour {
 		transform.localRotation = baseRot * Quaternion.Euler(euler);
 	}
 
+	private void Update() { // needed for the enable checkbox
+		
+	}
+
 	static float Fbm(
 		float seedX,
 		float seedY,

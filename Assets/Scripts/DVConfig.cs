@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Newtonsoft.Json.Converters;
+
 public static class DVConfig {
 	public static int Seed; // set by manager each run 
 
@@ -31,10 +33,24 @@ public static class DVConfig {
 	public const bool doLeaking = true;
 	public const float leakRateHz = .1f;
 	public const float leakJitterFraction = .1f;
-	public const bool doPhotoreceptorNoise = true; // includes shot noise 
+
+	[Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
+	public enum PhotoNoiseBehaviour {
+		None,
+		v2e,
+		FixedVolts,
+		ApproximatedBA // approximate voltage based on background activity
+	}
+	public const PhotoNoiseBehaviour photoNoise = PhotoNoiseBehaviour.ApproximatedBA;
+
+	// v2e calculation
 	public const float shotNoiseRateHz = 5f;
 	// this value is REALLY finnicky. try to figure it out better. 
-	public const float photoNoiseCutoffHz = 200f; // for 1000fps 100-300, no longer v2e's
+	public const float photoNoiseCutoffHz = 100; // for 1000fps 100-300, no longer v2e's
+
+	public const float fixedPhotoNoiseVolts = .09f; // 1 mV
+
+	public const float targetBA = 1f;
 
 	// --- Unity side config ---
 	public const int cameraWarmupTimeFrames = 50; // scene warmup time frames

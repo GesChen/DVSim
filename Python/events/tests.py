@@ -1,5 +1,3 @@
-import numpy as np
+from emulator_utils import compute_photoreceptor_noise_voltage
 
-a = np.load(r'E:\DVSim\Python\MotionBERT\output\X3D.npy')
-
-print(a)
+print(compute_photoreceptor_noise_voltage(5., 30., 60., .2, .2, .05))

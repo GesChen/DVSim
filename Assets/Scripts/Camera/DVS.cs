@@ -204,19 +204,22 @@ public class DVS : MonoBehaviour {
 		EventShader.SetFloat("leakRateHz", DVConfig.leakRateHz);
 		EventShader.SetFloat("leakJitterFraction", DVConfig.leakJitterFraction);
 
-		EventShader.SetBool("addPhotoAndShotNoise", DVConfig.doPhotoreceptorNoise);
-		float photoNoiseVolts;
-		if (DVConfig.doPhotoreceptorNoise)
-			photoNoiseVolts = ComputePhotoreceptorNoiseVoltage(
-				DVConfig.shotNoiseRateHz,
-				DVConfig.photoNoiseCutoffHz, // f3db == cutoff hz
-				DVConfig.simFPS,
-				DVConfig.idealPosThresh,
-				DVConfig.idealNegThresh,
-				DVConfig.threshSigma
-			);
-		else
-			photoNoiseVolts = 0;
+		EventShader.SetBool("addPhotoAndShotNoise", DVConfig.photoNoise != DVConfig.PhotoNoiseBehaviour.None);
+		float photoNoiseVolts = DVConfig.photoNoise switch {
+			DVConfig.PhotoNoiseBehaviour.None => 0,
+			DVConfig.PhotoNoiseBehaviour.v2e =>
+				ComputePhotoreceptorNoiseVoltage(
+					DVConfig.shotNoiseRateHz,
+					DVConfig.photoNoiseCutoffHz, // f3db == cutoff hz
+					DVConfig.simFPS,
+					DVConfig.idealPosThresh,
+					DVConfig.idealNegThresh,
+					DVConfig.threshSigma
+				),
+			DVConfig.PhotoNoiseBehaviour.FixedVolts => DVConfig.fixedPhotoNoiseVolts,
+			DVConfig.PhotoNoiseBehaviour.ApproximatedBA => ApproximateVoltage(DVConfig.simFPS, DVConfig.targetBA),
+			_ => throw new IndexOutOfRangeException()
+		};
 		EventShader.SetFloat("photoNoiseVoltage", photoNoiseVolts);
 		EventShader.SetFloat("photoNoiseCutoffHz", DVConfig.photoNoiseCutoffHz);
 
@@ -252,13 +255,54 @@ public class DVS : MonoBehaviour {
 	}
 
 	// v2e- emulator_utils.py
-	public static float ComputePhotoreceptorNoiseVoltage(
+	static float ComputePhotoreceptorNoiseVoltage(
 		float shotNoiseRateHz,
 		float f3db,
 		float sampleRateHz,
 		float posThr,
 		float negThr,
 		float sigmaThr) {
+
+
+		static float ComputeVnFromLogRatePerHz(float thr, float x) {
+			float x2 = x * x;
+			float x3 = x2 * x;
+
+			float y =
+			- 0.0026f * x3
+			- 0.036f * x2
+			- 0.1949f * x
+			+ 0.321f;
+
+			float thrPerVn = Mathf.Pow(10f, y);
+			return thr / thrPerVn;
+		}
+
+		// Box-Muller normal RNG, mean 0, std 1.
+		static float RandNormal() {
+			float u1 = Mathf.Max(UnityEngine.Random.value, 1e-7f);
+			float u2 = UnityEngine.Random.value;
+
+			return Mathf.Sqrt(-2f * Mathf.Log(u1)) *
+				   Mathf.Cos(2f * Mathf.PI * u2);
+		}
+
+		static float StdDev(float[] values) {
+			float mean = 0f;
+			for (int i = 0; i < values.Length; i++)
+				mean += values[i];
+
+			mean /= values.Length;
+
+			float var = 0f;
+			for (int i = 0; i < values.Length; i++) {
+				float d = values[i] - mean;
+				var += d * d;
+			}
+
+			return Mathf.Sqrt(var / values.Length);
+		}
+
 
 		float ratePerBw = (shotNoiseRateHz / f3db) * 0.5f;
 
@@ -294,7 +338,7 @@ public class DVS : MonoBehaviour {
 				$"eps={eps:F3} for IIR lowpass is > 0.1. " +
 				$"Increase sample rate or decrease cutoff_hz. dt={dt:F6}s, cutoff={f3db:F3}Hz");
 			Debug.LogWarning(
-				"THIS MAY CAUSE NO OUTPUT!!! >10 does not!!!");
+				"THIS MAY CAUSE NO OUTPUT!!! >2.5 does not!!!");
 		}
 
 		int len = Mathf.Max(2, Mathf.CeilToInt((1000f * tau) / dt));
@@ -318,43 +362,16 @@ public class DVS : MonoBehaviour {
 		return vnScaled;
 	}
 
-	static float ComputeVnFromLogRatePerHz(float thr, float x) {
-		float x2 = x * x;
-		float x3 = x2 * x;
+	static float ApproximateVoltage(float fps, float targetBA) {
+		float lba = Mathf.Log10(targetBA);
+		float lfps = Mathf.Log10(fps);
 
-		float y =
-			- 0.0026f * x3
-			- 0.036f * x2
-			- 0.1949f * x
-			+ 0.321f;
-
-		float thrPerVn = Mathf.Pow(10f, y);
-		return thr / thrPerVn;
-	}
-
-	// Box-Muller normal RNG, mean 0, std 1.
-	static float RandNormal() {
-		float u1 = Mathf.Max(UnityEngine.Random.value, 1e-7f);
-		float u2 = UnityEngine.Random.value;
-
-		return Mathf.Sqrt(-2f * Mathf.Log(u1)) *
-			   Mathf.Cos(2f * Mathf.PI * u2);
-	}
-
-	static float StdDev(float[] values) {
-		float mean = 0f;
-		for (int i = 0; i < values.Length; i++)
-			mean += values[i];
-
-		mean /= values.Length;
-
-		float var = 0f;
-		for (int i = 0; i < values.Length; i++) {
-			float d = values[i] - mean;
-			var += d * d;
-		}
-
-		return Mathf.Sqrt(var / values.Length);
+		return 
+			0.04725155f
+			+ 0.00274859f * lba
+			+ 0.00788103f * lfps
+			+ 0.00955851f * lba * lfps
+		;
 	}
 
 	// occurs after init, prepare for a new permutation
