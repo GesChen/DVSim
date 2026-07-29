@@ -108,8 +108,6 @@ InitTestScene*.unity*
 
 /Assets/Assets/cmu mocap bvhs
 /Assets/.Output
-/Assets/Python/data
-/Assets/Python/__pycache__
 *.pyc
 /Python/data
 /Python/__pycache__
@@ -155,5 +153,3 @@ InitTestScene*.unity*
 /Python/exterior/carla
 /Python/human/SMPLitex-textures
 /Assets/Materials/human skins/SMPLitex-textures
-/Assets/Materials
-/Assets/Assets/exterior scenes/forest_ground_06_2k

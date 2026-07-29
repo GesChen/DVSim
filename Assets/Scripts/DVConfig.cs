@@ -16,7 +16,7 @@ public static class DVConfig {
 	// simulated fps 10k-100k most realistic.
 	// make it 1m if you have all the time in the world i guess.
 	// higher = better temporal precision, more realistic
-	public const float simFPS = 1000; 
+	public const float simFPS = 10000; 
 	public const int timeScale = 1_000_000_000;
 	public const bool interpolateTime = true;
 	public const int refractoryPeriod = 10000; // global timescale, this is ns
@@ -50,7 +50,7 @@ public static class DVConfig {
 
 	public const float fixedPhotoNoiseVolts = .09f; // 1 mV
 
-	public const float targetBA = 1f;
+	public const float targetBA = .1f;
 
 	// --- Unity side config ---
 	public const int cameraWarmupTimeFrames = 50; // scene warmup time frames

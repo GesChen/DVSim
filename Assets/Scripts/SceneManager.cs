@@ -26,8 +26,7 @@ public class SceneManager : Singleton<SceneManager> {
 			var desired = g.Objects[permutation[i]];
 			desired.gameObject.SetActive(true);
 			newObjs.Add(desired);
-			if (desired is DVO_ObjectGroup subgroup) 
-				newObjs.AddRange(subgroup.Objects);
+			newObjs.AddRange(desired.AllSubObjects);
 
 			if (desired.TryGetComponent(out DVO_PoseAnim anim)) {
 				// find armature type from the animation

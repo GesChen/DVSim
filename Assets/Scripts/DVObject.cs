@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.ConstrainedExecution;
 using System.Text;
 using UnityEngine;
 
@@ -9,6 +8,11 @@ public abstract class DVObject : MonoBehaviour {
 	public string LabelOverride;
 
 	public string Label => LabelOverride.Length > 0 ? LabelOverride : gameObject.name;
+
+	public DVObject[] AllSubObjects;
+	void Awake() {
+		AllSubObjects = transform.GetComponentsInChildren<DVObject>().Where(o => o != this).ToArray();
+	}
 
 	public Renderer renderer => HF.LoadCached(ref m_renderer, () => {
 		if (checkedR) return null;
