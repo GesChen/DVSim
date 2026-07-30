@@ -47,6 +47,15 @@ class EventStream:
         return stream
 
     @classmethod
+    def from_unity_raw(cls, path):
+        print("loading dataset...")
+
+        data = np.load(Path(path))["arr_0"]
+
+        print("loaded")
+        return data
+
+    @classmethod
     def from_v2e(cls, path):
         print("loading dataset...")
 

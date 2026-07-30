@@ -153,3 +153,4 @@ InitTestScene*.unity*
 /Python/exterior/carla
 /Python/human/SMPLitex-textures
 /Assets/Materials/human skins/SMPLitex-textures
+*.npz
