@@ -4,6 +4,7 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+        
         {
             "name": "Python Debugger: Current File",
             "type": "debugpy",
@@ -18,7 +19,7 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "args": [
-                "E:\\DVSim\\Assets\\.Output\\Permutations\\0_0_0_0_0_0\\camera 2\\meta.json"
+                "E:\\DVSim\\Assets\\.Output\\Permutations\\0_0_0_0_0_0\\drone\\meta.json"
             ],
             "justMyCode": false
         }

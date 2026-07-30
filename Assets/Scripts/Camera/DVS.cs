@@ -35,6 +35,8 @@ public class DVS : MonoBehaviour {
 	private DVS StereoLeft;
 	private DVS StereoRight;
 
+	DVMotion motionController;
+
 	RenderTexture cameraTarget;
 	RenderTexture sensorState;
 	RenderTexture outputMap;
@@ -64,9 +66,6 @@ public class DVS : MonoBehaviour {
 	Vector2Int globalShaderGroups;
 
 	System.Random rng;
-
-	public Action OnInit;
-	public Action<double> OnTick;
 
 	bool hot;
 
@@ -121,7 +120,10 @@ public class DVS : MonoBehaviour {
 
 		SetupEventShader();
 
-		OnInit?.Invoke();
+		if (TryGetComponent(out DVMotion mc)) {
+			motionController = mc;
+			mc.Initialize();
+		}
 
 		hot = true;
 		Debug.Log($"DVS \"{camera.name}\" ready");
@@ -159,8 +161,6 @@ public class DVS : MonoBehaviour {
 		objt.SetLocalPositionAndRotation((left ? -1 : 1) * StereoSpacing * Vector3.right, Quaternion.identity);
 
 		DVS dvs = obj.AddComponent<DVS>();
-		dvs.OnInit = OnInit;
-		dvs.OnTick = OnTick;
 		dvs.Stereo = false;
 
 		return dvs;
@@ -421,14 +421,15 @@ public class DVS : MonoBehaviour {
 		Destroy(rt);
 	}
 
-	public void Tick() {
+	public void Tick(ulong time) {
 		if (Stereo) {
-			StereoLeft.Tick();
-			StereoRight.Tick();
+			StereoLeft.Tick(time);
+			StereoRight.Tick(time);
 			return;
 		}
 
-		OnTick?.Invoke(DVManager.Time / (double)DVConfig.timeScale);
+		if (motionController != null)
+			motionController.UpdateMotion(time);
 
 		//Debug.Log("tick");
 		camera.Render();
@@ -450,7 +451,7 @@ public class DVS : MonoBehaviour {
 		//if (DVManager.Frame % 10 == 0)
 		//	RenderDoc.EndCaptureRenderDoc(EditorWindow.focusedWindow);
 
-		ulong timeAtReq = DVManager.Time;
+		ulong timeAtReq = time;
 		ulong frameAtReq = DVManager.Frame;
 
 		AsyncGPUReadback.Request(

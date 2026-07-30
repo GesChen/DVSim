@@ -16,7 +16,7 @@ public static class DVConfig {
 	// simulated fps 10k-100k most realistic.
 	// make it 1m if you have all the time in the world i guess.
 	// higher = better temporal precision, more realistic
-	public const float simFPS = 10000; 
+	public const float simFPS = 1000; 
 	public const int timeScale = 1_000_000_000;
 	public const bool interpolateTime = true;
 	public const int refractoryPeriod = 10000; // global timescale, this is ns
@@ -41,7 +41,7 @@ public static class DVConfig {
 		FixedVolts,
 		ApproximatedBA // approximate voltage based on background activity
 	}
-	public const PhotoNoiseBehaviour photoNoise = PhotoNoiseBehaviour.ApproximatedBA;
+	public const PhotoNoiseBehaviour photoNoise = PhotoNoiseBehaviour.None;
 
 	// v2e calculation
 	public const float shotNoiseRateHz = 5f;
@@ -83,5 +83,5 @@ public static class DVConfig {
 	public const string frameCapSubFolder = "frames";
 	public const string frameCapDataSubFolder = "data";
 	public const int frameNumDigits = 5;
-	public const bool deleteFrameCapsAfterPostProcess = false;
+	public const bool deleteFrameCapsAfterPostProcess = true;
 }

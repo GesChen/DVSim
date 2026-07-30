@@ -1,8 +1,6 @@
 using UnityEngine;
 
-public class HandheldTremor : MonoBehaviour {
-	DVS MainSensor;
-
+public class DVM_HandheldTremor : DVMotion {
 	[Header("Amplitude (degrees)")]
 	public float Scale = 1;
 	public Vector3 Amplitude = new(0.15f, 0.12f, 0.08f);
@@ -25,14 +23,13 @@ public class HandheldTremor : MonoBehaviour {
 
 	Quaternion baseRot;
 
-	private void Awake() {
-		MainSensor = GetComponent<DVS>();
-		MainSensor.OnInit += Init;
-		MainSensor.OnTick += UpdateTremor;
+
+	public override void Initialize() {
+		baseRot = transform.localRotation;
 	}
 
-	void Init() {
-		baseRot = transform.localRotation;
+	public override void UpdateMotion(ulong t) {
+		UpdateTremor(t / (double)DVConfig.timeScale);
 	}
 
 	public void UpdateTremor(double time) {

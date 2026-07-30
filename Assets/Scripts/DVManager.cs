@@ -25,7 +25,7 @@ public class DVManager : Singleton<DVManager> {
 
 		foreach (var sensor in Sensors) {
 			if (sensor.gameObject.activeSelf)
-				sensor.Tick();
+				sensor.Tick(Time);
 		}
 
 		Frame++;

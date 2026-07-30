@@ -22,12 +22,12 @@ public class DVO_Weather : DVObject {
 	}
 
 	public override void UpdateState(ulong time) {
-		if (time < lastTime) 
+		if (time > lastTime) 
 			foreach (var ps in particles) 
 				ps.Simulate(
 					(float)((double)(time - lastTime) / DVConfig.timeScale * timeScale),
 					true, false, false);
-		else
+		else // resimulate
 			foreach (var ps in particles) 
 				ps.Simulate(
 					(float)((double)time / DVConfig.timeScale * timeScale),

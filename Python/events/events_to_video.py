@@ -11,7 +11,7 @@ import get_data
 COLOR_MODE = "col"  # "col" or "bw"
 
 FPS = 60
-DATASET_PATH = r"E:\DVSim\Assets\.Output\Permutations\0_0_0_0_0\camera 2\events.npz"
+DATASET_PATH = r"E:\DVSim\Assets\.Output\Permutations\0_0_0_0_0_0\camera 2\events.npz"
 RES = (1280, 720)
 OUTNAME = "eventvideo"
 

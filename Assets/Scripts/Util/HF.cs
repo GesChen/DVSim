@@ -759,4 +759,90 @@ public static class HF {
 
 	public static string Depath(string path) => // turns path into name
 		Path.GetFileNameWithoutExtension(path);
+
+
+	// Wraps an index into a positive zero-based range.
+	public static int WrapIndex(int value, int count) {
+		int result = value % count;
+		return result < 0 ? result + count : result;
+	}
+
+	// Combines an integer into a deterministic configuration hash.
+	public static void CombineHash(ref int hash, int value) {
+		hash = hash * 31 + value;
+	}
+
+	// Combines a boolean into a deterministic configuration hash.
+	public static void CombineHash(ref int hash, bool value) {
+		CombineHash(ref hash, value ? 1 : 0);
+	}
+
+	// Combines a floating-point value into a deterministic configuration hash.
+	public static void CombineHash(ref int hash, float value) {
+		CombineHash(ref hash, value.GetHashCode());
+	}
+
+	// Combines a three-axis vector into a deterministic configuration hash.
+	public static void CombineHash(ref int hash, Vector3 value) {
+		CombineHash(ref hash, value.x);
+		CombineHash(ref hash, value.y);
+		CombineHash(ref hash, value.z);
+	}
+
+	// Combines a quaternion into a deterministic configuration hash.
+	public static void CombineHash(ref int hash, Quaternion value) {
+		CombineHash(ref hash, value.x);
+		CombineHash(ref hash, value.y);
+		CombineHash(ref hash, value.z);
+		CombineHash(ref hash, value.w);
+	}
+}
+
+public sealed class PidController {
+	public float Kp { get; set; } = 1.0f;
+	public float Ki { get; set; } = 0.0f;
+	public float Kd { get; set; } = 0.0f;
+
+
+	public PidController(float kp, float ki, float kd) {
+		Kp = kp;
+		Ki = ki;
+		Kd = kd;
+	}
+
+	public PidController() {
+	}
+
+	private float _integral;
+	private float _previousError;
+	private bool _hasPreviousError;
+
+	public float Update(float setpoint, float measurement, float dt) {
+		if (dt <= 0)
+			throw new ArgumentOutOfRangeException(nameof(dt), "dt must be positive.");
+
+		float error = setpoint - measurement;
+
+		_integral += error * dt;
+
+		float derivative = 0.0f;
+		if (_hasPreviousError)
+			derivative = (error - _previousError) / dt;
+
+		float output =
+			Kp * error +
+			Ki * _integral +
+			Kd * derivative;
+
+		_previousError = error;
+		_hasPreviousError = true;
+
+		return output;
+	}
+
+	public void Reset() {
+		_integral = 0;
+		_previousError = 0;
+		_hasPreviousError = false;
+	}
 }
