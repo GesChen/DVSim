@@ -83,5 +83,5 @@ public static class DVConfig {
 	public const string frameCapSubFolder = "frames";
 	public const string frameCapDataSubFolder = "data";
 	public const int frameNumDigits = 5;
-	public const bool deleteFrameCapsAfterPostProcess = true;
+	public const bool deleteFrameCapsAfterPostProcess = false;
 }

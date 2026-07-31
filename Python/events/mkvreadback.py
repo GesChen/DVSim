@@ -163,9 +163,9 @@ def hashes_to_rgb(hashes: np.ndarray) -> np.ndarray:
     rgb[values == 0] = 0
     return rgb
 
-data = read_ffv1_mkv(r"E:\DVSim\Assets\.Output\Permutations\0_0_0_0_0\camera 2\data.mkv")
+data = read_ffv1_mkv(r"E:\DVSim\Assets\.Output\Permutations\0_0_0_0_0_0\drone\data.mkv")
 
-# rgb = depth_to_rgb(data[..., 0])
-rgb = hashes_to_rgb(data[..., 1])
+rgb = depth_to_rgb(data[..., 0])
+# rgb = hashes_to_rgb(data[..., 1])
 
 play_video(rgb, 60)

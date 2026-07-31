@@ -15,7 +15,6 @@ using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
-using static UnityEngine.Rendering.DebugUI;
 
 public struct Event {
 	public int x;
@@ -29,6 +28,7 @@ public struct Event {
 public class DVS : MonoBehaviour {
 	public Camera camera;
 	public DVSMemory memory;
+	//public DVSFasterMemory fasterMemory;
 
 	public bool Stereo;
 	public float StereoSpacing = DVConfig.DefaultStereoSpacing;
@@ -115,6 +115,10 @@ public class DVS : MonoBehaviour {
 		memory = new();
 		memory.Setup(camera);
 		memory.Open();
+
+		//fasterMemory = new();
+		//fasterMemory.Setup(camera);
+		//fasterMemory.Open();
 
 		rng = new(DVConfig.Seed);
 
@@ -411,6 +415,7 @@ public class DVS : MonoBehaviour {
 		ThreshNRData.Dispose();
 
 		_ = memory.Close();
+		//fasterMemory.Close();
 	}
 
 	private void Release(RenderTexture rt) {
@@ -482,11 +487,13 @@ public class DVS : MonoBehaviour {
 		NativeArray<float> outputData = request.GetData<float>();
 
 		var eventQueue = new NativeQueue<Event>(Allocator.TempJob);
+		var smallEventQueue = new NativeQueue<DVSFasterMemory.CompressedEvent>(Allocator.TempJob);
 
 		new EventReadbackJob {
 			OutputData = outputData,
 			ThreshNoiseRateData = ThreshNRData,
 			Events = eventQueue.AsParallelWriter(),
+			CompressedEvents = smallEventQueue.AsParallelWriter(),
 
 			Width = DVConfig.resolution.x,
 			Height = DVConfig.resolution.y,
@@ -504,7 +511,12 @@ public class DVS : MonoBehaviour {
 			memory.NewEvent(e.x, e.y, e.t, e.p);
 		}
 
+		/*while (smallEventQueue.TryDequeue(out DVSFasterMemory.CompressedEvent ce)) {
+			fasterMemory.NewEvent(ce);
+		}*/
+
 		eventQueue.Dispose();
+		smallEventQueue.Dispose();
 		outputData.Dispose();
 	}
 
@@ -626,6 +638,7 @@ public class DVS : MonoBehaviour {
 		[ReadOnly] public NativeArray<Vector4> ThreshNoiseRateData;
 
 		[WriteOnly] public NativeQueue<Event>.ParallelWriter Events;
+		[WriteOnly] public NativeQueue<DVSFasterMemory.CompressedEvent>.ParallelWriter CompressedEvents;
 
 		public int Width;
 		public int Height;
@@ -674,6 +687,13 @@ public class DVS : MonoBehaviour {
 					p = on
 				});
 			}
+
+			/*if (numEvents > 0)
+				CompressedEvents.Enqueue(new() {
+					position = index,
+					time = Time,
+					data = data
+				});*/
 		}
 	}
 

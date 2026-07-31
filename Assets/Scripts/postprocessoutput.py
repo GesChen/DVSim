@@ -62,6 +62,33 @@ def processbin():
 
 	print("done")
 
+def processfasterbin():
+	camfilepath = meta['outfilepath']
+
+	print("reading faster bin...")
+
+	raw_event_dtype = np.dtype([
+		("x", "<i4"),
+		("y", "<i4"),
+		("t", "<u8"),
+		("p", "u1"),
+	])
+
+	data = np.fromfile(camfilepath, dtype=raw_event_dtype)
+
+	data = data.astype(event_dtype, copy=False)
+	data["p"] = data["p"].astype(bool)
+
+	print("saving as npz...")
+
+	outfile = path / eventsout
+	np.savez_compressed(outfile, data)
+	
+	# TODO: frame rescaling based on a value from config json
+	# dont need yet     
+
+	print("done")
+
 def load_exr(path) -> np.ndarray:
 	exr = OpenEXR.InputFile(str(path))
 	dw = exr.header()["dataWindow"]
