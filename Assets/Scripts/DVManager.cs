@@ -93,25 +93,29 @@ public class DVManager : Singleton<DVManager> {
 
 	IEnumerator SimulateCurrentScene() {
 		Frame = 0;
-		
+
 		Stopwatch = new();
 		Stopwatch.Start();
 
+		yield return null;
+
 		PrepareAllSensors();
 
-		Playing = true;
-		while (Time < SceneManager.Instance.CurrentSceneLengthSeconds * DVConfig.timeScale) {
-			if (Playing)
-				Tick();
-			else 
-				break;
+		try {
+			Playing = true;
+			while (Time < SceneManager.Instance.CurrentSceneLengthSeconds * DVConfig.timeScale) {
+				if (Playing)
+					Tick();
+				else
+					break;
 
-			// dont freeze the player
-			yield return new WaitForEndOfFrame();
+				// dont freeze the player
+				yield return new WaitForEndOfFrame();
+			}
+			Playing = false;
+		} finally { // ensure cleanup occurs
+			CleanupSensors();
 		}
-		Playing = false;
-
-		CleanupSensors();
 	}
 
 	private void OnDisable() {

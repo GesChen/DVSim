@@ -449,7 +449,7 @@ if __name__ == "__main__":
 	path = Path(camfilepath).parent / outsubfolder / permfoldername / camname
 	path.mkdir(parents=True, exist_ok=True)
 
-	# processbin()
+	processbin()
 
 	processcolorframes()
 

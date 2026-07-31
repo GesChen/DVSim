@@ -12,6 +12,7 @@ public class PreviewCamera : MonoBehaviour {
 	private void Update() {
 		cam.CopyFrom(Target);
 		cam.targetTexture = null;
+		cam.targetDisplay = 0;
 		transform.SetPositionAndRotation(Target.transform.position, Target.transform.rotation);
 	}
 }

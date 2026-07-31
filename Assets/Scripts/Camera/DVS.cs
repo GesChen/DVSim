@@ -111,7 +111,6 @@ public class DVS : MonoBehaviour {
 		fcColorPixels = GenerateNativeArray();
 		fcDataPixels = GenerateNativeArray();
 
-
 		// wont change so you can precompute this
 		globalShaderGroups = Vector2Int.CeilToInt((Vector2)DVConfig.resolution / 8f);
 
@@ -416,6 +415,8 @@ public class DVS : MonoBehaviour {
 			Destroy(frameCapColorTexture);
 			Destroy(frameCapDataTexture);
 		}
+		fcColorPixels.Dispose();
+		fcDataPixels.Dispose();
 		Release(ThreshNoiseRateRT);
 		ThreshNRData.Dispose();
 
