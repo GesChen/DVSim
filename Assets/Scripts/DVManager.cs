@@ -7,9 +7,10 @@ using UnityEditor;
 using UnityEngine;
 
 public class DVManager : Singleton<DVManager> {
-	public static ulong Frame; 
-	public static ulong Time; // ns
-	public static bool Playing;
+	public ulong Frame; 
+	public ulong Time; // ns
+	public bool Playing;
+	public System.Diagnostics.Stopwatch Stopwatch;
 
 	public List<DVPermutationGroup> PermutationGroups;
 
@@ -92,6 +93,10 @@ public class DVManager : Singleton<DVManager> {
 
 	IEnumerator SimulateCurrentScene() {
 		Frame = 0;
+		
+		Stopwatch = new();
+		Stopwatch.Start();
+
 		PrepareAllSensors();
 
 		Playing = true;

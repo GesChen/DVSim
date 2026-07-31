@@ -28,6 +28,8 @@ datavidout = 'data.mkv'
 bboxesout = 'bboxes.json'
 depthscale = 1000
 
+quiet_ffmpeg = True
+
 event_dtype = np.dtype([
 	("x", np.uint16),
 	("y", np.uint16),
@@ -106,6 +108,17 @@ def load_exr(path) -> np.ndarray:
 
 	return np.stack(channels, axis=-1)
 
+def load_byteframe(path):
+	width, height = config['resolution']['x'], config['resolution']['y']
+	pixels = np.fromfile(path, dtype=np.float32)
+
+	channels = pixels.size // (height * width)
+	pixels = pixels.reshape(height, width, channels)
+	pixels = np.flipud(pixels)
+	return pixels;
+
+def load_fc(path): return (load_exr if config['useEXR'] else load_byteframe)(path)
+
 def loadexrfolder(path: Path, channel=None) -> np.ndarray:
 	print(f'loading exrs in \'{path.parts[-1]}\' {f"channel {channel}" if channel is not None else ''}')
 
@@ -136,13 +149,25 @@ def loadexrfolder(path: Path, channel=None) -> np.ndarray:
 
 	return frames
 
-
 def getexrfiles(path: Path) -> list[Path]:
 	return sorted(
 		path.glob("*.exr"),
 		key=lambda p: int(re.search(r"\d+", p.stem).group())
 	)
 
+def getbytesfiles(path):
+	return sorted(
+		path.glob("*.bytes"),
+		key=lambda p: int(re.search(r"\d+", p.stem).group())
+	)
+
+def getFCfiles(path):
+	exr = config['useEXR']
+	if exr: return getexrfiles(path)
+	else: return getbytesfiles(path)
+
+# never write code ever again. 
+def getFCfileswtf(path): return (getexrfiles if config['useEXR'] else getbytesfiles)(path)
 
 def calculate_exposure(
 	files: list[Path],
@@ -163,7 +188,7 @@ def calculate_exposure(
 	luminance_samples = []
 
 	for i in tqdm(indices, desc='exposure samples'):
-		img = load_exr(files[i])[..., :3]
+		img = load_fc(files[i])[..., :3]
 
 		lum = (
 			0.2126 * img[..., 0] +
@@ -180,9 +205,19 @@ def calculate_exposure(
 
 	return max(scene_level / target, np.finfo(np.float32).eps)
 
+def linear_to_srgb(img: np.ndarray) -> np.ndarray:
+    """Convert linear RGB in [0,1] to sRGB in [0,1]."""
+    img = np.clip(img, 0.0, 1.0)
+
+    return np.where(
+        img <= 0.0031308,
+        img * 12.92,
+        1.055 * np.power(img, 1.0 / 2.4) - 0.055
+    )
+
 def processcolorframes():
 	frame_path = path / config["frameCapSubFolder"]
-	files = getexrfiles(frame_path)
+	files = getFCfileswtf(frame_path)
 
 	if not files:
 		print('no color frames in folder')
@@ -190,10 +225,12 @@ def processcolorframes():
 
 	exposure = calculate_exposure(
 		files,
-		n_samples=16
+		n_samples=32,
+		# percentile=99,
+		# target=.95
 	)
 
-	first = load_exr(files[0])
+	first = load_fc(files[0])
 	h, w = first.shape[:2]
 	del first
 
@@ -207,13 +244,14 @@ def processcolorframes():
 	if not writer.isOpened():
 		raise RuntimeError('failed to open video writer')
 
-	print('processing color frames...')
+	print('writing color frames...')
 
 	try:
 		for file in tqdm(files):
-			img = load_exr(file)[..., :3]
+			img = load_fc(file)[..., :3]
 
 			img = np.clip(img / exposure, 0.0, 1.0)
+			img = linear_to_srgb(img)
 			img = (img * 255).astype(np.uint8)
 
 			# EXR is RGB; OpenCV VideoWriter expects BGR.
@@ -251,16 +289,13 @@ def processdataframes():
 
 	remap = resolveIDremapping()
 
-	files = sorted(
-		(path / config["frameCapDataSubFolder"]).glob("*.exr"),
-		key=lambda p: int(p.stem),
-	)
+	files = getFCfileswtf(path / config["frameCapDataSubFolder"])
 
-	if len(files) == 0:
+	if not files or len(files) == 0:
 		print('no data files, skipping..')
 		return;
 
-	first = load_exr(files[0])
+	first = load_fc(files[0])
 	h, w = first.shape[:2]
 	fps = config['frameCapFPS']
 
@@ -299,13 +334,13 @@ def processdataframes():
 
 	try:
 		for framepath in files:
-			exr = load_exr(framepath)
+			data = load_fc(framepath)
 
 			frame = np.empty((h, w, 4), dtype=np.uint16)
-			frame[..., 0] = convert_r(exr[..., 0])
-			frame[..., 1] = convert_g(exr[..., 1])
-			frame[..., 2] = convert_b(exr[..., 2])
-			frame[..., 3] = convert_a(exr[..., 3])
+			frame[..., 0] = convert_r(data[..., 0])
+			frame[..., 1] = convert_g(data[..., 1])
+			frame[..., 2] = convert_b(data[..., 2])
+			frame[..., 3] = convert_a(data[..., 3])
 
 			ffmpeg.stdin.write(frame.astype("<u2", copy=False).tobytes())
 	finally:
@@ -322,10 +357,17 @@ def loadviscompDF(time):
 
 	dataindex = int(time * config['frameCapFPS'])
 	vc_df_time = time
+	ext = 'exr' if config['useEXR'] else 'bytes'
 	exrpath = path / config["frameCapDataSubFolder"] \
-		/ (f'%0{config["frameNumDigits"]}d.exr' % dataindex)
-	
-	exr = load_exr(exrpath)
+		/ (f'%0{config["frameNumDigits"]}d.{ext}' % dataindex)
+
+	# if frame cap runs at different fps than extra data, it may lag behind
+	while not exrpath.exists():
+		dataindex -= 1
+		exrpath = path / config["frameCapDataSubFolder"] \
+			/ (f'%0{config["frameNumDigits"]}d.{ext}' % dataindex)
+		
+	exr = load_fc(exrpath)
 	viscompute_segframe = exr[..., 1].view(np.uint32)
 
 def computevisibility(bbobj):
@@ -390,7 +432,6 @@ def processbboxes():
 
 	with (path / bboxesout).open('w') as w:
 		json.dump(out, w)
-	
 
 if __name__ == "__main__":
 	jsonpath = sys.argv[1]
@@ -408,7 +449,7 @@ if __name__ == "__main__":
 	path = Path(camfilepath).parent / outsubfolder / permfoldername / camname
 	path.mkdir(parents=True, exist_ok=True)
 
-	processbin()
+	# processbin()
 
 	processcolorframes()
 

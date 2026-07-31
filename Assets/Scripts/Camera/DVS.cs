@@ -8,6 +8,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using Unity.Burst;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEditor;
@@ -102,8 +103,10 @@ public class DVS : MonoBehaviour {
 			DVConfig.resolution.x * DVConfig.resolution.y,
 			24); // stride comes from float4 + float + float = 24 bytes
 
-		frameCapColorTexture = GenerateTex2d();
-		frameCapDataTexture = GenerateTex2d();
+		if (DVConfig.useEXR) {
+			frameCapColorTexture = GenerateTex2d();
+			frameCapDataTexture = GenerateTex2d();
+		}
 
 		fcColorPixels = GenerateNativeArray();
 		fcDataPixels = GenerateNativeArray();
@@ -409,8 +412,10 @@ public class DVS : MonoBehaviour {
 		Release(outputMap);
 		Release(debugOutput);
 		frameCapOut?.Release();
-		Destroy(frameCapColorTexture);
-		Destroy(frameCapDataTexture);
+		if (DVConfig.useEXR) {
+			Destroy(frameCapColorTexture);
+			Destroy(frameCapDataTexture);
+		}
 		Release(ThreshNoiseRateRT);
 		ThreshNRData.Dispose();
 
@@ -446,7 +451,7 @@ public class DVS : MonoBehaviour {
 		EventShader.SetTexture(eventKernel, "State", sensorState);
 		EventShader.SetTexture(eventKernel, "Output", outputMap);
 		EventShader.SetTexture(eventKernel, "Debug", debugOutput);
-		EventShader.SetBool("firstFrame", DVManager.Frame == 0);
+		EventShader.SetBool("firstFrame", DVManager.Instance.Frame == 0);
 
 		var iterSeed = rng.Next(int.MinValue, int.MaxValue);
 		EventShader.SetInt("iterSeed", iterSeed);
@@ -457,7 +462,7 @@ public class DVS : MonoBehaviour {
 		//	RenderDoc.EndCaptureRenderDoc(EditorWindow.focusedWindow);
 
 		ulong timeAtReq = time;
-		ulong frameAtReq = DVManager.Frame;
+		ulong frameAtReq = DVManager.Instance.Frame;
 
 		AsyncGPUReadback.Request(
 			outputMap,
@@ -480,7 +485,7 @@ public class DVS : MonoBehaviour {
 	void Readback(AsyncGPUReadbackRequest request, ulong time, ulong frame) {
 		if (frame < DVConfig.cameraWarmupTimeFrames) return;
 		if (request.hasError) return;
-		if (!DVManager.Playing) return;
+		if (!DVManager.Instance.Playing) return;
 
 		ulong dt = (ulong)math.round(DVConfig.timeScale / DVConfig.simFPS);
 
@@ -542,7 +547,7 @@ public class DVS : MonoBehaviour {
 		//RenderDoc.EndCaptureRenderDoc(EditorWindow.focusedWindow);
 
 		string permutationAtCall = string.Join('_', DVManager.CurrentPermutation);
-		int frameCapFrameAtCall = (int)(DVManager.Frame * DVConfig.frameCapFPS / DVConfig.simFPS);
+		int frameCapFrameAtCall = (int)(DVManager.Instance.Frame * DVConfig.frameCapFPS / DVConfig.simFPS);
 
 		AsyncGPUReadback.Request(
 			frameCapOut,
@@ -551,9 +556,8 @@ public class DVS : MonoBehaviour {
 	}
 
 	void FrameCapReadback(AsyncGPUReadbackRequest req, string permutation, int frame) {
-		if (frameCapDataTexture == null) return;
 		if (req.hasError) return;
-		if (!DVManager.Playing) return;
+		if (!DVManager.Instance.Playing) return;
 		
 		var source = req.GetData<FCPixelData>();
 
@@ -562,12 +566,6 @@ public class DVS : MonoBehaviour {
 			color = fcColorPixels,
 			data = fcDataPixels
 		}.Schedule(source.Length, 256).Complete();
-
-		frameCapColorTexture.SetPixelData(fcColorPixels, 0);
-		frameCapDataTexture.SetPixelData(fcDataPixels, 0);
-
-		frameCapColorTexture.Apply(false, false);
-		frameCapDataTexture.Apply(false, false);
 
 		string frameFolder = Path.Combine(
 			Application.dataPath,
@@ -579,10 +577,6 @@ public class DVS : MonoBehaviour {
 
 		Directory.CreateDirectory(frameFolder);
 
-		File.WriteAllBytes(
-			Path.Combine(frameFolder, $"{frame.ToString("D" + DVConfig.frameNumDigits)}.exr"), 
-			frameCapColorTexture.EncodeToEXR());
-
 		string dataFolder = Path.Combine(
 			Application.dataPath,
 			DVConfig.outputFolder,
@@ -593,9 +587,47 @@ public class DVS : MonoBehaviour {
 
 		Directory.CreateDirectory(dataFolder);
 
-		File.WriteAllBytes(
-			Path.Combine(dataFolder, $"{frame.ToString("D" + DVConfig.frameNumDigits)}.exr"),
-			frameCapDataTexture.EncodeToEXR(Texture2D.EXRFlags.OutputAsFloat));
+		string ext = DVConfig.useEXR ? "exr" : "bytes";
+		string colorFileName = Path.Combine(frameFolder, $"{frame.ToString("D" + DVConfig.frameNumDigits)}.{ext}");
+		string dataFileName = Path.Combine(dataFolder, $"{frame.ToString("D" + DVConfig.frameNumDigits)}.{ext}");
+
+		if (DVConfig.useEXR) {
+			frameCapColorTexture.SetPixelData(fcColorPixels, 0);
+			frameCapDataTexture.SetPixelData(fcDataPixels, 0);
+
+			frameCapColorTexture.Apply(false, false);
+			frameCapDataTexture.Apply(false, false);
+
+			File.WriteAllBytes(
+				colorFileName,
+				frameCapColorTexture.EncodeToEXR());
+
+			File.WriteAllBytes(
+				dataFileName,
+				frameCapDataTexture.EncodeToEXR(Texture2D.EXRFlags.OutputAsFloat));
+		} else {
+			WriteRaw(colorFileName, fcColorPixels);
+			WriteRaw(dataFileName, fcDataPixels);
+		}
+	}
+
+	static unsafe void WriteRaw<T>(
+		string path,
+		NativeArray<T> data)
+		where T : unmanaged {
+
+		int byteCount = data.Length * UnsafeUtility.SizeOf<T>();
+
+		void* ptr = NativeArrayUnsafeUtility.GetUnsafeReadOnlyPtr(data);
+		ReadOnlySpan<byte> bytes = new(ptr, byteCount);
+
+		using FileStream stream = new(
+			path,
+			FileMode.Create,
+			FileAccess.Write,
+			FileShare.Read);
+
+		stream.Write(bytes);
 	}
 
 	public void ClearFrameFiles(int[] permutation) {

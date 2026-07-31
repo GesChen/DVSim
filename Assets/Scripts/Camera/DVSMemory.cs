@@ -79,10 +79,10 @@ public class DVSMemory {
 		outputMetadata = new() {
 			{ "permutation", DVManager.CurrentPermutation },
 			{ "uniqueids", null },
+			{ "simtime", -1f },
 
 			{ "outfilepath", eOutFilePath },
 			{ "absoluteassetpath", Application.dataPath },
-
 
 			{ "camera", new Dictionary<string, object> {
 				{ "position", (S_Vector3)camera.transform.position },
@@ -162,11 +162,7 @@ public class DVSMemory {
 
 		var permAtClose = DVManager.CurrentPermutation.ToArray();
 
-		Log("Closing eventbuffer, awaiting flushtask");
-		await CloseEventBuffer();
-
-		try {
-			string dataPath = Path.Combine(
+		string dataPath = Path.Combine(
 				Application.dataPath,
 				DVConfig.outputFolder,
 				DVConfig.permutationFolder,
@@ -174,6 +170,12 @@ public class DVSMemory {
 				name)
 				.Replace('/', '\\');
 
+		FinalizeWriteMetadata(dataPath); // do this immediately before awaiting, before things get deleted
+
+		Log("Closing eventbuffer, awaiting flushtask");
+		await CloseEventBuffer();
+
+		try {
 			if (DVConfig.recordCameraRoute)
 				SaveCameraRoute(dataPath);
 
@@ -290,12 +292,19 @@ public class DVSMemory {
 		});
 	}
 
-	void TriggerPythonPostProcess(string dataPath) {
+	void FinalizeWriteMetadata(string dataPath) {
 		string jsonPath = Path.Combine(dataPath, DVConfig.metadataFileName);
+
+		outputMetadata["simtime"] = DVManager.Instance.Stopwatch.Elapsed.TotalSeconds;
 
 		string json = JsonConvert.SerializeObject(outputMetadata, Formatting.Indented);
 
 		File.WriteAllText(jsonPath, json);
+
+	}
+
+	void TriggerPythonPostProcess(string dataPath) {
+		string jsonPath = Path.Combine(dataPath, DVConfig.metadataFileName);
 
 		var psi = new ProcessStartInfo {
 			FileName = "cmd.exe",

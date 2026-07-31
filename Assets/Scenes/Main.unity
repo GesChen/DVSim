@@ -153,6 +153,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e59af47d54655834e8f6eb196cd1265c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVManager
+  Frame: 0
+  Time: 0
+  Playing: 0
   PermutationGroups:
   - {fileID: 1112438146}
   - {fileID: 1171441058}
@@ -10839,8 +10842,8 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 6915256703295841418}
   - {fileID: 9201185145609506868}
+  - {fileID: 6915256703295841418}
   - {fileID: 543450652845969225}
   m_Father: {fileID: 473641386}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

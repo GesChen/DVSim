@@ -1,5 +1,5 @@
 from eventstream import EventStream
-from raggedutil import *
+from compressiontesting.raggedutil import *
 import numpy as np
 from tqdm import tqdm
 
