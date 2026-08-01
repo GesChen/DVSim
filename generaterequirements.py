@@ -44,6 +44,7 @@ def generateRequirementsTxt():
 
     excludes = [
         'ellipses'
+        'pytorch'
     ]
 
     requirements = {}
@@ -76,7 +77,7 @@ def generateRequirementsTxt():
             req = Requirement(line)
             key = canonicalize_name(req.name)
 
-            if key in excludes:
+            if any([key in e for e in excludes]):
                 continue
 
             previous = requirements.get(key)
