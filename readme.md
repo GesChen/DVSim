@@ -21,7 +21,7 @@ Then, open the "Main" scene for the simulator
 
 # Usage
 ## Assets file structure
-- * Some assets are gitignored because of large file size and/or to not redistribute them without permission
+- *Some assets are gitignored because of large file size and/or to not redistribute them without permission
 - **Assets:** Contains all 3D models and recordings
 	- Animated armature FBXs
 		- `captury`, `freemocap`, `MotionBERT` - mostly straight from the source with some preprocessing into clean FBXs
@@ -64,9 +64,10 @@ Then, open the "Main" scene for the simulator
 
 ## Output
  All output goes into `Assets/.Output/Permutations/permutation_code/camera name/.`
- - `bboxes.json`
-```json
-[    {
+ - `bboxes.json` - 2D screen space object bounds
+```
+[  
+      {
         "time": time in ns,
         "bboxes": [ {
                 "id": object ID in unity,
@@ -76,12 +77,14 @@ Then, open the "Main" scene for the simulator
                 "dist": distance from the sensor,
                 "visible": is this object visible at this time?
             }, 
-            ...other objects... ]
-    }, ...other timestamps... 
+            ...other objects... 
+        ]
+    },
+    ...other timestamps... 
 ]
 ```
 - `cameraroute.json`
-```json
+```
 [
     [
         time in ns,  
@@ -95,7 +98,7 @@ Then, open the "Main" scene for the simulator
 - `data.mkv` - ffv1 mkv- read with `/Python/events/mkvreadback.py`
 	- R channel - depth * 1000, then quantized to ints
 	- G channel - integer object IDS - mapped from `Assets/.Output/allids.json`
-- `events.npz` - load with np.load \[arr_0] - just an array of event objects
+- `events.npz` - load with `np.load .. [arr_0]` - just an array of event objects
 ```python
 event_dtype = np.dtype([
     ("x", np.uint16),
