@@ -120,13 +120,13 @@ InitTestScene*.unity*
 /Python/video to fbx/input
 /Python/room generation/replica
 /Python/room generation/habitat_sim
-*.fbx
+!*.fbx
 /Python/room generation/ReplicaCAD_baked_lighting
 /Python/room generation/ReplicaCAD_dataset
 /Python/room generation/Replica-Dataset
 /Python/room generation/habitat-sim-master
 /Python/room generation/ptexutils
-*.blend
+!*.blend
 /Python/events/data/from umd
 /Python/events/data/IROS_Dataset-2018-independent-motion
 /Python/events/V2CE-Toolbox-master
@@ -144,7 +144,7 @@ InitTestScene*.unity*
 /Python/motion/MotionBERT
 /Python/exterior/urbanscene3d/ArtSci_fine
 /Python/exterior/urbanscene3d/PolyTech_fine
-*.zip
+!*.zip
 /Python/exterior/urbanscene3d/Simulator
 /Python/exterior/custom blender
 /Python/exterior/infinigen
