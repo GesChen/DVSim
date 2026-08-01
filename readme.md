@@ -13,4 +13,4 @@ git clone https://github.com/GesChen/DVSim.git
 cd DVSim
 py setup.py
 ```
-Follow setup recommendations, then open the entire repository in Unity as a Unity project with Editor 2022.3.62.f2
+Follow setup recommendations, then open Unity Hub -> Add -> Add project from disk -> Open the entire DVSim folder
