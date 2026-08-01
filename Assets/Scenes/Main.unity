@@ -168,6 +168,7 @@ MonoBehaviour:
   - {fileID: 1982064165}
   - {fileID: 1293237960}
   Objects: []
+  PermZeroTestRun: 1
 --- !u!4 &120236687
 Transform:
   m_ObjectHideFlags: 0

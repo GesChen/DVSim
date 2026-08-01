@@ -16,6 +16,7 @@ public class DVManager : Singleton<DVManager> {
 
 	public List<DVS> Sensors;
 	public List<DVObject> Objects;
+	public bool PermZeroTestRun;
 
 	public static int[] CurrentPermutation { get; private set; }
 
@@ -37,20 +38,22 @@ public class DVManager : Singleton<DVManager> {
 		Frame = 0;
 		Time = 0;
 
-		var random = new System.Random();
-		DVConfig.Seed = random.Next(int.MinValue, int.MaxValue);
-
-		InitSensors();
-
-		LoadPermutation(new int[] { 0, 0, 0, 0, 0, 0});
-
-		StartCoroutine(SimulateCurrentScene());
-
 		EditorApplication.playModeStateChanged += state => {
 			if (state == PlayModeStateChange.ExitingPlayMode) {
 				Playing = false;
 			}
 		};
+
+		var random = new System.Random();
+		DVConfig.Seed = random.Next(int.MinValue, int.MaxValue);
+
+		InitSensors();
+
+		if (PermZeroTestRun) {
+			LoadPermutation(new int[] { 0, 0, 0, 0, 0, 0 });
+
+			StartCoroutine(SimulateCurrentScene());
+		}
 	}
 
 	void InitSensors() {

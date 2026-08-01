@@ -9,7 +9,7 @@ public abstract class DVObject : MonoBehaviour {
 
 	public string Label => LabelOverride.Length > 0 ? LabelOverride : gameObject.name;
 
-	public DVObject[] AllSubObjects;
+	[HideInInspector] public DVObject[] AllSubObjects;
 	void Awake() {
 		AllSubObjects = transform.GetComponentsInChildren<DVObject>().Where(o => o != this).ToArray();
 	}

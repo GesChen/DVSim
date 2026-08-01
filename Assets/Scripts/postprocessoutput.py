@@ -1,33 +1,10 @@
 ## POST PROCESSOR FOR ONE DVS SENSOR-
 # each sensor calls this for itself 
 
-import shutil
-import numpy as np
+# redirect output now so missing package exceptions will get logged
 import sys
 from pathlib import Path
-from tqdm import tqdm 
-import json
-import OpenEXR
-import Imath
-import numpy as np
-import re
-import cv2
-import subprocess
 import datetime
-
-# preload 
-meta = {}
-config = {}
-path = Path()
-
-quiet_ffmpeg = True
-
-event_dtype = np.dtype([
-	("x", np.uint16),
-	("y", np.uint16),
-	("t", np.uint64),
-	("p", bool),
-], align=False)
 
 class Tee:
     def __init__(self, *streams):
@@ -54,6 +31,34 @@ def setupStdout():
 
 	sys.stdout = Tee(sys.__stdout__, log)
 	sys.stderr = Tee(sys.__stderr__, log)
+
+setupStdout()
+
+import shutil
+import numpy as np
+from tqdm import tqdm 
+import json
+import OpenEXR
+import Imath
+import numpy as np
+import re
+import cv2
+import subprocess
+
+# preload 
+meta = {}
+config = {}
+path = Path()
+
+quiet_ffmpeg = True
+
+event_dtype = np.dtype([
+	("x", np.uint16),
+	("y", np.uint16),
+	("t", np.uint64),
+	("p", bool),
+], align=False)
+
 
 def processbin():
 	camfilepath = meta['outfilepath']
@@ -451,7 +456,6 @@ def processbboxes():
 		json.dump(out, w)
 
 if __name__ == "__main__":
-	setupStdout()
 	jsonpath = sys.argv[1]
 
 	with open(jsonpath, "r") as f:
