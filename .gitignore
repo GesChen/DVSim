@@ -154,3 +154,10 @@ InitTestScene*.unity*
 /Python/human/SMPLitex-textures
 /Assets/Materials/human skins/SMPLitex-textures
 *.npz
+/DVSim
+*.gz
+/Assets/Assets/Replica
+client_secrets.json
+client_secrets_web.json
+client_secrets_desktop.json
+credentials.json

@@ -1,0 +1,17 @@
+ellipses==0.1.0
+gdown==6.1.0
+h5py==3.14.0
+hdf5plugin==6.0.0
+Imath==0.0.2
+matplotlib==3.11.1
+numpy==2.5.1
+opencv_python==5.0.0.93
+opencv_python_headless==4.13.0.90
+OpenEXR==3.4.13
+packaging==26.2
+Pillow==12.3.0
+PyDrive2==1.21.3
+Requests==2.34.2
+torch==2.11.0+cu128
+tqdm==4.69.0
+zstandard==0.25.0

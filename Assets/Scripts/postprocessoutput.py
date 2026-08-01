@@ -6,7 +6,6 @@ import numpy as np
 import sys
 from pathlib import Path
 from tqdm import tqdm 
-from send2trash import send2trash
 import json
 import OpenEXR
 import Imath
@@ -14,19 +13,12 @@ import numpy as np
 import re
 import cv2
 import subprocess
+import datetime
 
-# global consts
+# preload 
 meta = {}
 config = {}
 path = Path()
-
-eventsout = 'events.npz'
-outsubfolder = "Permutations"
-idremapfile = 'allids.json'
-colorvidout = 'color.mp4'
-datavidout = 'data.mkv'
-bboxesout = 'bboxes.json'
-depthscale = 1000
 
 quiet_ffmpeg = True
 
@@ -36,6 +28,32 @@ event_dtype = np.dtype([
 	("t", np.uint64),
 	("p", bool),
 ], align=False)
+
+class Tee:
+    def __init__(self, *streams):
+        self.streams = streams
+
+    def write(self, data):
+        for stream in self.streams:
+            stream.write(data)
+            stream.flush()
+
+    def flush(self):
+        for stream in self.streams:
+            stream.flush()
+
+    def isatty(self):
+        return any(getattr(s, "isatty", lambda: False)() for s in self.streams)
+
+def setupStdout():
+	log = open(Path(__file__).with_suffix(".log"), "a", encoding="utf-8")
+	log.write("\n" + "=" * 20
+		    + "Run:" + datetime.datetime.now().isoformat(sep=' ', timespec='seconds')
+			+ '=' * 20 + "\n")
+	log.flush()
+
+	sys.stdout = Tee(sys.__stdout__, log)
+	sys.stderr = Tee(sys.__stderr__, log)
 
 def processbin():
 	camfilepath = meta['outfilepath']
@@ -56,7 +74,7 @@ def processbin():
 
 	print("saving as npz...")
 
-	outfile = path / eventsout
+	outfile = path / config["eventsOut"]
 	np.savez_compressed(outfile, data)
 	
 	# TODO: frame rescaling based on a value from config json
@@ -83,7 +101,7 @@ def processfasterbin():
 
 	print("saving as npz...")
 
-	outfile = path / eventsout
+	outfile = path / config["eventsOut"]
 	np.savez_compressed(outfile, data)
 	
 	# TODO: frame rescaling based on a value from config json
@@ -235,7 +253,7 @@ def processcolorframes():
 	del first
 
 	writer = cv2.VideoWriter(
-		str(path / colorvidout),
+		str(path / config["colorVidOut"]),
 		cv2.VideoWriter_fourcc(*"mp4v"),
 		config['frameCapFPS'],
 		(w, h)
@@ -260,7 +278,7 @@ def processcolorframes():
 		writer.release()
 	
 def resolveIDremapping(): 
-	remappath = path.parent.parent.parent / idremapfile
+	remappath = path.parent.parent.parent / config["idRemapFile"]
 	uniqueids = meta['uniqueids']
 
 	if remappath.exists():
@@ -302,6 +320,9 @@ def processdataframes():
 	ffmpeg = subprocess.Popen(
 		[
 			"ffmpeg", "-y",
+				*(['-hide_banner',
+				"-loglevel", "warning",
+				"-stats"] if quiet_ffmpeg else []),
 			"-f", "rawvideo",
 			"-pixel_format", "rgba64le",
 			"-video_size", f"{w}x{h}",
@@ -312,14 +333,13 @@ def processdataframes():
 			"-coder", "1",
 			"-context", "1",
 			"-slicecrc", "1",
-			'-hide_banner',
-			str(path / datavidout),
+			str(path / config["dataVidOut"]),
 		],
 		stdin=subprocess.PIPE,
 	)
 	
 	def convert_r(channel):
-		return np.clip(channel * depthscale, 0, 65535).astype(np.uint16)
+		return np.clip(channel * config["depthScale"], 0, 65535).astype(np.uint16)
 
 	def convert_g(channel):
 		lookup = {s: i for i, s in enumerate(remap)}
@@ -348,15 +368,9 @@ def processdataframes():
 		if ffmpeg.wait() != 0:
 			raise RuntimeError("FFmpeg encoding failed")
 
-viscompute_segframe = None
-vc_df_time = -1
-
 def loadviscompDF(time):
-	global viscompute_segframe
-	global vc_df_time
-
 	dataindex = int(time * config['frameCapFPS'])
-	vc_df_time = time
+	loadviscompDF.sf_time = time
 	ext = 'exr' if config['useEXR'] else 'bytes'
 	exrpath = path / config["frameCapDataSubFolder"] \
 		/ (f'%0{config["frameNumDigits"]}d.{ext}' % dataindex)
@@ -368,16 +382,19 @@ def loadviscompDF(time):
 			/ (f'%0{config["frameNumDigits"]}d.{ext}' % dataindex)
 		
 	exr = load_fc(exrpath)
-	viscompute_segframe = exr[..., 1].view(np.uint32)
+	loadviscompDF.segframe = exr[..., 1].view(np.uint32)
+
+loadviscompDF.segframe = None
+loadviscompDF.sf_time = -1
 
 def computevisibility(bbobj):
 	id = bbobj['ID']
 	time = bbobj['time'] / config['timeScale']
 
-	if viscompute_segframe is None or vc_df_time != time:
+	if loadviscompDF.segframe is None or loadviscompDF.sf_time != time:
 		loadviscompDF(time)
 
-	return bool(np.any(viscompute_segframe == id))
+	return bool(np.any(loadviscompDF.segframe == id))
 
 def processbboxes():
 	print('processing bboxes..')
@@ -430,10 +447,11 @@ def processbboxes():
 		}
 		out.append(item)
 
-	with (path / bboxesout).open('w') as w:
+	with (path / config["bboxesOut"]).open('w') as w:
 		json.dump(out, w)
 
 if __name__ == "__main__":
+	setupStdout()
 	jsonpath = sys.argv[1]
 
 	with open(jsonpath, "r") as f:
@@ -446,7 +464,7 @@ if __name__ == "__main__":
 	permutation = meta['permutation']
 	permfoldername = '_'.join(str(num) for num in permutation)
 
-	path = Path(camfilepath).parent / outsubfolder / permfoldername / camname
+	path = Path(camfilepath).parent / config["outSubfolder"] / permfoldername / camname
 	path.mkdir(parents=True, exist_ok=True)
 
 	processbin()

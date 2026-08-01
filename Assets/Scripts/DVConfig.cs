@@ -8,8 +8,7 @@ public static class DVConfig {
 
 	// --- Sensor Settings ---
 
-	// global resolution for sim
-	public static readonly Vector2Int resolution = new(1280, 720);
+	public static readonly Vector2Int resolution = new(1280, 720); // global resolution for entire sim
 
 	public const float DefaultStereoSpacing = .065f; // 65 mm, typical spacing
 
@@ -19,7 +18,7 @@ public static class DVConfig {
 	public const float simFPS = 100; 
 	public const int timeScale = 1_000_000_000;
 	public const bool interpolateTime = true;
-	public const int refractoryPeriod = 10000; // global timescale, this is ns
+	public const int refractoryPeriod = 6800; // global timescale, this is ns -- https://doi.org/10.3929/ethz-c-000655648
 
 	// low pass filter settings 
 	public const float tauOn = .005f; // has to be in seconds 
@@ -44,17 +43,16 @@ public static class DVConfig {
 	public const PhotoNoiseBehaviour photoNoise = PhotoNoiseBehaviour.None;
 
 	// v2e calculation
-	public const float shotNoiseRateHz = 5f;
+	public const float shotNoiseRateHz = 5f; //https://doi.org/10.48550/arXiv.2109.08640
 	// this value is REALLY finnicky. try to figure it out better. 
 	public const float photoNoiseCutoffHz = 100; // for 1000fps 100-300, no longer v2e's
-
+	
 	public const float fixedPhotoNoiseVolts = .09f; // 1 mV
-
+	
 	public const float targetBA = .1f;
 
 	// --- Unity side config ---
 	public const int cameraWarmupTimeFrames = 50; // scene warmup time frames
-	public const int eventBufferInitCap = 100000; // buffer initial capacity
 	public const int eventFlushIntervalMs = 10; // buffer flush interval
 	public const int eventCountScale = 100; // coefficient for event count in the packed float output from compute
 	public const bool doAutoGrounding = true;
@@ -85,4 +83,13 @@ public static class DVConfig {
 	public const string frameCapDataSubFolder = "data";
 	public const int frameNumDigits = 5;
 	public const bool deleteFrameCapsAfterPostProcess = false;
+
+	// --- post processing---
+	public const string eventsOut = "events.npz";
+	public const string outSubfolder = "Permutations";
+	public const string idRemapFile = "allids.json";
+	public const string colorVidOut = "color.mp4";
+	public const string dataVidOut = "data.mkv";
+	public const string bboxesOut = "bboxes.json";
+	public const float depthScale = 1000;
 }
