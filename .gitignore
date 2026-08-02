@@ -161,3 +161,5 @@ client_secrets.json
 client_secrets_web.json
 client_secrets_desktop.json
 credentials.json
+/Assets/Assets/Mocap/cmu mocap bvhs
+*.blend1

@@ -14,7 +14,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 INPUT_DIR = SCRIPT_DIR / "input"
 OUTPUT_DIR = SCRIPT_DIR / "output"
 
-COPY_OUTPUT_DIR = Path(r'E:\DVSim\Assets\Assets\captury')
+COPY_OUTPUT_DIR = SCRIPT_DIR.parent.parent.parent / 'Assets/Assets/Mocap/captury/'
 
 
 def find_input_fbx(folder: Path) -> Path:
