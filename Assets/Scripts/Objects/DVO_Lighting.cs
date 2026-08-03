@@ -1,9 +1,46 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public class DVO_Lighting : DVObject {
+	public enum EnvironmentLightingSource {
+		Skybox,
+		Gradient,
+		Color
+	}
+
+	public enum EnvironmentReflectionSource {
+		Skybox,
+		Custom
+	}
+
+	[SerializeField] private Material skyboxMaterial;
+	[SerializeField] private Light sunSource;
+	[SerializeField] private Color realtimeShadowColor = Color.gray;
+
+	[SerializeField]
+	private EnvironmentLightingSource lightingSource =
+		EnvironmentLightingSource.Skybox;
+
+	[SerializeField] private Color skyColor = Color.gray;
+	[SerializeField] private Color equatorColor = Color.gray;
+	[SerializeField] private Color groundColor = Color.gray;
+	[SerializeField] private Color ambientColor = Color.gray;
+
+	[SerializeField, Range(0f, 8f)]
+	private float environmentIntensityMultiplier = 1f;
+	
+	[SerializeField]
+	private EnvironmentReflectionSource reflectionSource =
+		EnvironmentReflectionSource.Skybox;
+
+	[SerializeField] private Cubemap customCubemap;
+
+	[SerializeField, Range(0f, 1f)]
+	private float reflectionIntensityMultiplier = 1f;
 
 	const bool SimulateIndirectBouncing = false;
 	const int SIBounces = 2;
@@ -22,7 +59,58 @@ public class DVO_Lighting : DVObject {
 				SimulateIndirect(light);
 			}
 		}
+
+		Load();
 	}
+
+	public void Load() {
+		RenderSettings.skybox = skyboxMaterial;
+		RenderSettings.sun = sunSource;
+		RenderSettings.subtractiveShadowColor = realtimeShadowColor;
+
+		switch (lightingSource) {
+			case EnvironmentLightingSource.Skybox:
+				RenderSettings.ambientMode = AmbientMode.Skybox;
+				break;
+
+			case EnvironmentLightingSource.Gradient:
+				RenderSettings.ambientMode = AmbientMode.Trilight;
+				RenderSettings.ambientSkyColor = skyColor;
+				RenderSettings.ambientEquatorColor = equatorColor;
+				RenderSettings.ambientGroundColor = groundColor;
+				break;
+
+			case EnvironmentLightingSource.Color:
+				RenderSettings.ambientMode = AmbientMode.Flat;
+				RenderSettings.ambientLight = ambientColor;
+				break;
+		}
+
+		RenderSettings.ambientIntensity =
+			environmentIntensityMultiplier;
+
+		switch (reflectionSource) {
+			case EnvironmentReflectionSource.Skybox:
+				RenderSettings.defaultReflectionMode =
+					DefaultReflectionMode.Skybox;
+
+				RenderSettings.customReflectionTexture = null;
+				break;
+
+			case EnvironmentReflectionSource.Custom:
+				RenderSettings.defaultReflectionMode =
+					DefaultReflectionMode.Custom;
+
+				RenderSettings.customReflectionTexture = customCubemap;
+				break;
+		}
+
+		RenderSettings.reflectionIntensity =
+			reflectionIntensityMultiplier;
+
+		DynamicGI.UpdateEnvironment();
+	}
+
 
 	void SimulateIndirect(Light light) {
 		float halfAngle = light.spotAngle * .5f;
@@ -116,3 +204,178 @@ public class DVO_Lighting : DVObject {
 		
 	}
 }
+
+
+#if UNITY_EDITOR
+
+
+[CustomEditor(typeof(DVO_Lighting))]
+public sealed class DVOLightingConfigEditor : Editor {
+	private SerializedProperty skyboxMaterial;
+	private SerializedProperty sunSource;
+	private SerializedProperty realtimeShadowColor;
+
+	private SerializedProperty lightingSource;
+	private SerializedProperty skyColor;
+	private SerializedProperty equatorColor;
+	private SerializedProperty groundColor;
+	private SerializedProperty ambientColor;
+	private SerializedProperty environmentIntensityMultiplier;
+
+	private SerializedProperty reflectionSource;
+	private SerializedProperty customCubemap;
+	private SerializedProperty reflectionIntensityMultiplier;
+
+	private void OnEnable() {
+		skyboxMaterial =
+			serializedObject.FindProperty("skyboxMaterial");
+
+		sunSource =
+			serializedObject.FindProperty("sunSource");
+
+		realtimeShadowColor =
+			serializedObject.FindProperty("realtimeShadowColor");
+
+		lightingSource =
+			serializedObject.FindProperty("lightingSource");
+
+		skyColor =
+			serializedObject.FindProperty("skyColor");
+
+		equatorColor =
+			serializedObject.FindProperty("equatorColor");
+
+		groundColor =
+			serializedObject.FindProperty("groundColor");
+
+		ambientColor =
+			serializedObject.FindProperty("ambientColor");
+
+		environmentIntensityMultiplier =
+			serializedObject.FindProperty(
+				"environmentIntensityMultiplier"
+			);
+
+		reflectionSource =
+			serializedObject.FindProperty("reflectionSource");
+
+		customCubemap =
+			serializedObject.FindProperty("customCubemap");
+
+		reflectionIntensityMultiplier =
+			serializedObject.FindProperty(
+				"reflectionIntensityMultiplier"
+			);
+	}
+
+	public override void OnInspectorGUI() {
+		serializedObject.Update();
+
+		EditorGUILayout.LabelField(
+			"Environment",
+			EditorStyles.boldLabel
+		);
+
+		EditorGUILayout.PropertyField(
+			skyboxMaterial,
+			new GUIContent("Skybox Material")
+		);
+
+		EditorGUILayout.PropertyField(
+			sunSource,
+			new GUIContent("Sun Source")
+		);
+
+		EditorGUILayout.PropertyField(
+			realtimeShadowColor,
+			new GUIContent("Realtime Shadow Color")
+		);
+
+		EditorGUILayout.Space();
+
+		EditorGUILayout.LabelField(
+			"Environment Lighting",
+			EditorStyles.boldLabel
+		);
+
+		EditorGUILayout.PropertyField(
+			lightingSource,
+			new GUIContent("Source")
+		);
+
+		var selectedLightingSource =
+			(DVO_Lighting.EnvironmentLightingSource)
+			lightingSource.enumValueIndex;
+
+		switch (selectedLightingSource) {
+			case DVO_Lighting
+				.EnvironmentLightingSource.Gradient:
+
+				EditorGUILayout.PropertyField(
+					skyColor,
+					new GUIContent("Sky Color")
+				);
+
+				EditorGUILayout.PropertyField(
+					equatorColor,
+					new GUIContent("Equator Color")
+				);
+
+				EditorGUILayout.PropertyField(
+					groundColor,
+					new GUIContent("Ground Color")
+				);
+
+				break;
+
+			case DVO_Lighting
+				.EnvironmentLightingSource.Color:
+
+				EditorGUILayout.PropertyField(
+					ambientColor,
+					new GUIContent("Ambient Color")
+				);
+
+				break;
+		}
+
+		EditorGUILayout.PropertyField(
+			environmentIntensityMultiplier,
+			new GUIContent("Intensity Multiplier")
+		);
+
+		EditorGUILayout.Space();
+
+		EditorGUILayout.LabelField(
+			"Environment Reflections",
+			EditorStyles.boldLabel
+		);
+
+		EditorGUILayout.PropertyField(
+			reflectionSource,
+			new GUIContent("Source")
+		);
+
+		var selectedReflectionSource =
+			(DVO_Lighting.EnvironmentReflectionSource)
+			reflectionSource.enumValueIndex;
+
+		if (selectedReflectionSource ==
+			DVO_Lighting
+				.EnvironmentReflectionSource.Custom) {
+			EditorGUILayout.PropertyField(
+				customCubemap,
+				new GUIContent("Cubemap")
+			);
+		}
+
+		EditorGUILayout.PropertyField(
+			reflectionIntensityMultiplier,
+			new GUIContent("Intensity Multiplier")
+		);
+
+		serializedObject.ApplyModifiedProperties();
+	}
+}
+
+#endif

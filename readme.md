@@ -23,12 +23,12 @@ Then, open the "Main" scene for the simulator
 ## Assets file structure
 - *Some assets are gitignored because of large file size and/or to not redistribute them without permission
 - **Assets:** Contains all 3D models and recordings
-	- Animated armature FBXs
+	- `Mocap` - Animated armature FBXs
 		- `captury`, `freemocap`, `MotionBERT` - mostly straight from the source with some preprocessing into clean FBXs
 		- `cmu mocap bvhs` - bvhs from the cmu motion capture dataset
-		`BVH` - FBX converted BVHs from cmu ds
-	- `exterior scenes`, `Replica` - environments, Replica is from the Replica indoor dataset
-	- `.blend` files are development places, live work on models is performed in there
+		- `BVH` - FBX converted BVHs from cmu ds
+	- `exterior scenes`, `Interior` - environments
+		- In `Interior`- `Replica` is from the Replica indoor dataset
 - **Materials** (self explanatory) 
 	- `unity_texture_packer` - py script that converts multiple texture maps into unity's mask
 - **Scenes** - only Main is important, the others can be ignored
@@ -110,6 +110,13 @@ event_dtype = np.dtype([
 - `meta.json`
 	- Metadata regarding simulation run, should be self explanatory to read
 	- Also exports current configuration as defined in DVConfig.cs
+
+Sensors write to a temporary `.bin` file under `.Output` before they are converted to `.npz`.
+
+## Permutations
+Scenes are defined by a specific permutation. For every aspect (variable) of a scene, there can be multiple variations of that aspect. A specific combination of these variations is a permutation.
+
+Permutations are defined by a specific number sequence. The order of these numbers is the order of the permutation groups under the Scene gameobject. The number is the index of the specific variation gameobject under each permutation group. e.g. Permutation 0_0_0_0_0.. would be the first variation for each permutation group. 
 
 ## To Run:
 ### For manual single test simulations

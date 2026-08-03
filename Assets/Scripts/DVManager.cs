@@ -50,7 +50,7 @@ public class DVManager : Singleton<DVManager> {
 		InitSensors();
 
 		if (PermZeroTestRun) {
-			LoadPermutation(new int[] { 0, 0, 0, 0, 0, 0 });
+			LoadPermutation(Enumerable.Repeat(0, PermutationGroups.Count).ToArray());
 
 			StartCoroutine(SimulateCurrentScene());
 		}

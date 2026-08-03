@@ -20,13 +20,13 @@ RenderSettings:
   m_FogDensity: 0.01
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
-  m_AmbientSkyColor: {r: 0.8962264, g: 0.8962264, b: 0.8962264, a: 1}
+  m_AmbientSkyColor: {r: 0.9056604, g: 0.9056604, b: 0.9056604, a: 1}
   m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
   m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
-  m_AmbientIntensity: 0.62
+  m_AmbientIntensity: 1.68
   m_AmbientMode: 3
-  m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 2100000, guid: b6513eeb94912a549a2ee076d3c9e252, type: 2}
+  m_SubtractiveShadowColor: {r: 0.6509434, g: 0.6509434, b: 0.6509434, a: 1}
+  m_SkyboxMaterial: {fileID: 2100000, guid: d2dbf90a1a9b316499c4509ad2052df8, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -37,7 +37,7 @@ RenderSettings:
   m_ReflectionBounces: 1
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
-  m_Sun: {fileID: 225767552}
+  m_Sun: {fileID: 0}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -159,7 +159,6 @@ MonoBehaviour:
   PermutationGroups:
   - {fileID: 1112438146}
   - {fileID: 1171441058}
-  - {fileID: 1419388929}
   - {fileID: 121486009}
   - {fileID: 2077162540}
   - {fileID: 735698281}
@@ -706,6 +705,7 @@ MonoBehaviour:
   ArmatureGroup: {fileID: 1520479875}
   Armatures: []
   ArmatureInUse: {fileID: 0}
+  Lightings: {fileID: 1419388929}
   CurrentSceneLengthSeconds: 0
 --- !u!1 &492882631
 GameObject:
@@ -755,6 +755,18 @@ MonoBehaviour:
   LabelOverride: 
   AllSubObjects: []
   ID: 0
+  skyboxMaterial: {fileID: 2100000, guid: b6513eeb94912a549a2ee076d3c9e252, type: 2}
+  sunSource: {fileID: 225767552}
+  realtimeShadowColor: {r: 0.41960788, g: 0.4784314, b: 0.627451, a: 1}
+  lightingSource: 0
+  skyColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  equatorColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  groundColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  ambientColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  environmentIntensityMultiplier: 1
+  reflectionSource: 0
+  customCubemap: {fileID: 0}
+  reflectionIntensityMultiplier: 1
 --- !u!1 &516477366
 GameObject:
   m_ObjectHideFlags: 0
@@ -11011,8 +11023,8 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1941212301873019150}
   - {fileID: 9201185145609506868}
+  - {fileID: 1941212301873019150}
   - {fileID: 6915256703295841418}
   - {fileID: 543450652845969225}
   - {fileID: 1446192581}
@@ -11190,8 +11202,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1293237957}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.0039088987, y: -0.99931294, z: 0.01945016, w: 0.031307854}
-  m_LocalPosition: {x: -0.0076841116, y: 1.4836632, z: 2.662261}
+  m_LocalRotation: {x: 0.015278086, y: -0.7069417, z: 0.015278086, w: 0.7069417}
+  m_LocalPosition: {x: 2.59, y: 1.47, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -54475,8 +54487,9 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 492882632}
   - {fileID: 8897792917843252083}
+  - {fileID: 1776477147}
+  - {fileID: 492882632}
   m_Father: {fileID: 473641386}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1419388929
@@ -54585,6 +54598,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1446192581}
+  - component: {fileID: 1446192582}
   m_Layer: 0
   m_Name: replica
   m_TagString: Untagged
@@ -54614,6 +54628,22 @@ Transform:
   - {fileID: 661830073}
   m_Father: {fileID: 1112438145}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1446192582
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1446192580}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f778bd6dc8af20f4fb63019366df052e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  LabelOverride: 
+  AllSubObjects: []
+  ID: 0
+  lighting: {fileID: 0}
 --- !u!1001 &1457007015
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -54817,6 +54847,65 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 1743330424}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1776477146
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1776477147}
+  - component: {fileID: 1776477148}
+  m_Layer: 0
+  m_Name: mocap studio lighting
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &1776477147
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1776477146}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1419388928}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1776477148
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1776477146}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c21f63e64c9f00e4ea45917c6ea1e875, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  LabelOverride: 
+  AllSubObjects: []
+  ID: 0
+  skyboxMaterial: {fileID: 2100000, guid: d2dbf90a1a9b316499c4509ad2052df8, type: 2}
+  sunSource: {fileID: 0}
+  realtimeShadowColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  lightingSource: 2
+  skyColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  equatorColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  groundColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  ambientColor: {r: 1, g: 1, b: 1, a: 1}
+  environmentIntensityMultiplier: 1
+  reflectionSource: 0
+  customCubemap: {fileID: 0}
+  reflectionIntensityMultiplier: 1
 --- !u!1 &1778194819
 GameObject:
   m_ObjectHideFlags: 0
@@ -59853,8 +59942,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1912218702}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.0039088987, y: -0.99931294, z: 0.01945016, w: 0.031307854}
-  m_LocalPosition: {x: -0.0076841116, y: 1.4836632, z: 2.662261}
+  m_LocalRotation: {x: 0.015278086, y: -0.7069417, z: 0.015278086, w: 0.7069417}
+  m_LocalPosition: {x: 2.59, y: 1.47, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -62836,6 +62925,7 @@ MonoBehaviour:
   LabelOverride: 
   AllSubObjects: []
   ID: 0
+  lighting: {fileID: 492882633}
 --- !u!4 &927480505321276214
 Transform:
   m_ObjectHideFlags: 0
@@ -62978,6 +63068,18 @@ MonoBehaviour:
   LabelOverride: 
   AllSubObjects: []
   ID: 0
+  skyboxMaterial: {fileID: 0}
+  sunSource: {fileID: 0}
+  realtimeShadowColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  lightingSource: 2
+  skyColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  equatorColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  groundColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  ambientColor: {r: 0, g: 0, b: 0, a: 1}
+  environmentIntensityMultiplier: 1
+  reflectionSource: 0
+  customCubemap: {fileID: 0}
+  reflectionIntensityMultiplier: 1
 --- !u!1 &1091157331278587514
 GameObject:
   m_ObjectHideFlags: 0
@@ -63163,6 +63265,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1941212301873019150}
+  - component: {fileID: 1941212301873019151}
   m_Layer: 0
   m_Name: mocap studio
   m_TagString: Untagged
@@ -63967,6 +64070,22 @@ Transform:
   - {fileID: 1145690232536287622}
   m_Father: {fileID: 1112438145}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1941212301873019151
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1277688454170420148}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f778bd6dc8af20f4fb63019366df052e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  LabelOverride: 
+  AllSubObjects: []
+  ID: 0
+  lighting: {fileID: 1776477148}
 --- !u!1 &1953046826911141214
 GameObject:
   m_ObjectHideFlags: 0
@@ -66765,6 +66884,7 @@ MonoBehaviour:
   LabelOverride: 
   AllSubObjects: []
   ID: 0
+  lighting: {fileID: 1090075641039526178}
 --- !u!1 &4002016547019783940
 GameObject:
   m_ObjectHideFlags: 0
@@ -73961,6 +74081,7 @@ MonoBehaviour:
   LabelOverride: 
   AllSubObjects: []
   ID: 0
+  lighting: {fileID: 492882633}
 --- !u!1 &9211381498618920921
 GameObject:
   m_ObjectHideFlags: 0

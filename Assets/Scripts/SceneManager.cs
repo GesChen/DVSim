@@ -7,6 +7,7 @@ public class SceneManager : Singleton<SceneManager> {
 	public Transform ArmatureGroup;
 	public DVO_Armature[] Armatures;
 	public DVO_Armature ArmatureInUse;
+	public DVPermutationGroup Lightings;
 
 	public double CurrentSceneLengthSeconds;
 
@@ -48,5 +49,15 @@ public class SceneManager : Singleton<SceneManager> {
 				model.SetToCurArmature();
 			}
 		}
+	}
+
+	public void LoadLighting(DVO_Lighting lighting) {
+		foreach (var obj in Lightings.Objects) {
+			obj.gameObject.SetActive(false);
+		}
+
+		lighting.gameObject.SetActive(true);
+		lighting.Init();
+		Debug.Log($"Loaded lighting \"{lighting.Label}\"");
 	}
 }
