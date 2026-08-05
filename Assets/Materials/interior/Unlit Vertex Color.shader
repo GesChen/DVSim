@@ -2,6 +2,7 @@ Shader "Custom/Unlit Vertex Color"
 {
     Properties
     {
+        _Brightness ("Brightness", Range(0.0, 4.0)) = 1.0
     }
 
     // Universal Render Pipeline
@@ -19,6 +20,7 @@ Shader "Custom/Unlit Vertex Color"
         Pass
         {
             Name "Unlit"
+
             Tags
             {
                 "LightMode" = "UniversalForward"
@@ -36,6 +38,10 @@ Shader "Custom/Unlit Vertex Color"
             #pragma fragment Fragment
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+            CBUFFER_START(UnityPerMaterial)
+                half _Brightness;
+            CBUFFER_END
 
             struct Attributes
             {
@@ -64,7 +70,10 @@ Shader "Custom/Unlit Vertex Color"
 
             half4 Fragment(Varyings input) : SV_Target
             {
-                return input.color;
+                half4 color = input.color;
+                color.rgb *= _Brightness;
+
+                return color;
             }
 
             ENDHLSL
@@ -99,6 +108,8 @@ Shader "Custom/Unlit Vertex Color"
 
             #include "UnityCG.cginc"
 
+            fixed _Brightness;
+
             struct Attributes
             {
                 float4 vertex : POSITION;
@@ -123,7 +134,10 @@ Shader "Custom/Unlit Vertex Color"
 
             fixed4 Fragment(Varyings input) : SV_Target
             {
-                return input.color;
+                fixed4 color = input.color;
+                color.rgb *= _Brightness;
+
+                return color;
             }
 
             ENDCG
