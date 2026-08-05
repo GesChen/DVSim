@@ -15,8 +15,6 @@ public class DVO_WavyGrass : DVObject {
 	public override void UpdateState(ulong time) {
 		if (wave)
 			material.SetFloat("_Phase", time / (float)DVConfig.timeScale);
-		else
-			material.SetFloat("_Phase", 0);
 	}
 
 	private void OnEnable() {

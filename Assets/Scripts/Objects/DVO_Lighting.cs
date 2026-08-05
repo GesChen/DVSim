@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -374,7 +375,25 @@ public sealed class DVOLightingConfigEditor : Editor {
 			new GUIContent("Intensity Multiplier")
 		);
 
+		EditorGUILayout.Space();
+
 		serializedObject.ApplyModifiedProperties();
+
+		if (GUILayout.Button("Apply Lighting Configuration")) {
+			var lighting = (DVO_Lighting)target;
+
+			lighting.Load();
+
+			EditorUtility.SetDirty(lighting);
+
+			if (lighting.gameObject.scene.IsValid()) {
+				EditorSceneManager.MarkSceneDirty(
+					lighting.gameObject.scene
+				);
+			}
+
+			SceneView.RepaintAll();
+		}
 	}
 }
 
