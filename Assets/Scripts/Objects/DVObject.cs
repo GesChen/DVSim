@@ -14,7 +14,7 @@ public abstract class DVObject : MonoBehaviour {
 		AllSubObjects = transform.GetComponentsInChildren<DVObject>().Where(o => o != this).ToArray();
 	}
 
-	public Renderer renderer => HF.LoadCached(ref m_renderer, () => {
+	public Renderer Renderer => HF.LoadCached(ref m_renderer, () => {
 		if (checkedR) return null;
 		var r = GetComponent<Renderer>();
 		checkedR = true;
@@ -39,14 +39,14 @@ public abstract class DVObject : MonoBehaviour {
 
 		var propertyBlock = new MaterialPropertyBlock();
 
-		if (renderer == null) {
+		if (Renderer == null) {
 			//Debug.LogWarning($"{gameObject.name} has no renderer, will not get ID mpb");
 			return; // still has an id just not renderable one 
 		}
 
-		renderer.GetPropertyBlock(propertyBlock);
+		Renderer.GetPropertyBlock(propertyBlock);
 		propertyBlock.SetInteger("_ID", unchecked((int)ID));
-		renderer.SetPropertyBlock(propertyBlock);
+		Renderer.SetPropertyBlock(propertyBlock);
 		//Debug.Log($"registered id property for {gameObject.name}");
 	}
 
@@ -80,9 +80,9 @@ public abstract class DVObject : MonoBehaviour {
 	// imprecise implementation for now, fast but rough and not exact
 	// using dvsmemory.bbox here is bad code but whatever
 	public DVSMemory.BBox GenerateBBoxFast(Camera camera) {
-		if (renderer == null) return new() { rendered = false };
+		if (Renderer == null) return new() { rendered = false };
 
-		var wsBounds = renderer.bounds;
+		var wsBounds = Renderer.bounds;
 
 		// too lazy to write myself 
 		// https://discussions.unity.com/t/is-there-an-easy-way-to-get-on-screen-render-size-bounds/15884/3
@@ -122,7 +122,7 @@ public abstract class DVObject : MonoBehaviour {
 
 	// slow since it needs to do all this calculation
 	public virtual DVSMemory.BBox GenerateBBoxExact(Camera camera) {
-		if (renderer == null) return new() { rendered = false };
+		if (Renderer == null) return new() { rendered = false };
 
 		Vector3[] wsVerts = localVerts.ToArray();
 		transform.TransformPoints(wsVerts);

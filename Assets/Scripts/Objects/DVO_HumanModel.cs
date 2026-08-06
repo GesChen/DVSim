@@ -72,7 +72,7 @@ public class DVO_HumanModel : DVObject {
 	};
 
 	public override DVSMemory.BBox GenerateBBoxExact(Camera camera) {
-		if (renderer == null) return new() { rendered = false };
+		if (Renderer == null) return new() { rendered = false };
 
 		SMRenderer.BakeMesh(bakedMesh);
 		bakedMesh.GetVertices(bmVerts);

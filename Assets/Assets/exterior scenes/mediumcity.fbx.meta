@@ -1,0 +1,280 @@
+fileFormatVersion: 2
+guid: 9bd91591c0caef6438b8907bc96d7813
+ModelImporter:
+  serializedVersion: 22200
+  internalIDToNameTable: []
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGenBrick Wall
+    second: {fileID: 2100000, guid: 4a084a4d97386894fa6740b55f11ef9b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGenGlass
+    second: {fileID: -4963154090321795894, guid: ba68eeb01fdbe2c43bf5d69927c83950,
+      type: 3}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGenGrate001_1K-JPG_Color
+    second: {fileID: 2100000, guid: 2ec4b5c13fe37e1489a5a54fb8b251ac, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGenManholeCover003_1K-JPG_Color
+    second: {fileID: 2100000, guid: 400808e9caea6ee41934bcf5cd455ce0, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGenManholeCover006_1K-JPG_Color
+    second: {fileID: 2100000, guid: b7a0a363cf2350b45907ed17ec8cd08e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGenManholeCover007_1K-JPG_Color
+    second: {fileID: 2100000, guid: 1535289e78f76714c8bae3fb9a52d48d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGenTCom_DecalsStain0047_1_masked_S
+    second: {fileID: 2100000, guid: 681e1ecc8913faa4fb979909b5649ca3, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGenTCom_DecalsStain0057_1_masked_S
+    second: {fileID: 2100000, guid: 6ef7f390dbb77b643a94bc447a63d369, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGenTCom_DecalsStain0094_2_masked_S
+    second: {fileID: 2100000, guid: 5357ce692a550d8489ce19915412e50e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGenTCom_Various_Manhole2_1K_albedo
+    second: {fileID: 2100000, guid: 3708f8ec8e74a5c419b30376d49749bb, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGenTCom_Various_Manhole3_1K_albedo
+    second: {fileID: 2100000, guid: 50ce6f119db57f9469c0d1fe8c7850ac, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGen_Curb
+    second: {fileID: 2100000, guid: 81a31c1dad9fe4448ba4ad8cf9ccdcfb, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGen_Grass
+    second: {fileID: 2100000, guid: ee44099f416094a4ea595189bd493c36, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGen_Interior_Room_Shader
+    second: {fileID: 2100000, guid: f5431b47cd0f5d94e8d8b7d2c4e16fe4, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGen_Interior_Store_Shader
+    second: {fileID: 2100000, guid: 05398d1dec7b7e443998b46b6cc941ee, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGen_LR_Facades
+    second: {fileID: 2100000, guid: 75bd54ee3bf43a7478346bedf38c84af, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGen_Streets
+    second: {fileID: 2100000, guid: 226c6a25b31d8ed42aa99aaf38520dc5, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGen_lanes_secondary_color
+    second: {fileID: 2100000, guid: c9fae6d640ab9934ba7cddf5da948e93, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGen_lanes_white
+    second: {fileID: 2100000, guid: 1fcd7985d03d01d4e9703b4a7ee1ab03, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGenbasic dark green
+    second: {fileID: 2100000, guid: c44e65a4c9418424780f04bff9475b5d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGenbasic metal
+    second: {fileID: 2100000, guid: 35667800423276a459885187e4b41127, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGenblack wood
+    second: {fileID: 2100000, guid: 2c129a43b9afddf4995687e3ba9d6610, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGenblack_
+    second: {fileID: 2100000, guid: cc84d75e5ed854643b71ab15333e22a5, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGenconcrete
+    second: {fileID: 2100000, guid: 4f07f7506d27e594a8fc278f2cb622f8, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGengold
+    second: {fileID: 2100000, guid: 018b43f995ca1c64a9da5d88888503ba, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGenmarble tiles
+    second: {fileID: 2100000, guid: 3a36e3ed44488534fad4693697c1b86d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGenroof.001
+    second: {fileID: 2100000, guid: c01cac8795c5e664b80e94b459de6da4, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGenroof.002
+    second: {fileID: 2100000, guid: a6644ce873842294daca3e3820f5c68e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGenroof.003
+    second: {fileID: 2100000, guid: 6f0e3f5a0a733494b87552351c8b4d66, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGensale signs
+    second: {fileID: 2100000, guid: 28a0fb79afa88dc4aa2b61599f73e0be, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGenside walks
+    second: {fileID: 2100000, guid: a61b07c905905eb40a334363eb7cd646, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGenwhite
+    second: {fileID: 2100000, guid: 86b5df4d7f91d174bb72c7e0f0e34ae2, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGenwindow frames
+    second: {fileID: 2100000, guid: fe6a166c8c828404791abec02e8a1926, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CityGenyellow stone
+    second: {fileID: 2100000, guid: 5f86ee860ff41e54298b799d5a93c00e, type: 2}
+  materials:
+    materialImportMode: 2
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    removeConstantScaleCurves: 0
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 0
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    useSRGBMaterialColor: 1
+    sortHierarchyByName: 1
+    importPhysicalCameras: 1
+    importVisibility: 1
+    importBlendShapes: 1
+    importCameras: 1
+    importLights: 1
+    nodeNameCollisionStrategy: 1
+    fileIdsGeneration: 2
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    keepQuads: 0
+    weldVertices: 1
+    bakeAxisConversion: 0
+    preserveHierarchy: 0
+    skinWeightsMode: 0
+    maxBonesPerVertex: 4
+    minBoneWeight: 0.001
+    optimizeBones: 1
+    meshOptimizationFlags: -1
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVMarginMethod: 1
+    secondaryUVMinLightmapResolution: 40
+    secondaryUVMinObjectScale: 1
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+    strictVertexDataChecks: 0
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    blendShapeNormalImportMode: 1
+    normalSmoothingSource: 0
+  referencedClips: []
+  importAnimation: 1
+  humanDescription:
+    serializedVersion: 3
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    globalScale: 1
+    rootMotionBoneName: 
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  autoGenerateAvatarMappingIfUnspecified: 1
+  animationType: 2
+  humanoidOversampling: 1
+  avatarSetup: 0
+  addHumanoidExtraRootOnlyWhenUsingAvatar: 1
+  importBlendShapeDeformPercent: 1
+  remapMaterialsIfMaterialImportModeIsNone: 0
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
