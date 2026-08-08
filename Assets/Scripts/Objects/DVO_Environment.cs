@@ -5,8 +5,13 @@ public class DVO_Environment : DVObject {
 
 	public override void UpdateState(ulong time) {
 	}
+	
 	public override void Init() {
 		if (lighting != null) SceneManager.Instance.LoadLighting(lighting);
 		else Debug.LogWarning($"Environment {gameObject.name} has not set a target lighting, using the last loaded one");
+	}
+
+	public override DVSMemory.BBox GenerateBBoxExact(Camera camera) {
+		return new() { rendered = false };
 	}
 }

@@ -3,40 +3,26 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
-public class DVO_Car : DVObject {
-	public int paintMatIndex;
+public class DVO_Car : DVO_Vehicle {
+	public Transform frontWheels;
+	public Transform backWheels;
 
-	Material material;
+	protected override void Randomize() {
+		GenerateID();
 
-	public override void Init() {
-		material = Renderer.materials[paintMatIndex];
-	}
+		bool hasHiPart = HiRes.TryGetComponent(out DVO_CarPart hiResPart);
+		bool hasLowPart = LowRes.TryGetComponent(out DVO_CarPart lowResPart);
 
-	public void SetColor(int col) {
-		if (col < 0 || col > 7) Debug.LogError($"invalid color {col} must be 0-7");
-		material.SetInt("_PaletteIndex", col);
-	}
+		if (!(hasHiPart && hasLowPart)) {
+			Debug.LogError("Both parts of DVO Car need to be carpart");
+		}
 
-	public void TestColor() {
-		material = Renderer.sharedMaterials[paintMatIndex];
-		int col = Random.Range(0, 8);
-		Debug.Log($"testing {col}");
-		SetColor(col);
+		int col = (int)(ID % 7);
+		hiResPart.SetColor(col);
+		lowResPart.SetColor(col);
 	}
 
 	public override void UpdateState(ulong time) {
 		
-	}
-}
-
-[CustomEditor(typeof(DVO_Car))]
-public class DVOCarEditor : Editor {
-	public override void OnInspectorGUI() {
-		DrawDefaultInspector();
-
-		var comp = (DVO_Car)target;
-		if (GUILayout.Button("Test color")) {
-			comp.TestColor();
-		}
 	}
 }
