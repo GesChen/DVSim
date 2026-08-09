@@ -14,4 +14,8 @@ public class DVO_Armature : DVObject {
 	public override void UpdateState(ulong time) {
 		
 	}
+
+	public void ApplyPose(Poses.Pose pose) {
+		Poses.CopyPose(pose, transform);
+	}
 }

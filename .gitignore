@@ -164,3 +164,4 @@ credentials.json
 /Assets/Assets/Mocap/cmu mocap bvhs
 *.blend1
 /Python/interior/Replica
+/Assets/Assets/Mocap/.BVH

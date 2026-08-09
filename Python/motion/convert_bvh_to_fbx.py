@@ -1,9 +1,11 @@
 import sys
 import os
 import bpy
+from pathlib import Path
+import subprocess
 
 # EDIT THIS: all converted FBX files will be written here.
-OUTPUT_DIR = r"C:\CProjects\Event Camera\DVSim\Assets\Assets\BVH"
+OUTPUT_DIR = Path(__file__).parent.parent.parent / 'Assets/Assets/Mocap/.BVH'
 
 # Optional import/export settings.
 BVH_AXIS_FORWARD = '-Z'
@@ -26,10 +28,10 @@ def convert_bvh_to_fbx(bvh_path: str) -> str:
     if not bvh_path.lower().endswith('.bvh'):
         raise ValueError(f"Input is not a .bvh file: {bvh_path}")
 
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    OUTPUT_DIR.mkdir(exist_ok=True)
 
     base_name = os.path.splitext(os.path.basename(bvh_path))[0]
-    fbx_path = os.path.join(OUTPUT_DIR, base_name + '.fbx')
+    fbx_path = OUTPUT_DIR / (base_name + '.fbx')
 
     clean_scene()
 
@@ -53,7 +55,7 @@ def convert_bvh_to_fbx(bvh_path: str) -> str:
     bpy.ops.object.select_all(action='SELECT')
 
     bpy.ops.export_scene.fbx(
-        filepath=fbx_path,
+        filepath=str(fbx_path),
         use_selection=True,
         axis_forward=FBX_AXIS_FORWARD,
         axis_up=FBX_AXIS_UP,

@@ -51,7 +51,7 @@ public abstract class DVObject : MonoBehaviour {
 	}
 
 	// stable string hash, gethashcode is not
-	public static uint Fnv1a32(string value) {
+	private static uint Fnv1a32(string value) {
 		const uint offset = 2166136261;
 		const uint prime = 16777619;
 

@@ -1,12 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 [ExecuteAlways]
 public class DVO_WavyGrass : DVObject {
 	public bool wave;
 	Material material;
+
 	Material shared;
+	LocalKeyword previewKW;
 	
 	public override void Init() {
 		material = GetComponent<Renderer>().material;
@@ -19,6 +22,7 @@ public class DVO_WavyGrass : DVObject {
 
 	private void OnEnable() {
 		shared = GetComponent<Renderer>().sharedMaterial;
+		previewKW = new LocalKeyword(shared.shader, "_PREVIEW_WAVE");
 	}
 	private void OnDisable() {
 		shared = null;
@@ -27,7 +31,7 @@ public class DVO_WavyGrass : DVObject {
 	void Update() {
 		if (Application.isPlaying) return;
 		if (!wave) return;
-		shared.SetFloat("_Phase", Time.timeSinceLevelLoad);
+		shared.SetKeyword(previewKW, wave);
 	}
 
 	public override DVSMemory.BBox GenerateBBoxExact(Camera camera) {

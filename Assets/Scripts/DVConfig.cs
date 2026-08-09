@@ -73,6 +73,7 @@ public static class DVConfig {
 
 	public const bool recordBboxes = true;
 	public const string bboxFileName = "bboxes_raw.json";
+	public const bool autoDeleteBBoxesRaw = true;
 
 	// ------- frame captures ------
 	public const bool doFrameCaptures = true;
@@ -82,7 +83,7 @@ public static class DVConfig {
 	public const string frameCapSubFolder = "frames";
 	public const string frameCapDataSubFolder = "data";
 	public const int frameNumDigits = 5;
-	public const bool deleteFrameCapsAfterPostProcess = false;
+	public const bool autoDeleteFrameCaps = false;
 
 	// --- post processing---
 	public const string eventsOut = "events.npz";
@@ -92,4 +93,5 @@ public static class DVConfig {
 	public const string dataVidOut = "data.mkv";
 	public const string bboxesOut = "bboxes.json";
 	public const float depthScale = 1000;
+	public const bool autoDeleteCapBin = true;
 }

@@ -59,7 +59,6 @@ event_dtype = np.dtype([
 	("p", bool),
 ], align=False)
 
-
 def processbin():
 	camfilepath = meta['outfilepath']
 
@@ -455,6 +454,18 @@ def processbboxes():
 	with (path / config["bboxesOut"]).open('w') as w:
 		json.dump(out, w)
 
+def deletetempfiles():
+	if config['autoDeleteFrameCaps']:
+		shutil.rmtree(str(path / config["frameCapSubFolder"]), ignore_errors=True)
+		shutil.rmtree(str(path / config["frameCapDataSubFolder"]), ignore_errors=True)
+
+	if config['autoDeleteCapBin']:
+		Path(meta['outfilepath']).unlink(True)
+
+	if config['autoDeleteBBoxesRaw']:
+		(path / config['bboxFileName']).unlink(True)
+	
+
 if __name__ == "__main__":
 	jsonpath = sys.argv[1]
 
@@ -479,6 +490,4 @@ if __name__ == "__main__":
 
 	processbboxes()
 
-	if config['deleteFrameCapsAfterPostProcess']:
-		shutil.rmtree(str(path / config["frameCapSubFolder"]), ignore_errors=True)
-		shutil.rmtree(str(path / config["frameCapDataSubFolder"]), ignore_errors=True)
+	deletetempfiles()

@@ -10,14 +10,12 @@ public class DVO_PoseAnim : DVObject {
 
 	public Poses.PoseAnimation Animation { get; private set; }
 
-	DVO_Armature targetArm;
-	Transform target;
+	DVO_Armature target;
 	Quaternion targetInitRot;
 
 	public override void Init() {
-		targetArm = SceneManager.Instance.ArmatureInUse;
-		target = SceneManager.Instance.ArmatureInUse.transform;
-		targetInitRot = target.rotation;
+		target = SceneManager.Instance.ArmatureInUse;
+		targetInitRot = target.transform.rotation;
 
 		LoadFBX(AnimObjAssetPath, out var model, out var clip);
 
@@ -27,7 +25,7 @@ public class DVO_PoseAnim : DVObject {
 
 		if (!useCustomOffset && DVConfig.doAutoGrounding) {
 			Poses.Pose p0 = Animation.Poses[0];
-			CopyPose(p0, target);
+			target.ApplyPose(p0);
 
 			// find feet average
 			// aka lowest two bones
@@ -44,7 +42,7 @@ public class DVO_PoseAnim : DVObject {
 				}
 			}
 
-			Vector3 feetAvg = (lowest + lowest2) / 2f - target.position; // local only
+			Vector3 feetAvg = (lowest + lowest2) / 2f - target.transform.position; // local only
 
 			// find ground
 			Vector3 ground = Vector3.zero;
@@ -54,7 +52,7 @@ public class DVO_PoseAnim : DVObject {
 				&& (ground == Vector3.zero || (ground != Vector3.zero && hit2.point.y < ground.y)))
 				ground = hit2.point;
 
-			Offset = ground - feetAvg + targetArm.groundingOffset;
+			Offset = ground - feetAvg + target.groundingOffset;
 
 			//DebugExtra.DrawPoint(ground, MoreColors.Red);
 			//DebugExtra.DrawPoint(feetAvg, MoreColors.Green);
@@ -64,9 +62,8 @@ public class DVO_PoseAnim : DVObject {
 
 	public override void UpdateState(ulong time) {
 		var pose = Animation.Sample(time);
+		target.ApplyPose(pose);
 
-		CopyPose(pose, target);
-
-		target.SetPositionAndRotation(Offset, transform.rotation * targetInitRot);
+		target.transform.SetPositionAndRotation(Offset, transform.rotation * targetInitRot);
 	}
 }

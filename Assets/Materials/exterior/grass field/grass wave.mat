@@ -11,7 +11,8 @@ Material:
   m_Shader: {fileID: 4800000, guid: 180d83d4b6a7f2b42b60b826f3734ea5, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _PREVIEW_WAVE
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -40,7 +41,7 @@ Material:
     - _NormalStrength: 1
     - _Phase: 0
     - _PreviewSpeed: 1
-    - _PreviewWave: 0
+    - _PreviewWave: 1
     - _TipPower: 1.5
     - _WaveFrequency: 1.5
     - _WaveStrength: 0.15

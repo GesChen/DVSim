@@ -34,4 +34,4 @@ if errorlevel 1 (
 
 echo.
 echo Conversion complete.
-pause
+@REM pause

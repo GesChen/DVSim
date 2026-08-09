@@ -18,6 +18,8 @@ public static class Poses {
 
 		public Pose Sample(ulong time) => SampleAnim(time, this);
 
+		public float Duration => Poses.Length / fps;
+
 		public void Scale(float scale) {
 			foreach (var p in Poses) {
 				p.Scale(scale);
@@ -33,6 +35,36 @@ public static class Poses {
 				b.Scale(scale);
 			}
 		}
+
+		public static Pose Lerp(Pose a, Pose b, float t) {
+			if (!a.Equals(b)) { Debug.LogError("can't lerp poses, bone structure is not congruent"); return a; }
+
+			Pose interpolated = new() {
+				Bones = new PoseBone[a.Bones.Length]
+			};
+
+			for (int i = 0; i < a.Bones.Length; i++) {
+				PoseBone abone = a.Bones[i];
+				PoseBone bbone = b.Bones[i];
+
+				interpolated.Bones[i] = new PoseBone() {
+					Name = abone.Name,
+					Position = Vector3.Lerp(abone.Position, bbone.Position, t),
+					Rotation = Quaternion.Slerp(abone.Rotation, b.Bones[i].Rotation, t)
+				};
+			}
+			return interpolated;
+		}
+
+		public override bool Equals(object obj) {
+			if (obj is not Pose other) return false;
+			if (other.Bones.Length != Bones.Length) return false;
+			for (int i = 0; i < Bones.Length; i++) 
+				if (Bones[i].Name != other.Bones[i].Name) return false;
+			return true;
+		}
+
+		public string StringRepr() => Bones.Select(b => b.Name).ToBetterString();
 	}
 
 	public class PoseBone {
