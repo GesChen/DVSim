@@ -93,7 +93,7 @@ public class DVSFasterMemory {
 		if (!isOpen)
 			return;
 
-		var permAtClose = DVManager.CurrentPermutation.ToArray();
+		var permAtClose = DVManager.Instance.CurrentPermutation.ToArray();
 
 		Log("Closing eventbuffer, awaiting flushtask");
 		await CloseEventBuffer();

@@ -1573,18 +1573,23 @@ MonoBehaviour:
   Frame: 0
   Time: 0
   Playing: 0
-  PermutationGroups:
+  Variables:
   - {fileID: 1112438146}
   - {fileID: 1171441058}
-  - {fileID: 121486009}
   - {fileID: 2077162540}
+  - {fileID: 121486009}
   - {fileID: 735698281}
   Sensors:
   - {fileID: 330585548}
   - {fileID: 1982064165}
   - {fileID: 1293237960}
-  Objects: []
+  ImmediateObjects: []
   PermZeroTestRun: 1
+  Scene: {fileID: 473641386}
+  ArmatureGroup: {fileID: 1520479875}
+  Armatures: []
+  ArmatureInUse: {fileID: 0}
+  CurrentSceneLengthSeconds: 0
 --- !u!4 &120236687
 Transform:
   m_ObjectHideFlags: 0
@@ -1643,10 +1648,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 121486007}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dc18cbd8980190944b13c2b1f1d7dd80, type: 3}
+  m_Script: {fileID: 11500000, guid: 94dff7f97d662dc4e836b56884601f4b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVPermutationGroup
   Objects: []
+  Variations: []
+  activeObjects: 
 --- !u!1 &133203284
 GameObject:
   m_ObjectHideFlags: 0
@@ -2240,7 +2247,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PoseAnimObj
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   AnimObjAssetPath: Assets/Assets/freemocap/fm_test.fbx
   Scale: 1
@@ -5666,7 +5672,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 473641386}
-  - component: {fileID: 473641387}
   m_Layer: 0
   m_Name: Scene
   m_TagString: Untagged
@@ -5697,23 +5702,6 @@ Transform:
   - {fileID: 1520479875}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &473641387
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 473641385}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0f177359311d0c24ea77681fc25d0c9d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SceneManager
-  ArmatureGroup: {fileID: 1520479875}
-  Armatures: []
-  ArmatureInUse: {fileID: 0}
-  Lightings: {fileID: 1419388929}
-  CurrentSceneLengthSeconds: 0
 --- !u!1 &484085204
 GameObject:
   m_ObjectHideFlags: 0
@@ -6078,7 +6066,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   skyboxMaterial: {fileID: 2100000, guid: b6513eeb94912a549a2ee076d3c9e252, type: 2}
   sunSource: {fileID: 225767552}
@@ -7085,7 +7072,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_ConstTransform
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   constPositionRate: {x: 0, y: 0, z: 0}
   sinPositionAmount: {x: 3, y: 0, z: 0}
@@ -7207,7 +7193,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   skyboxMaterial: {fileID: 2100000, guid: aaf73f273dcf6d84aa68d65e75a619d2, type: 2}
   sunSource: {fileID: 611523496}
@@ -7576,7 +7561,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 614802894}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 25.63, y: 0, z: 61.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -7596,7 +7581,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   vehiclePrefab: {fileID: 3139681321850873601, guid: cd3d4fa110b6be64d99571cf8eb8d219,
     type: 3}
@@ -52190,7 +52174,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   timeScale: 0
   particles: []
@@ -52619,10 +52602,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 735698279}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dc18cbd8980190944b13c2b1f1d7dd80, type: 3}
+  m_Script: {fileID: 11500000, guid: 94dff7f97d662dc4e836b56884601f4b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   Objects: []
+  Variations: []
+  activeObjects: 
 --- !u!1 &741563713
 GameObject:
   m_ObjectHideFlags: 0
@@ -60746,10 +60731,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 1112438144}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dc18cbd8980190944b13c2b1f1d7dd80, type: 3}
+  m_Script: {fileID: 11500000, guid: 94dff7f97d662dc4e836b56884601f4b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVPermutationGroup
   Objects: []
+  Variations: []
+  activeObjects: 
 --- !u!1 &1154328670
 GameObject:
   m_ObjectHideFlags: 0
@@ -60879,10 +60866,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 1171441056}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dc18cbd8980190944b13c2b1f1d7dd80, type: 3}
+  m_Script: {fileID: 11500000, guid: 94dff7f97d662dc4e836b56884601f4b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVPermutationGroup
   Objects: []
+  Variations:
+  - Possibilities:
+    - obj: {fileID: 1519598892}
+      probability: 1
+    - obj: {fileID: 614802896}
+      probability: 1
+  activeObjects: 
 --- !u!1 &1182800611
 GameObject:
   m_ObjectHideFlags: 0
@@ -106451,10 +106445,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 1419388927}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dc18cbd8980190944b13c2b1f1d7dd80, type: 3}
+  m_Script: {fileID: 11500000, guid: 94dff7f97d662dc4e836b56884601f4b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVPermutationGroup
   Objects: []
+  Variations: []
+  activeObjects: 
 --- !u!1 &1420117678
 GameObject:
   m_ObjectHideFlags: 0
@@ -107436,8 +107432,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1519598890}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 27.53, y: 0, z: 62.47}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 24.7, y: 0, z: 55.76}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -107456,7 +107452,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   vehiclePrefab: {fileID: 2564064421236424805, guid: bb967b731db82c24c94b72998e9ad82f,
     type: 3}
@@ -107482,7 +107477,7 @@ MonoBehaviour:
     keypoints:
     - position: {x: 28.009386, y: 64.44563}
       stopSign: 0
-    - position: {x: 23.717587, y: 70.797844}
+    - position: {x: 23.665062, y: 70.836075}
       stopSign: 0
   seed: 12345
   prewarmSeconds: 20
@@ -152504,7 +152499,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   skyboxMaterial: {fileID: 2100000, guid: ea0083f11570f5c46a8080ebca4b85ae, type: 2}
   sunSource: {fileID: 0}
@@ -153672,7 +153666,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   skyboxMaterial: {fileID: 2100000, guid: d2dbf90a1a9b316499c4509ad2052df8, type: 2}
   sunSource: {fileID: 0}
@@ -159181,7 +159174,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   timeScale: 100
   particles:
@@ -159486,7 +159478,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   skyboxMaterial: {fileID: 2100000, guid: 78d5eb5d3a0171245b29fce80b85c57b, type: 2}
   sunSource: {fileID: 0}
@@ -160148,7 +160139,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   skyboxMaterial: {fileID: 2100000, guid: 6c576ef95e175844687f45b6a3bd6f06, type: 2}
   sunSource: {fileID: 0}
@@ -160586,7 +160576,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PoseAnimObj
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   AnimObjAssetPath: Assets/Assets/MotionBERT/skeleton-walk3.fbx
   Scale: 1
@@ -160956,7 +160945,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PoseAnimObj
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   AnimObjAssetPath: Assets/Assets/Mocap/captury/1.fbx
   Scale: 1
@@ -161409,10 +161397,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 2077162538}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dc18cbd8980190944b13c2b1f1d7dd80, type: 3}
+  m_Script: {fileID: 11500000, guid: 94dff7f97d662dc4e836b56884601f4b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVPermutationGroup
   Objects: []
+  Variations: []
+  activeObjects: 
 --- !u!1 &2096284816
 GameObject:
   m_ObjectHideFlags: 0
@@ -162129,7 +162119,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_HumanModel
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   Models:
   - TargetArmatureType: BVH
@@ -165123,7 +165112,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   lighting: {fileID: 492882633}
 --- !u!4 &927480505321276214
@@ -165465,7 +165453,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_Lighting
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   skyboxMaterial: {fileID: 0}
   sunSource: {fileID: 0}
@@ -167414,7 +167401,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   lighting: {fileID: 1776477148}
 --- !u!4 &1943224747553659570
@@ -167481,7 +167467,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PoseAnimObj
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   AnimObjAssetPath: Assets/Assets/BVH/01_01.fbx
   Scale: 0.07
@@ -167525,7 +167510,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   lighting: {fileID: 1982329253}
 --- !u!1 &1955770841113479860
@@ -170092,7 +170076,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_Rotator
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   axes: {x: 0, y: 0, z: 20}
 --- !u!4 &3052410454447541753
@@ -172120,7 +172103,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_Armature
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   Type: MBERT
   RootBoneTransform: {fileID: 162786508521796014}
@@ -172196,7 +172178,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_Environment
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   lighting: {fileID: 1090075641039526178}
 --- !u!4 &3965794699064557636
@@ -175831,7 +175812,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_Armature
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   Type: FMC
   RootBoneTransform: {fileID: 252425126598450837}
@@ -175923,7 +175903,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_Armature
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   Type: BVH
   RootBoneTransform: {fileID: 1862925670447674312}
@@ -177114,7 +177093,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_Armature
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   Type: CPTY
   RootBoneTransform: {fileID: 7354220205329165117}
@@ -178432,7 +178410,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_HumanModel
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   Models:
   - TargetArmatureType: BVH
@@ -178578,7 +178555,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   lighting: {fileID: 1934737905}
 --- !u!4 &6915256703295841418
@@ -178799,7 +178775,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_ObjectGroup
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
 --- !u!33 &7002884964296817861
 MeshFilter:
@@ -179253,7 +179228,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_ConstTransform
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   constPositionRate: {x: 0, y: 0, z: 0}
   sinPositionAmount: {x: 3, y: 0, z: 0}
@@ -179363,7 +179337,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
 --- !u!23 &7202271455068446333
 MeshRenderer:
@@ -180618,7 +180591,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   wave: 1
 --- !u!4 &7662475599650129887
@@ -181321,7 +181293,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   lighting: {fileID: 1668316228}
 --- !u!23 &7857472280302502238
@@ -181957,7 +181928,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DVO_ObjectGroup
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
 --- !u!1 &8089097335425325991
 GameObject:
@@ -182855,7 +182825,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   lighting: {fileID: 571849964}
 --- !u!23 &8463078888954472205
@@ -182913,10 +182882,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   HiRes: {fileID: 0}
   LowRes: {fileID: 0}
+  UsingHiRes: 0
   frontWheels: {fileID: 0}
   backWheels: {fileID: 0}
 --- !u!1 &8486642751072167015
@@ -183015,10 +182984,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   HiRes: {fileID: 0}
   LowRes: {fileID: 0}
+  UsingHiRes: 0
   frontWheels: {fileID: 0}
   backWheels: {fileID: 0}
 --- !u!1 &8519050727439128482
@@ -184134,7 +184103,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   lighting: {fileID: 492882633}
 --- !u!1 &9211381498618920921

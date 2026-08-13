@@ -796,6 +796,15 @@ public static class HF {
 		CombineHash(ref hash, value.z);
 		CombineHash(ref hash, value.w);
 	}
+	public static T LogInline<T>(T value, string content, int level = 0) {
+		switch (level) {
+			case 0: Debug.Log(content); break;
+			case 1: Debug.LogWarning(content); break;
+			case 2: Debug.LogError(content); break;
+			default: Debug.Log(content); break;
+		}
+		return value;
+	}
 }
 
 public sealed class PidController {

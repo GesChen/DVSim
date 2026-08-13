@@ -547,7 +547,7 @@ public class DVS : MonoBehaviour {
 		FrameCapShader.Dispatch(frameCapKernel, globalShaderGroups.x, globalShaderGroups.y, 1);
 		//RenderDoc.EndCaptureRenderDoc(EditorWindow.focusedWindow);
 
-		string permutationAtCall = string.Join('_', DVManager.CurrentPermutation);
+		string permutationAtCall = string.Join('_', DVManager. Instance.CurrentPermutation);
 		int frameCapFrameAtCall = (int)(DVManager.Instance.Frame * DVConfig.frameCapFPS / DVConfig.simFPS);
 
 		AsyncGPUReadback.Request(

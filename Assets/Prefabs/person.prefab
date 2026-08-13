@@ -332,6 +332,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2fc75aa8a6623504f8871b4755b974d0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  BBoxKeypoints: 7c010000e00000003700000056000000a1000000be0000007a000000cf0000000900000021000000720000004501000020010000a3010000
+  renderer: {fileID: 0}
+  material: {fileID: 0}
 --- !u!1 &1703516059717961141
 GameObject:
   m_ObjectHideFlags: 0
@@ -540,10 +543,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
-  HiRes: {fileID: 6888024796939684132}
-  LowRes: {fileID: 1334484736829194844}
+  HiRes: {fileID: 5865148268351445453}
+  LowRes: {fileID: 7854584973498715564}
+  UsingHiRes: 0
   armature: {fileID: 3233382874233689173}
   rotationDelta: {x: -0.70710677, y: 0, z: 0, w: 0.70710677}
   minScale: 0.9
@@ -944,7 +947,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   LabelOverride: 
-  AllSubObjects: []
   ID: 0
   Type: 
   RootBoneTransform: {fileID: 5809641526457154581}
@@ -1201,6 +1203,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2fc75aa8a6623504f8871b4755b974d0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  BBoxKeypoints: e006000095020000c8000000d201000056030000c60400001b0300002c0400005d080000b30500009b09000008080000790500002e080000e9030000
+  renderer: {fileID: 0}
+  material: {fileID: 0}
 --- !u!1 &7577496629359188971
 GameObject:
   m_ObjectHideFlags: 0

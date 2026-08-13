@@ -43,6 +43,12 @@ public class DVSMemory {
 		public bool visible;
 		public bool rendered;
 	}
+	public class InterBBox { // nullable, no extra detail, for data transfer
+		// null for not rendered
+		public Vector2 min;
+		public Vector2 max;
+		public float dist;
+	}
 	List<BBox[]> bboxHistory = new();
 
 	Dictionary<string, object> outputMetadata;
@@ -77,7 +83,8 @@ public class DVSMemory {
 
 	public void GenerateMeta() { // for a new permutation
 		outputMetadata = new() {
-			{ "permutation", DVManager.CurrentPermutation },
+			{ "permutation", DVManager.Instance.CurrentPermutation },
+			{ "subpermutation", DVManager.Instance.SubPermutations },
 			{ "uniqueids", null },
 			{ "simtime", -1f },
 
@@ -97,7 +104,7 @@ public class DVSMemory {
 
 		outputMetadata["config"] = StaticClassToJObject(typeof(DVConfig));
 
-		outputMetadata["uniqueids"] = DVManager.Instance.Objects.Select(o => o.ID.ToString()).ToArray();
+		outputMetadata["uniqueids"] = DVManager.Instance.ImmediateObjects.Select(o => o.ID.ToString()).ToArray();
 	}
 
 	public static JObject StaticClassToJObject(Type staticClass) {
@@ -160,7 +167,7 @@ public class DVSMemory {
 		if (!isOpen)
 			return;
 
-		var permAtClose = DVManager.CurrentPermutation.ToArray();
+		var permAtClose = DVManager.Instance.CurrentPermutation.ToArray();
 
 		string dataPath = Path.Combine(
 				Application.dataPath,
@@ -348,11 +355,21 @@ public class DVSMemory {
 	}
 
 	void LogBboxes(ulong time) {
-		var bboxes = new BBox[DVManager.Instance.Objects.Count];
-		for (int i = 0; i < DVManager.Instance.Objects.Count; i++) {
-			DVObject obj = DVManager.Instance.Objects[i];
+		var objs = DVManager.Instance.GetAllDVObjectsThisFrame();
 
-			BBox bbox = obj.GenerateBBoxExact(camera);
+		var bboxes = new BBox[objs.Count];
+		for (int i = 0; i < objs.Count; i++) {
+			DVObject obj = objs[i];
+
+			InterBBox inter = obj.GenerateBBoxExact(camera);
+			BBox bbox = 
+				inter != null ? new() {
+					min = (S_Vector2)inter.min,
+					max = (S_Vector2)inter.max,
+					distance = inter.dist,
+					rendered = true
+				}
+				: new() { rendered = false };
 			bbox.label = obj.Label;
 			bbox.ID = obj.ID;
 			bbox.time = time;

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System;
 using UnityEngine;
 
 public abstract class DVObject : MonoBehaviour {
@@ -9,10 +10,7 @@ public abstract class DVObject : MonoBehaviour {
 
 	public string Label => LabelOverride.Length > 0 ? LabelOverride : gameObject.name;
 
-	[HideInInspector] public DVObject[] AllSubObjects;
-	void Awake() {
-		AllSubObjects = transform.GetComponentsInChildren<DVObject>().Where(o => o != this).ToArray();
-	}
+	public virtual DVObject[] GetSubObjects() => Array.Empty<DVObject>();
 
 	public Renderer Renderer => HF.LoadCached(ref m_renderer, () => {
 		if (checkedR) return null;
@@ -36,6 +34,7 @@ public abstract class DVObject : MonoBehaviour {
 	public void GenerateID() {
 		string identifier = $"{transform.gameObject.scene.name}/{GetCanonicalObjectPath(transform.gameObject.transform)}";
 		ID = Fnv1a32(identifier);
+		//Debug.Log($"generating for {name} = {ID}");
 
 		var propertyBlock = new MaterialPropertyBlock();
 
@@ -121,8 +120,8 @@ public abstract class DVObject : MonoBehaviour {
 	}
 
 	// slow since it needs to do all this calculation
-	public virtual DVSMemory.BBox GenerateBBoxExact(Camera camera) {
-		if (Renderer == null) return new() { rendered = false };
+	public virtual DVSMemory.InterBBox GenerateBBoxExact(Camera camera) {
+		if (Renderer == null) return null;
 
 		Vector3[] wsVerts = localVerts.ToArray();
 		transform.TransformPoints(wsVerts);
@@ -143,10 +142,9 @@ public abstract class DVObject : MonoBehaviour {
 		//DebugExtra.DrawRectSS(min, max, camera, drawGame: true, duration: .3f);
 
 		return new() {
-			min = (S_Vector2)min,
-			max = (S_Vector2)max,
-			distance = (camera.transform.position - center).magnitude,
-			rendered = true,
+			min = min,
+			max = max,
+			dist = (camera.transform.position - center).magnitude
 		};
 	}
 }

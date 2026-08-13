@@ -14,7 +14,7 @@ public class DVO_PoseAnim : DVObject {
 	Quaternion targetInitRot;
 
 	public override void Init() {
-		target = SceneManager.Instance.ArmatureInUse;
+		target = DVManager.Instance.ArmatureInUse;
 		targetInitRot = target.transform.rotation;
 
 		LoadFBX(AnimObjAssetPath, out var model, out var clip);

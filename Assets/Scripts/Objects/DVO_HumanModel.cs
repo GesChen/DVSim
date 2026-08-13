@@ -30,7 +30,7 @@ public class DVO_HumanModel : DVObject {
 		SMRenderer = GetComponent<SkinnedMeshRenderer>();
 
 		// check to see all model types are fulfilled
-		foreach (var arm in SceneManager.Instance.Armatures) {
+		foreach (var arm in DVManager.Instance.Armatures) {
 			if (!Models.Any(m => m.TargetArmatureType == arm.Type)) {
 				Debug.LogError($"Human model {name} lacks the model for armature type \"{arm.Type}\"");
 			}
@@ -49,7 +49,7 @@ public class DVO_HumanModel : DVObject {
 	}
 
 	public void SetToCurArmature() {
-		DVO_Armature armatureInUse = SceneManager.Instance.ArmatureInUse;
+		DVO_Armature armatureInUse = DVManager.Instance.ArmatureInUse;
 		var root = armatureInUse.RootBoneTransform;
 		SMRenderer.rootBone = root;
 
@@ -71,9 +71,7 @@ public class DVO_HumanModel : DVObject {
 		3133, 3066, 3214, 2563, 9104, 4357, 7486, 9300, 8372, 6816, 4866, 8563, 3850, 5481, 5570, 8090, 3977, 4501, 10394, 9440, 6899, 5299, 5143, 6036, 4139, 7772, 7256, 10284, 8406, 6788, 973, 3036, 5693, 4799, 4630, 5554, 7903, 4137, 9409, 6969, 9302, 4545, 3863, 8048
 	};
 
-	public override DVSMemory.BBox GenerateBBoxExact(Camera camera) {
-		if (Renderer == null) return new() { rendered = false };
-
+	public override DVSMemory.InterBBox GenerateBBoxExact(Camera camera) {
 		SMRenderer.BakeMesh(bakedMesh);
 		bakedMesh.GetVertices(bmVerts);
 
@@ -95,10 +93,9 @@ public class DVO_HumanModel : DVObject {
 		//Debug.Log($"min {min} max {max}");
 
 		return new() {
-			min = (S_Vector2)min,
-			max = (S_Vector2)max,
-			distance = (camera.transform.position - center).magnitude,
-			rendered = true,
+			min = min,
+			max = max,
+			dist = (camera.transform.position - center).magnitude,
 		};
 	}
 }

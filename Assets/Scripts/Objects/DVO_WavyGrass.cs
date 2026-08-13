@@ -34,7 +34,5 @@ public class DVO_WavyGrass : DVObject {
 		shared.SetKeyword(previewKW, wave);
 	}
 
-	public override DVSMemory.BBox GenerateBBoxExact(Camera camera) {
-		return new DVSMemory.BBox() { rendered = false };
-	}
+	public override DVSMemory.InterBBox GenerateBBoxExact(Camera camera) => null;
 }

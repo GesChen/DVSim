@@ -7,11 +7,9 @@ public class DVO_Environment : DVObject {
 	}
 	
 	public override void Init() {
-		if (lighting != null) SceneManager.Instance.LoadLighting(lighting);
+		if (lighting != null) DVManager.Instance.LoadLighting(lighting);
 		else Debug.LogWarning($"Environment {gameObject.name} has not set a target lighting, using the last loaded one");
 	}
 
-	public override DVSMemory.BBox GenerateBBoxExact(Camera camera) {
-		return new() { rendered = false };
-	}
+	public override DVSMemory.InterBBox GenerateBBoxExact(Camera camera) => null;
 }

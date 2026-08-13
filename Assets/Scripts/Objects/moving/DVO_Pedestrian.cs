@@ -21,10 +21,10 @@ public class DVO_Pedestrian : DVO_Vehicle {
 
 	public static Texture2D[] SMPLitexTextures;
 
-	DVO_PedestrianPart lowResPart => HF.LoadCached(ref m_lrp, LowRes.GetComponent<DVO_PedestrianPart>);
+	DVO_PedestrianPart lowResPart => HF.LoadCached(ref m_lrp, () => LowRes as DVO_PedestrianPart);
 	DVO_PedestrianPart m_lrp;
 
-	DVO_PedestrianPart hiResPart => HF.LoadCached(ref m_hrp, HiRes.GetComponent<DVO_PedestrianPart>);
+	DVO_PedestrianPart hiResPart => HF.LoadCached(ref m_hrp, () => HiRes as DVO_PedestrianPart);
 	DVO_PedestrianPart m_hrp;
 
 	protected override void InitVehicle() {
@@ -44,9 +44,6 @@ public class DVO_Pedestrian : DVO_Vehicle {
 		blendFactor = Random.Range(0.0f, 1.0f);
 		phaseOffset = (ulong)(Random.Range(0, animLength) * DVConfig.timeScale);
 		armature.transform.localScale = Random.Range(minScale, maxScale) * Vector3.one;
-
-		lowResPart.Init();
-		hiResPart.Init();
 	}
 
 	protected override void Randomize() {
@@ -70,7 +67,7 @@ public class DVO_Pedestrian : DVO_Vehicle {
 			armature.groundingOffset,
 			armature.RootBoneTransform.localRotation * rotationDelta);
 
-		if (lowResPart.gameObject.activeSelf) lowResPart.UpdateState(time);
-		if (hiResPart.gameObject.activeSelf) hiResPart.UpdateState(time);
+		// this isnt the worst thing ive ever seen
+		(UsingHiRes ? hiResPart : lowResPart).UpdateState(time);
 	}
 }

@@ -25,6 +25,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
+using System.Linq;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -587,8 +588,7 @@ public sealed class DVO_TrafficSimulator : DVObject {
 				continue;
 
 			required.Add(track.id);
-			DVO_Vehicle vehicle;
-			if (!liveVehicles.TryGetValue(track.id, out vehicle) || vehicle == null) {
+			if (!liveVehicles.TryGetValue(track.id, out DVO_Vehicle vehicle) || vehicle == null) {
 				vehicle = InstantiateVehicle(track.id);
 				if (vehicle == null)
 					continue;
@@ -607,7 +607,7 @@ public sealed class DVO_TrafficSimulator : DVObject {
 			// we should fix this later 
 		}
 
-		List<int> stale = new List<int>();
+		List<int> stale = new();
 		foreach (KeyValuePair<int, DVO_Vehicle> pair in liveVehicles) {
 			if (!required.Contains(pair.Key) || pair.Value == null)
 				stale.Add(pair.Key);
@@ -683,6 +683,9 @@ public sealed class DVO_TrafficSimulator : DVObject {
 				DestroyObjectDynamic(vehicle.gameObject);
 		}
 		liveVehicles.Clear();
+
+		foreach (Transform obj in vehicleParent)
+			DestroyObjectDynamic(obj.gameObject);
 	}
 
 	private static void DestroyObjectDynamic(UnityEngine.Object target) {
@@ -999,6 +1002,10 @@ public sealed class DVO_TrafficSimulator : DVObject {
 	}
 
 	#endregion
+
+	public override DVObject[] GetSubObjects() => liveVehicles.Values.ToArray();
+
+	public override DVSMemory.InterBBox GenerateBBoxExact(Camera camera) => null;
 }
 
 #if UNITY_EDITOR
