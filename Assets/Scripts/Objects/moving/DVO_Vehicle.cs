@@ -7,7 +7,7 @@ public abstract class DVO_Vehicle : DVObject {
 	public DVO_VehicleLOD HiRes;
 	public DVO_VehicleLOD LowRes;
 
-	const float HiResDist = 10f;
+	const float HiResDist = 20f;
 	[HideInInspector] public bool UsingHiRes;
 
 	public void UpdateModel() {
@@ -16,7 +16,7 @@ public abstract class DVO_Vehicle : DVObject {
 			reference = DVManager.Instance.ArmatureInUse.transform.position;
 		else reference = Vector3.zero;
 
-		UsingHiRes = (transform.position - reference).sqrMagnitude < HiResDist;
+		UsingHiRes = (transform.position - reference).sqrMagnitude < HiResDist * HiResDist;
 
 		HiRes.gameObject.SetActive(UsingHiRes);
 		LowRes.gameObject.SetActive(!UsingHiRes);

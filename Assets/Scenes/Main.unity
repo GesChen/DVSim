@@ -6036,7 +6036,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &492882632
 Transform:
   m_ObjectHideFlags: 0
@@ -7163,7 +7163,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &571849963
 Transform:
   m_ObjectHideFlags: 0
@@ -7552,7 +7552,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &614802895
 Transform:
   m_ObjectHideFlags: 0
@@ -7562,7 +7562,7 @@ Transform:
   m_GameObject: {fileID: 614802894}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 25.63, y: 0, z: 61.5}
+  m_LocalPosition: {x: -16.4, y: 0, z: -52.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7648,7 +7648,7 @@ MonoBehaviour:
   stopDuration: 1
   stopApproachDistance: 5
   previewMode: 1
-  previewTime: 27.61256919999778
+  previewTime: 1.510551299999861
   drawPaths: 1
   drawVehicleBounds: 0
   useDebugExtra: 0
@@ -47686,13 +47686,22 @@ ParticleSystem:
         m_Curve:
         - serializedVersion: 3
           time: 0
-          value: 0.34782633
-          inSlope: 3.5031035
-          outSlope: 3.5031035
+          value: 0
+          inSlope: 12.117647
+          outSlope: 12.117647
           tangentMode: 0
           weightedMode: 0
           inWeight: 0
-          outWeight: 0.09929077
+          outWeight: 0.6094363
+        - serializedVersion: 3
+          time: 0.106539026
+          value: 0.70076203
+          inSlope: 2.0482013
+          outSlope: 2.0482013
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0.33333334
+          outWeight: 0.122535154
         - serializedVersion: 3
           time: 1
           value: 0
@@ -55359,7 +55368,7 @@ ParticleSystem:
         m_RotationOrder: 4
     separateAxes: 0
   ColorModule:
-    enabled: 0
+    enabled: 1
     gradient:
       serializedVersion: 2
       minMaxState: 1
@@ -55369,32 +55378,32 @@ ParticleSystem:
         serializedVersion: 2
         key0: {r: 1, g: 1, b: 1, a: 1}
         key1: {r: 1, g: 1, b: 1, a: 1}
-        key2: {r: 0, g: 0, b: 0, a: 0}
-        key3: {r: 0, g: 0, b: 0, a: 0}
-        key4: {r: 0, g: 0, b: 0, a: 0}
+        key2: {r: 1, g: 1, b: 1, a: 0}
+        key3: {r: 1, g: 1, b: 1, a: 0}
+        key4: {r: 1, g: 1, b: 1, a: 0}
         key5: {r: 0, g: 0, b: 0, a: 0}
         key6: {r: 0, g: 0, b: 0, a: 0}
         key7: {r: 0, g: 0, b: 0, a: 0}
         ctime0: 0
         ctime1: 65535
-        ctime2: 0
-        ctime3: 0
-        ctime4: 0
+        ctime2: 65535
+        ctime3: 65535
+        ctime4: 65535
         ctime5: 0
         ctime6: 0
         ctime7: 0
         atime0: 0
-        atime1: 65535
-        atime2: 0
+        atime1: 43947
+        atime2: 65535
         atime3: 0
         atime4: 0
         atime5: 0
         atime6: 0
         atime7: 0
         m_Mode: 0
-        m_ColorSpace: -1
+        m_ColorSpace: 0
         m_NumColorKeys: 2
-        m_NumAlphaKeys: 2
+        m_NumAlphaKeys: 3
       minGradient:
         serializedVersion: 2
         key0: {r: 1, g: 1, b: 1, a: 1}
@@ -60717,9 +60726,9 @@ Transform:
   - {fileID: 6913206058555148480}
   - {fileID: 7468579402883726331}
   - {fileID: 1941212301873019150}
-  - {fileID: 6915256703295841418}
   - {fileID: 9201185145609506868}
   - {fileID: 543450652845969225}
+  - {fileID: 6915256703295841418}
   m_Father: {fileID: 473641386}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1112438146
@@ -61871,7 +61880,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1293237958
 Transform:
   m_ObjectHideFlags: 0
@@ -107433,7 +107442,7 @@ Transform:
   m_GameObject: {fileID: 1519598890}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 24.7, y: 0, z: 55.76}
+  m_LocalPosition: {x: -32.82, y: 0, z: -68.22}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -107496,7 +107505,7 @@ MonoBehaviour:
   stopDuration: 1
   stopApproachDistance: 5
   previewMode: 1
-  previewTime: 4.497452999999496
+  previewTime: 2.4070338000001357
   drawPaths: 1
   drawVehicleBounds: 0
   useDebugExtra: 0
@@ -159207,8 +159216,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1912218702}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -1, z: -0, w: -0.000038035214}
-  m_LocalPosition: {x: 0, y: 1.43, z: 2.57}
+  m_LocalRotation: {x: 0.015278086, y: -0.7069417, z: 0.015278086, w: 0.7069417}
+  m_LocalPosition: {x: 2.59, y: 1.47, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -159333,7 +159342,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4a680b8a1f10e32459a0399eba3756e4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  Target: {fileID: 1982064167}
+  Target: {fileID: 1293237962}
 --- !u!114 &1912218709
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -159949,7 +159958,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1982064164
 Transform:
   m_ObjectHideFlags: 0
@@ -160946,7 +160955,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PoseAnimObj
   LabelOverride: 
   ID: 0
-  AnimObjAssetPath: Assets/Assets/Mocap/captury/1.fbx
+  AnimObjAssetPath: Mocap/captury/1
   Scale: 1
   Offset: {x: 0, y: 1, z: 0}
   useCustomOffset: 0
@@ -162121,7 +162130,8 @@ MonoBehaviour:
   LabelOverride: 
   ID: 0
   Models:
-  - TargetArmatureType: BVH
+  - Enabled: 1
+    TargetArmatureType: BVH
     SourceAsset: {fileID: 919132149155446097, guid: 05d84dd0341737f449f1125b73392402,
       type: 3}
     BoneStructure: []
@@ -178412,19 +178422,23 @@ MonoBehaviour:
   LabelOverride: 
   ID: 0
   Models:
-  - TargetArmatureType: BVH
+  - Enabled: 0
+    TargetArmatureType: BVH
     SourceAsset: {fileID: 919132149155446097, guid: 5f6cb8bbb8c45b942abffb0c45f3a3b0,
       type: 3}
     BoneStructure: []
-  - TargetArmatureType: MBERT
+  - Enabled: 0
+    TargetArmatureType: MBERT
     SourceAsset: {fileID: 919132149155446097, guid: 3cf977041e8ead14288f951850fa93bc,
       type: 3}
     BoneStructure: []
-  - TargetArmatureType: FMC
+  - Enabled: 0
+    TargetArmatureType: FMC
     SourceAsset: {fileID: 919132149155446097, guid: d5d7fce891fea12448934b70824c3e9a,
       type: 3}
     BoneStructure: []
-  - TargetArmatureType: CPTY
+  - Enabled: 1
+    TargetArmatureType: CPTY
     SourceAsset: {fileID: 919132149155446097, guid: 56172bdebbd43eb459d1dc719af52f42,
       type: 3}
     BoneStructure: []
@@ -179567,7 +179581,7 @@ Transform:
   m_GameObject: {fileID: 7953514669601160204}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: -0, z: -0, w: 0.7071067}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -16.3, y: 0, z: -52.7}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -181586,6 +181600,7 @@ GameObject:
   - component: {fileID: 5946022861562980627}
   - component: {fileID: 8457886560744955353}
   - component: {fileID: 8457886560744955354}
+  - component: {fileID: 8457886560744955355}
   m_Layer: 0
   m_Name: smaller mediumcity
   m_TagString: Untagged
@@ -182827,6 +182842,28 @@ MonoBehaviour:
   LabelOverride: 
   ID: 0
   lighting: {fileID: 571849964}
+--- !u!64 &8457886560744955355
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7953514669601160204}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -8037174927981262706, guid: 08ff436bd0720f94abf8a57cbd55cb41, type: 3}
 --- !u!23 &8463078888954472205
 MeshRenderer:
   m_ObjectHideFlags: 0

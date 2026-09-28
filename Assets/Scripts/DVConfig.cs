@@ -15,7 +15,7 @@ public static class DVConfig {
 	// simulated fps 10k-100k most realistic.
 	// make it 1m if you have all the time in the world i guess.
 	// higher = better temporal precision, more realistic
-	public const float simFPS = 100; 
+	public const float simFPS = 1000; 
 	public const int timeScale = 1_000_000_000;
 	public const bool interpolateTime = true;
 	public const int refractoryPeriod = 6800; // global timescale, this is ns -- https://doi.org/10.3929/ethz-c-000655648

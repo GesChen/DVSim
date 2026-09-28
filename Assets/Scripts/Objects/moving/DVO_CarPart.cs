@@ -4,7 +4,6 @@ using UnityEditor;
 using UnityEngine;
 
 public class DVO_CarPart : DVO_VehicleLOD {
-	public int paintMatIndex;
 
 	public void SetColor(int col) {
 		if (col < 0 || col > 7) Debug.LogError($"invalid color {col} must be 0-7");
@@ -13,7 +12,7 @@ public class DVO_CarPart : DVO_VehicleLOD {
 	}
 
 	public void TestColor() {
-		material = GetComponent<Renderer>().sharedMaterials[paintMatIndex];
+		material = GetComponent<Renderer>().sharedMaterials[targetMaterialIndex];
 		int col = Random.Range(0, 8);
 		Debug.Log($"testing {col}");
 		SetColor(col);

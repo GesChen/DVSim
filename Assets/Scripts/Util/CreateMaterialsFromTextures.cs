@@ -72,6 +72,7 @@
  * than duplicated.
  */
 
+#if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -884,3 +885,4 @@ public static class CreateMaterialsFromTextures {
 		SetKeyword(material, "_ALPHATEST_ON", false);
 	}
 }
+#endif

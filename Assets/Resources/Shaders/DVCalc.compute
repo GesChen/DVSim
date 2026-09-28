@@ -29,14 +29,15 @@ bool addPhotoAndShotNoise;
 float photoNoiseVoltage;
 float photoNoiseCutoffHz;
 
+// x = positive ON threshold
+// y = negative OFF thresh
+// z = photonoise rate
+// w = unused
 Texture2D<float4> ThreshAndNoiseRate;
 
 float luma(float4 col)
 {
-	return 
-		.2126 * max(0., col.r) +
-		.7152 * max(0., col.g) +
-		.0722 * max(0., col.b);
+	return dot(float3(.2126, .7152, .0722), max(0., col.rgb)); // no performance difference from og
 }
 
 float leakCurrent(inout uint4 seed, float4 threshNoiseRate)

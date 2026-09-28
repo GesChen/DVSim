@@ -1,15 +1,64 @@
 import json
 import subprocess
+import shutil
+import hashlib
 from pathlib import Path
-
 import numpy as np
-
 import matplotlib.pyplot as plt
-from matplotlib.widgets import Slider, Button
+from tqdm import tqdm
 
-def read_ffv1_mkv(path):
-    print('reading..')
+
+def grayscale_to_rgb(video: np.ndarray) -> np.ndarray:
+    if video.ndim != 2:
+        raise ValueError("video must have shape (height, width)")
+    return np.repeat(video[..., None], 3, axis=-1).astype(np.float32)
+
+
+def depth_to_rgb(video, maxdepth=None):
+    if maxdepth is None:
+        maxdepth = np.max(video)
+    scaled = video.astype(np.float32) / maxdepth
+    return grayscale_to_rgb(scaled)
+
+
+def hashes_to_rgb(hashes: np.ndarray) -> np.ndarray:
+    if hashes.ndim != 2:
+        raise ValueError("hashes must have shape (height, width)")
+
+    values = hashes.astype(np.uint64)
+    mixed = values.copy()
+    mixed ^= mixed >> np.uint64(30)
+    mixed *= np.uint64(0xBF58476D1CE4E5B9)
+    mixed ^= mixed >> np.uint64(27)
+    mixed *= np.uint64(0x94D049BB133111EB)
+    mixed ^= mixed >> np.uint64(31)
+
+    rgb = np.empty((*hashes.shape, 3), dtype=np.uint8)
+    rgb[..., 0] = mixed & 0xFF
+    rgb[..., 1] = (mixed >> np.uint64(8)) & 0xFF
+    rgb[..., 2] = (mixed >> np.uint64(16)) & 0xFF
+    rgb[values == 0] = 0
+    return rgb
+
+
+def read_ffv1_mkv(path, fps=30.0, mode="depth"):
     path = Path(path)
+
+    cache = path.parent / ".cache"
+    cache.mkdir(exist_ok=True)
+
+    key = hashlib.sha1(
+        f"{path.resolve()}:{path.stat().st_mtime_ns}:{mode}:{fps}".encode()
+    ).hexdigest()[:16]
+
+    video_path = cache / f"{key}.mkv"
+
+    if video_path.exists():
+        print("using cached video..")
+        return video_path
+
+    frame_cache = cache / f"{key}_frames"
+    frame_cache.mkdir(parents=True, exist_ok=True)
 
     probe = subprocess.run(
         [
@@ -29,6 +78,9 @@ def read_ffv1_mkv(path):
     width = int(stream["width"])
     height = int(stream["height"])
 
+    total_frames = stream.get("nb_frames")
+    total_frames = int(total_frames) if total_frames not in (None, "N/A") else None
+
     process = subprocess.Popen(
         [
             "ffmpeg",
@@ -42,130 +94,96 @@ def read_ffv1_mkv(path):
     )
 
     frame_bytes = width * height * 4 * np.dtype("<u2").itemsize
-    frames = []
+    frame_index = 0
+    maxdepth = 0
 
-    while True:
-        data = process.stdout.read(frame_bytes)
+    with tqdm(total=total_frames, desc="reading", unit="frame") as bar:
+        while True:
+            data = process.stdout.read(frame_bytes)
 
-        if not data:
-            break
+            if not data:
+                break
 
-        if len(data) != frame_bytes:
-            raise RuntimeError("Incomplete frame read")
+            if len(data) != frame_bytes:
+                raise RuntimeError("Incomplete frame read")
 
-        frame = np.frombuffer(data, dtype="<u2").reshape(height, width, 4)
-        frames.append(frame.copy())
+            frame = np.frombuffer(data, dtype="<u2").reshape(height, width, 4)
+
+            if mode == "depth":
+                maxdepth = max(maxdepth, int(frame[..., 0].max()))
+
+            frame.tofile(frame_cache / f"{frame_index:08d}.raw")
+            frame_index += 1
+            bar.update(1)
 
     if process.wait() != 0:
         raise RuntimeError("FFmpeg decoding failed")
 
-    frames = np.stack(frames)
+    for i in tqdm(range(frame_index), desc="converting", unit="frame"):
+        raw_path = frame_cache / f"{i:08d}.raw"
 
-    return frames
+        frame = np.fromfile(raw_path, dtype="<u2").reshape(height, width, 4)
 
-def play_video(video: np.ndarray, fps: float = 30.0) -> None:
-    """Display a (frames, height, width, channels) ndarray with scrubber and play/pause."""
-    if video.ndim != 4 or video.shape[-1] not in (3, 4):
-        raise ValueError("video must have shape (frames, height, width, 3 or 4)")
+        if mode == "depth":
+            rgb = depth_to_rgb(frame[..., 0], maxdepth)
+        elif mode == "hashes":
+            rgb = hashes_to_rgb(frame[..., 1])
+        else:
+            raise ValueError("mode must be 'depth' or 'hashes'")
 
-    frame_count = video.shape[0]
-    interval = 1.0 / fps
-    state = {"playing": False, "frame": 0}
+        plt.imsave(frame_cache / f"{i:08d}.png", rgb)
+        raw_path.unlink()
 
-    fig, ax = plt.subplots()
-    plt.subplots_adjust(bottom=0.22)
-
-    image = ax.imshow(video[0])
-    ax.axis("off")
-
-    slider_ax = fig.add_axes((0.15, 0.08, 0.7, 0.04))
-    slider = Slider(
-        slider_ax,
-        "Frame",
-        0,
-        frame_count - 1,
-        valinit=0,
-        valstep=1,
+    process = subprocess.Popen(
+        [
+            "ffmpeg",
+            "-v", "error",
+            "-y",
+            "-framerate", str(fps),
+            "-i", str(frame_cache / "%08d.png"),
+            "-c:v", "ffv1",
+            "-pix_fmt", "rgb24",
+            "-progress", "pipe:1",
+            "-nostats",
+            str(video_path),
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
     )
 
-    button_ax = fig.add_axes((0.43, 0.015, 0.14, 0.045))
-    button = Button(button_ax, "Play")
+    with tqdm(total=frame_index, desc="merging", unit="frame") as bar:
+        last_frame = 0
 
-    def show_frame(index: int) -> None:
-        state["frame"] = index
-        image.set_data(video[index])
-        ax.set_title(f"Frame {index}/{frame_count - 1}")
-        fig.canvas.draw_idle()
+        for line in process.stdout:
+            if line.startswith("frame="):
+                current = int(line.split("=", 1)[1])
+                bar.update(current - last_frame)
+                last_frame = current
 
-    def on_slider(value) -> None:
-        show_frame(int(value))
+    if process.wait() != 0:
+        raise RuntimeError(process.stderr.read())
 
-    def toggle_play(_event) -> None:
-        state["playing"] = not state["playing"]
-        button.label.set_text("Pause" if state["playing"] else "Play")
+    shutil.rmtree(frame_cache)
 
-    def update(_frame) -> None:
-        if not state["playing"]:
-            return
+    return video_path
 
-        next_frame = (state["frame"] + 1) % frame_count
-        slider.set_val(next_frame)
+def play_video(video) -> None:
+    subprocess.Popen([
+        "vlc",
+        str(video),
+    ])
 
-    slider.on_changed(on_slider)
-    button.on_clicked(toggle_play)
+video = read_ffv1_mkv(
+    r"E:\DVSim\Assets\.Output\Permutations\0_0_0_0_0\camera 2\data.mkv",
+    fps=60,
+    mode="depth",
+)
 
-    animation = fig.canvas.new_timer(interval=int(interval * 1000))
-    animation.add_callback(update, None)
-    animation.start()
+# video = read_ffv1_mkv(
+#     r"E:\DVSim\Assets\.Output\Permutations\0\_0_0_0_0\camera 2\data.mkv",
+#     fps=60,
+#     mode="hashes",
+# )
 
-    show_frame(0)
-    plt.show()
-
-def grayscale_to_rgb(video: np.ndarray) -> np.ndarray:
-    """Convert (frames, height, width) grayscale video to RGB."""
-    print('converting gray to rgb.. ')
-    if video.ndim != 3:
-        raise ValueError("video must have shape (frames, height, width)")
-
-    return np.repeat(video[..., None], 3, axis=-1).astype(np.float32)
-
-def depth_to_rgb(video):
-    print('converting depth to rgb.. ')
-    maxdepth = np.max(video.flatten())
-    scaled = video.astype(np.float32) / maxdepth
-    return grayscale_to_rgb(scaled)
-
-def hashes_to_rgb(hashes: np.ndarray) -> np.ndarray:
-    """
-    Convert integer hashes shaped (frames, height, width) to deterministic RGB.
-
-    Equal hash values always receive equal colors. Hash value 0 becomes black.
-    """
-    print('converting ids to rgb.. ')
-    if hashes.ndim != 3:
-        raise ValueError("hashes must have shape (frames, height, width)")
-
-    values = hashes.astype(np.uint64)
-
-    # Deterministic integer mixing.
-    mixed = values.copy()
-    mixed ^= mixed >> np.uint64(30)
-    mixed *= np.uint64(0xBF58476D1CE4E5B9)
-    mixed ^= mixed >> np.uint64(27)
-    mixed *= np.uint64(0x94D049BB133111EB)
-    mixed ^= mixed >> np.uint64(31)
-
-    rgb = np.empty((*hashes.shape, 3), dtype=np.uint8)
-    rgb[..., 0] = mixed & 0xFF
-    rgb[..., 1] = (mixed >> np.uint64(8)) & 0xFF
-    rgb[..., 2] = (mixed >> np.uint64(16)) & 0xFF
-
-    rgb[values == 0] = 0
-    return rgb
-
-data = read_ffv1_mkv(r"E:\DVSim\Assets\.Output\Permutations\0_0_0_0_0_0\drone\data.mkv")
-
-rgb = depth_to_rgb(data[..., 0])
-# rgb = hashes_to_rgb(data[..., 1])
-
-play_video(rgb, 60)
+play_video(video)

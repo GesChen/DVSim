@@ -101,10 +101,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15465e076915a554288f0c56fc938ca9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  targetMaterialIndex: 1
   BBoxKeypoints: 6a850000118a00005c53000076420000140c0000360c000002290000381c0000fc550100747701007b3401000a130100
   renderer: {fileID: 0}
   material: {fileID: 0}
-  paintMatIndex: 1
 --- !u!1 &3139681321850873601
 GameObject:
   m_ObjectHideFlags: 0
@@ -176,7 +176,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &2347515686382830100
 Transform:
   m_ObjectHideFlags: 0
@@ -254,7 +254,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15465e076915a554288f0c56fc938ca9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  targetMaterialIndex: 0
   BBoxKeypoints: 050900006301000005100000d7100000f50e0000d00e0000310000000000000071030000720a00007a050000910f0000
   renderer: {fileID: 0}
   material: {fileID: 0}
-  paintMatIndex: 0

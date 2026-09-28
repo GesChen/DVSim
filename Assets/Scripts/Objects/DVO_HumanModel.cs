@@ -7,11 +7,14 @@ using UnityEngine;
 public class DVO_HumanModel : DVObject {
 	[Serializable]
 	public class ModelMapping {
+		public bool Enabled = true;
 		public string TargetArmatureType;
 		public GameObject SourceAsset;
 		public string[] BoneStructure;
 
 		public void Reconstruct() {
+			if (!Enabled) return;
+
 			var srcObj = Instantiate(SourceAsset);
 			var srcSMR = srcObj.GetComponentInChildren<SkinnedMeshRenderer>();
 

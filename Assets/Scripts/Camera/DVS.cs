@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -11,8 +10,6 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Mathematics;
-using UnityEditor;
-using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -43,11 +40,11 @@ public class DVS : MonoBehaviour {
 	RenderTexture outputMap;
 	RenderTexture debugOutput;
 
-	private const string EventShaderAssetPath = "Assets/Scripts/Shaders/DVCalc.compute";
+	private const string EventShaderResourcePath = "Shaders/DVCalc";
 	ComputeShader EventShader;
 	int eventKernel;
 
-	private const string ImperfectionAssetPath = "Assets/Scripts/Shaders/Imperfection.compute";
+	private const string ImperfectionResourcePath = "Shaders/Imperfection";
 	ComputeShader ImperfectionShader;
 	RenderTexture ThreshNoiseRateRT;
 	NativeArray<Vector4> ThreshNRData;
@@ -59,7 +56,7 @@ public class DVS : MonoBehaviour {
 	NativeArray<Vector4> fcColorPixels;
 	NativeArray<Vector4> fcDataPixels;
 
-	private const string FrameCapShaderAssetPath = "Assets/Scripts/Shaders/FrameCapture.compute";
+	private const string FrameCapShaderResourcePath = "Shaders/FrameCapture";
 	ComputeShader FrameCapShader;
 	int frameCapKernel;
 
@@ -88,14 +85,14 @@ public class DVS : MonoBehaviour {
 		outputMap = GenerateNonDepthRenTex(RenderTextureFormat.RFloat);
 		debugOutput = GenerateNonDepthRenTex(RenderTextureFormat.ARGBFloat);
 
-		EventShader = AssetDatabase.LoadAssetAtPath<ComputeShader>(EventShaderAssetPath);
+		EventShader = Resources.Load<ComputeShader>(EventShaderResourcePath);
 		eventKernel = EventShader.FindKernel("Main");
 
-		ImperfectionShader = AssetDatabase.LoadAssetAtPath<ComputeShader>(ImperfectionAssetPath);
+		ImperfectionShader = Resources.Load<ComputeShader>(ImperfectionResourcePath);
 		ThreshNoiseRateRT = GenerateNonDepthRenTex(RenderTextureFormat.ARGBFloat);
 		ThreshNRData = GenerateNativeArray();
 
-		FrameCapShader = AssetDatabase.LoadAssetAtPath<ComputeShader>(FrameCapShaderAssetPath);
+		FrameCapShader = Resources.Load<ComputeShader>(FrameCapShaderResourcePath);
 		frameCapKernel = FrameCapShader.FindKernel("Main");
 
 		frameCapOut = new GraphicsBuffer(

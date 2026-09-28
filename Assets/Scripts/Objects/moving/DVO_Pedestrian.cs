@@ -12,8 +12,8 @@ public class DVO_Pedestrian : DVO_Vehicle {
 	float blendFactor;
 	ulong phaseOffset;
 
-	const string AnimSrc1 = "Assets/Assets/humans/occluders/walk 1 39_13.fbx";
-	const string AnimSrc2 = "Assets/Assets/humans/occluders/walk 2 39_14.fbx";
+	const string AnimSrc1 = "Occluders/walk 1 39_13";
+	const string AnimSrc2 = "Occluders/walk 2 39_14";
 
 	static Poses.PoseAnimation anim1;
 	static Poses.PoseAnimation anim2;

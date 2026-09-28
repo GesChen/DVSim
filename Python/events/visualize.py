@@ -7,14 +7,14 @@ import cv2
 COLOR_MODE = "col"  # "col" or "bw"
 
 USE_VIDEO_BACKGROUND = False
-SOURCE_VIDEO_PATH = r"D:\Downloads\ytdlp\output.mp4"
+SOURCE_VIDEO_PATH = r"E:\DVSim\Assets\.Output\Permutations\0_0_0_0_0\camera 2\color.mp4"
 
 # EVENT_RES = (1920, 1080)  # input event coordinate scale
 EVENT_RES = (1280, 720)  # input event coordinate scale
 
 # (x, y, t, p) = get_data.load_v2e_dataset(r"E:\DVSim\Python\v2e-master\v2ecore\output\output.npz")
 # (x, y, t, p) = get_data.load_unity_dataset(r"E:\DVSim\Assets\.Output\Permutations\0_0_0_0_0\Main Camera\events.npz")
-(x, y, t, p) = get_data.load_unity_dataset(r"E:\DVSim\Assets\.Output\Permutations\0_0_0_0_0_0\drone\events.npz")
+(x, y, t, p) = get_data.load_unity_dataset(r"E:\DVSim\Assets\.Output\Permutations\0_0_0_0_0\camera 2\events.npz")
 
 y = EVENT_RES[1] - y
 

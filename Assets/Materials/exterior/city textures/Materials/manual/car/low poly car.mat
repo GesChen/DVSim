@@ -116,13 +116,13 @@ Material:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _PaletteColor0: {r: 1, g: 0, b: 0, a: 1}
-    - _PaletteColor1: {r: 1, g: 0.5, b: 0, a: 1}
-    - _PaletteColor2: {r: 1, g: 1, b: 0, a: 1}
-    - _PaletteColor3: {r: 0, g: 1, b: 0, a: 1}
-    - _PaletteColor4: {r: 0, g: 0.5, b: 1, a: 1}
-    - _PaletteColor5: {r: 0.24999997, g: 0, b: 1, a: 1}
-    - _PaletteColor6: {r: 1, g: 0, b: 1, a: 1}
+    - _PaletteColor0: {r: 1, g: 1, b: 1, a: 1}
+    - _PaletteColor1: {r: 0.6117647, g: 0.6117647, b: 0.6117647, a: 1}
+    - _PaletteColor2: {r: 0.1137255, g: 0.1137255, b: 0.1137255, a: 1}
+    - _PaletteColor3: {r: 0.10980393, g: 0.18431373, b: 0.6313726, a: 1}
+    - _PaletteColor4: {r: 0.87843144, g: 0.16470589, b: 0.078431375, a: 1}
+    - _PaletteColor5: {r: 0.20000002, g: 0.8000001, b: 0.22352943, a: 1}
+    - _PaletteColor6: {r: 0.9843138, g: 1, b: 0.3254902, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []
 --- !u!114 &2882174350322974348

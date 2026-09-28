@@ -165,3 +165,8 @@ credentials.json
 *.blend1
 /Python/interior/Replica
 /Assets/Assets/Mocap/.BVH
+/Python/EVREAL
+/Python/HyperE2VID
+/Python/event to video
+/Assets/Resources/Mocap/.BVH
+/Assets/Resources/Mocap/cmu mocap bvhs

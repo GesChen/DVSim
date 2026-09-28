@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using UnityEditor;
 using UnityEngine;
 
 public static class Poses {
@@ -77,12 +76,17 @@ public static class Poses {
 		}
 	}
 
-	public static void LoadFBX(string assetPath, out GameObject boneModel, out AnimationClip clip) {
-		boneModel = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+	public static void LoadFBX(string resourcePath, out GameObject boneModel, out AnimationClip clip) {
+		boneModel = Resources.Load<GameObject>(resourcePath);
 
-		clip = AssetDatabase.LoadAllAssetsAtPath(assetPath)
-			.OfType<AnimationClip>()
-			.First(c => !c.name.StartsWith("__preview__"));
+		if (boneModel == null)
+			throw new Exception($"FBX not found in Resources: {resourcePath}");
+
+		clip = Resources.LoadAll<AnimationClip>(resourcePath)
+			.FirstOrDefault(c => !c.name.StartsWith("__preview__"));
+
+		if (clip == null)
+			throw new Exception($"No AnimationClip found in FBX: {resourcePath}");
 	}
 
 	public static PoseAnimation GeneratePoseAnim(GameObject boneModel, AnimationClip clip) {

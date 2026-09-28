@@ -6,6 +6,7 @@ using UnityEditor;
 using System;
 
 public abstract class DVO_VehicleLOD : MonoBehaviour {
+	public int targetMaterialIndex;
 	public int[] BBoxKeypoints;
 
 	[HideInInspector] public Renderer renderer;
@@ -13,10 +14,17 @@ public abstract class DVO_VehicleLOD : MonoBehaviour {
 	Vector3[] keypoints;
 	public virtual void Init() {
 		renderer = GetComponent<Renderer>();
-		Vector3[] vertices = GetComponent<MeshFilter>().mesh.vertices;
-		keypoints = BBoxKeypoints.Select(k => vertices[k]).ToArray(); // one copy
+		
+		Vector3[] vertices;
 		if (Application.isPlaying)
-			material = renderer.material;
+			vertices = GetComponent<MeshFilter>().mesh.vertices;
+		else
+			vertices = GetComponent<MeshFilter>().sharedMesh.vertices;
+
+		keypoints = BBoxKeypoints.Select(k => vertices[k]).ToArray(); // one copy
+
+		if (Application.isPlaying)
+			material = renderer.materials[targetMaterialIndex];
 	}
 
 	public virtual DVSMemory.InterBBox GenerateBBox(Camera camera) {

@@ -2,8 +2,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public class DVManager : Singleton<DVManager> {
 	[Header("Simulation")]
@@ -47,11 +49,13 @@ public class DVManager : Singleton<DVManager> {
 		Frame = 0;
 		Time = 0;
 
+#if UNITY_EDITOR
 		EditorApplication.playModeStateChanged += state => {
 			if (state == PlayModeStateChange.ExitingPlayMode) {
 				Playing = false;
 			}
 		};
+#endif
 
 		var random = new System.Random();
 		DVConfig.Seed = random.Next(int.MinValue, int.MaxValue);
@@ -137,9 +141,10 @@ public class DVManager : Singleton<DVManager> {
 		try {
 			Playing = true;
 			while (Time < CurrentSceneLengthSeconds * DVConfig.timeScale) {
-				if (Playing)
-					Tick();
-				else
+				if (Playing) {
+					for (int i = 0; i<5; i++)
+						Tick();
+				} else
 					break;
 
 				// dont freeze the player

@@ -598,7 +598,7 @@ public sealed class DVO_TrafficSimulator : DVObject {
 			Pose2D pose = EvaluateTrack(track, time);
 			vehicle.transform.SetPositionAndRotation(
 				ToWorld(pose.position),
-				Quaternion.Euler(0f, pose.yaw, 0f));
+				transform.rotation * Quaternion.Euler(0f, pose.yaw, 0f));
 
 			vehicle.UpdateModel();
 
@@ -722,12 +722,15 @@ public sealed class DVO_TrafficSimulator : DVObject {
 	}
 
 	public void SetPointWorld(int pathIndex, int pointIndex, Vector3 world) {
-		paths[pathIndex].keypoints[pointIndex].position = new Vector2(world.x, world.z);
+		Vector3 local = transform.InverseTransformPoint(world);
+
+		paths[pathIndex].keypoints[pointIndex].position =
+			new Vector2(local.x, local.z);
 	}
 
 	public void AddPath() {
 		TrafficPath path = new TrafficPath { name = "Traffic Path " + (paths.Count + 1) };
-		Vector2 origin = new Vector2(transform.position.x, transform.position.z);
+		Vector2 origin = Vector2.zero;
 		path.keypoints.Add(new TrafficKeypoint(origin));
 		path.keypoints.Add(new TrafficKeypoint(origin + Vector2.up * 10f));
 		paths.Add(path);
@@ -737,9 +740,14 @@ public sealed class DVO_TrafficSimulator : DVObject {
 	public void AppendPointToSelectedPath(Vector3 world) {
 		if (!IsPathIndexValid(selectedPathIndex))
 			return;
+
+		Vector3 local = transform.InverseTransformPoint(world);
+
 		paths[selectedPathIndex].keypoints.Add(
-			new TrafficKeypoint(new Vector2(world.x, world.z)));
-		selectedPointIndex = paths[selectedPathIndex].keypoints.Count - 1;
+			new TrafficKeypoint(new Vector2(local.x, local.z)));
+
+		selectedPointIndex =
+			paths[selectedPathIndex].keypoints.Count - 1;
 	}
 
 	public void RemoveSelectedPoint() {
@@ -825,7 +833,7 @@ public sealed class DVO_TrafficSimulator : DVObject {
 	}
 
 	private Vector3 ToWorld(Vector2 point) {
-		return new Vector3(point.x, globalY, point.y);
+		return transform.TransformPoint(new Vector3(point.x, globalY, point.y));
 	}
 
 	private double SanitizeTime(double time) {
