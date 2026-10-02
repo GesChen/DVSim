@@ -235,6 +235,8 @@ public static class Poses {
 }
 
 public static class InterpolationMath {
+
+	// catmull-rom like SQUAD interpolation
 	public static Quaternion CatmullLikeQuaternion(
 		Quaternion q0,
 		Quaternion q1,

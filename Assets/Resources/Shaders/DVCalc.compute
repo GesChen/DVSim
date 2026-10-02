@@ -110,8 +110,10 @@ void Main(uint3 id : SV_DispatchThreadID)
 	
 	// photo noise 
 	float photoNoise = photoreceptorNoise(seed, curPhotoNoise);
+	Lf += photoNoise;
 	
-	float diff = Lf + photoNoise - ref;
+	// comparator
+	float diff = Lf - ref; // most important step
 	
 	bool on = diff > 0;
 	int polarity = on ? 1 : -1;

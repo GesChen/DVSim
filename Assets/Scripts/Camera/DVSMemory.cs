@@ -287,7 +287,7 @@ public class DVSMemory {
 					long delta = count - lastCount;
 					double rate = delta * 1000.0 / (ms - lastMs);
 
-					//Log($"Event write rate: {rate:N0}/s | total: {count:N0}");
+					Log($"Event write rate: {rate:N0}/s | total: {count:N0}");
 
 					lastCount = count;
 					lastMs = ms;
@@ -295,7 +295,7 @@ public class DVSMemory {
 			}
 
 			double avgRate = count / Math.Max(sw.Elapsed.TotalSeconds, 1e-9);
-			//Log($"Event write finished: {count:N0} events | avg: {avgRate:N0}/s");
+			Log($"Event write finished: {count:N0} events | avg: {avgRate:N0}/s");
 		});
 	}
 

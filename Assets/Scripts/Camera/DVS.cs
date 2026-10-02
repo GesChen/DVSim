@@ -236,7 +236,7 @@ public class DVS : MonoBehaviour {
 		ImperfectionShader.SetFloat("threshSigma", DVConfig.threshSigma);
 		ImperfectionShader.SetFloat("idealPosThresh", DVConfig.idealPosThresh);
 		ImperfectionShader.SetFloat("idealNegThresh", DVConfig.idealNegThresh);
-		ImperfectionShader.SetBool ("doLeaking", DVConfig.leakRateHz > 0);
+		ImperfectionShader.SetBool ("doLeaking", DVConfig.doLeaking);
 		ImperfectionShader.SetFloat("noiseRateCovDecades", DVConfig.noiseRateCovDecades);
 		ImperfectionShader.SetTexture(imperfectInitKernel, "VaryThreshsAndNoiseRate", ThreshNoiseRateRT);
 		
