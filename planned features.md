@@ -1,0 +1,9 @@
+- arbiter - finite event throughput
+- IMU
+- snow
+- optic flow output
+- SMPLX retargeting
+- real camera motion 
+- cloth clothes? 
+- skeleton output
+- per event labels 
