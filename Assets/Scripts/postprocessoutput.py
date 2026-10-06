@@ -5,6 +5,7 @@
 import sys
 from pathlib import Path
 import datetime
+import subprocess
 
 class Tee:
     def __init__(self, *streams):
@@ -454,20 +455,25 @@ def processbboxes():
 	with (path / config["bboxesOut"]).open('w') as w:
 		json.dump(out, w)
 
-def deletetempfiles():
+def deleteframecaps():
 	if config['autoDeleteFrameCaps']:
 		shutil.rmtree(str(path / config["frameCapSubFolder"]), ignore_errors=True)
+def deletedataframecaps():
+	if config['autoDeleteFrameCaps']:
 		shutil.rmtree(str(path / config["frameCapDataSubFolder"]), ignore_errors=True)
 
+def deletecapturebinary():
 	if config['autoDeleteCapBin']:
 		Path(meta['outfilepath']).unlink(True)
 
+def deletebboxes():
 	if config['autoDeleteBBoxesRaw']:
 		(path / config['bboxFileName']).unlink(True)
-	
 
 if __name__ == "__main__":
-	jsonpath = sys.argv[1]
+	isworker = len(sys.argv) >= 3 and sys.argv[1] == "--worker"
+
+	jsonpath = sys.argv[1] if not isworker else sys.argv[3]
 
 	with open(jsonpath, "r") as f:
 		meta = json.load(f)
@@ -482,12 +488,36 @@ if __name__ == "__main__":
 	path = Path(camfilepath).parent / config["outSubfolder"] / permfoldername / camname
 	path.mkdir(parents=True, exist_ok=True)
 
+	if isworker:
+		if sys.argv[2] == '1':
+			processcolorframes()
+			deleteframecaps()
+
+		if sys.argv[2] == '2':
+			processdataframes()
+			deletedataframecaps()
+
+		if sys.argv[2] == '3':
+			processbboxes()
+			deletebboxes()
+
+		sys.exit()
+
+	subprocess.Popen(
+		[sys.executable, __file__, "--worker", '1', jsonpath],
+		creationflags=subprocess.CREATE_NEW_CONSOLE,
+	)
+
+	
+	subprocess.Popen(
+		[sys.executable, __file__, "--worker", '2', jsonpath],
+		creationflags=subprocess.CREATE_NEW_CONSOLE,
+	)
+	
+	subprocess.Popen(
+		[sys.executable, __file__, "--worker", '3', jsonpath],
+		creationflags=subprocess.CREATE_NEW_CONSOLE,
+	)
+
 	processbin()
-
-	processcolorframes()
-
-	processdataframes()
-
-	processbboxes()
-
-	deletetempfiles()
+	deletecapturebinary()

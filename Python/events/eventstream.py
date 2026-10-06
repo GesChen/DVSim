@@ -1,6 +1,12 @@
 from pathlib import Path
 import numpy as np
 
+event_dtype = np.dtype([
+	("x", np.uint16),
+	("y", np.uint16),
+	("t", np.uint64),
+	("p", bool),
+], align=False)
 
 class EventStream:
     def __init__(self, x, y, t, p):
@@ -31,10 +37,12 @@ class EventStream:
         return t                  # seconds
 
     @classmethod
-    def from_unity(cls, path):
+    def from_unity(cls, path: Path | str):
         print("loading dataset...")
 
-        data = np.load(Path(path))["arr_0"]
+        #wtf bro
+        if not isinstance(path, Path): path = Path(path)
+        data = np.load(path)["arr_0"]
 
         stream = cls(
             x=data["x"],

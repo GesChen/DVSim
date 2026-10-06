@@ -15,8 +15,8 @@ public static class DVConfig {
 	// simulated fps 10k-100k most realistic.
 	// make it 1m if you have all the time in the world i guess.
 	// higher = better temporal precision, more realistic
-	public const float simFPS = 1000; 
-	public const int timeScale = 1_000_000_000;
+	public const float simFPS = 100; 
+	public const int timeScale = 1_000_000_000; // just means the sim runs at ns scale. dont change this.
 	public const bool interpolateTime = true;
 	public const int refractoryPeriod = 6800; // global timescale, this is ns -- https://doi.org/10.3929/ethz-c-000655648
 
@@ -29,7 +29,7 @@ public static class DVConfig {
 	public const float idealPosThresh = .2f;
 	public const float idealNegThresh = .2f;
 	public const float noiseRateCovDecades = .1f;
-	public const bool doLeaking = true;
+	public const bool doLeaking = false;
 	public const float leakRateHz = .1f;
 	public const float leakJitterFraction = .1f;
 
@@ -93,5 +93,5 @@ public static class DVConfig {
 	public const string dataVidOut = "data.mkv";
 	public const string bboxesOut = "bboxes.json";
 	public const float depthScale = 1000;
-	public const bool autoDeleteCapBin = true;
+	public const bool autoDeleteCapBin = false;
 }
