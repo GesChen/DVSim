@@ -16,7 +16,8 @@ public class DVManager : Singleton<DVManager> {
 
 	public List<DVVariable> Variables;
 
-	public List<DVS> Sensors;
+	public Transform SensorGroup;
+	DVS[] Sensors;
 	public List<DVObject> ImmediateObjects;
 	public bool PermZeroTestRun;
 
@@ -60,6 +61,8 @@ public class DVManager : Singleton<DVManager> {
 		var random = new System.Random();
 		DVConfig.Seed = random.Next(int.MinValue, int.MaxValue);
 
+		FindSensors();
+
 		InitSensors();
 
 		PrecomputeAllCurObjIDs();
@@ -69,6 +72,10 @@ public class DVManager : Singleton<DVManager> {
 
 			StartCoroutine(SimulateCurrentScene());
 		}
+	}
+
+	void FindSensors() {
+		Sensors = SensorGroup.GetComponentsInChildren<DVS>();
 	}
 
 	void InitSensors() {
@@ -142,7 +149,7 @@ public class DVManager : Singleton<DVManager> {
 			Playing = true;
 			while (Time < CurrentSceneLengthSeconds * DVConfig.timeScale) {
 				if (Playing) {
-					for (int i = 0; i<5; i++)
+					for (int i = 0; i<1; i++)
 						Tick();
 				} else
 					break;

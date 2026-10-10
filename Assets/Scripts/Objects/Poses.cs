@@ -167,7 +167,7 @@ public static class Poses {
 
 		// get 0-1 t
 		double t1 = (double)f_1 / fps;
-		double t2 = (double)(f_1 + 1 )/ fps;
+		double t2 = (double)(f_1 + 1)/ fps;
 
 		float T = (float)((t - t1) / (t2 - t1));
 
