@@ -33,7 +33,7 @@ public class DVS : MonoBehaviour {
 	private DVS StereoLeft;
 	private DVS StereoRight;
 
-	DVMotion motionController;
+	internal DVMotion motionController;
 
 	RenderTexture cameraTarget;
 	RenderTexture sensorState;
@@ -112,7 +112,7 @@ public class DVS : MonoBehaviour {
 		globalShaderGroups = Vector2Int.CeilToInt((Vector2)DVConfig.resolution / 8f);
 
 		memory = new();
-		memory.Setup(camera);
+		memory.Setup(this);
 		memory.Open();
 
 		//fasterMemory = new();
@@ -436,8 +436,10 @@ public class DVS : MonoBehaviour {
 			return;
 		}
 
-		if (motionController != null)
-			motionController.UpdateMotion(time);
+		if (motionController != null) {
+			(Vector3 pos, Quaternion rot) = motionController.SampleMotion(time);
+			transform.SetLocalPositionAndRotation(pos, rot);
+		}
 
 		//Debug.Log("tick");
 		camera.Render();

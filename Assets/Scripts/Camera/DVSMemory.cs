@@ -4,6 +4,8 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -28,10 +30,11 @@ public class DVSMemory {
 	Task flushTask;
 
 	// -- SCENE DATA --
-	Camera camera;
+	DVS parent;
 	string name;
 
 	List<(ulong t, Vector3 pos, Quaternion rot)> cameraRoute = new();
+	List<(ulong t, Vector3 accel, Vector3 angularVel)> IMULog = new();
 
 	public struct BBox {
 		public string label;
@@ -62,14 +65,14 @@ public class DVSMemory {
 		UnityEngine.Debug.LogError($"[{name}] {content}");
 	}
 
-	public void Setup(Camera sourceCam) {
-		camera = sourceCam;
-		name = camera.name;
+	public void Setup(DVS source) {
+		parent = source;
+		name = parent.camera.name;
 
 		eOutFilePath = Path.Combine(
 			Application.dataPath,
 			DVConfig.outputFolder,
-			camera.name + ".bin");
+			name + ".bin");
 
 		Directory.CreateDirectory(Path.GetDirectoryName(eOutFilePath));
 
@@ -92,11 +95,8 @@ public class DVSMemory {
 			{ "absoluteassetpath", Application.dataPath },
 
 			{ "camera", new Dictionary<string, object> {
-				{ "position", (S_Vector3)camera.transform.position },
-				{ "rotation", (S_Quaternion)camera.transform.rotation },
-
-				{ "projection", camera.orthographic ? "orthographic" : "perspective" },
-				{ "fov", camera.fieldOfView },
+				{ "projection", parent.camera.orthographic ? "orthographic" : "perspective" },
+				{ "fov", parent.camera.fieldOfView },
 			}},
 
 			{ "config", null}
@@ -188,6 +188,9 @@ public class DVSMemory {
 
 			if (DVConfig.recordBboxes)
 				SaveBboxes(dataPath);
+
+			if (DVConfig.recordIMU)
+				SaveIMU(dataPath);
 
 			Log("Post processing");
 			TriggerPythonPostProcess(dataPath);
@@ -333,10 +336,13 @@ public class DVSMemory {
 
 		if (DVConfig.recordBboxes)
 			LogBboxes(time);
+
+		if (DVConfig.recordIMU)
+			LogIMU(time);
 	}
 
 	void LogCameraRoute(ulong time) {
-		cameraRoute.Add((time, camera.transform.position, camera.transform.rotation));
+		cameraRoute.Add((time, parent.transform.position, parent.transform.rotation));
 	}
 
 	void SaveCameraRoute(string dataPath) {
@@ -361,7 +367,7 @@ public class DVSMemory {
 		for (int i = 0; i < objs.Count; i++) {
 			DVObject obj = objs[i];
 
-			InterBBox inter = obj.GenerateBBoxExact(camera);
+			InterBBox inter = obj.GenerateBBoxExact(parent.camera);
 			BBox bbox = 
 				inter != null ? new() {
 					min = (S_Vector2)inter.min,
@@ -387,5 +393,62 @@ public class DVSMemory {
 		string json = JsonConvert.SerializeObject(bboxHistory, Formatting.None);
 
 		File.WriteAllText(jsonPath, json);
+	}
+
+	void LogIMU(ulong time) {
+		var mc = parent.motionController;
+
+		ulong t = time;
+		ulong h = 
+			(ulong)(
+			mc is DVSampledMotion sm 
+			? DVConfig.timeScale / sm.SampleRate * DVConfig.IMU_H_DeltaT_coef 
+			: DVConfig.IMU_H_analyticSecs * DVConfig.timeScale);
+
+		(Vector3 pos, Quaternion rot) s_tph = mc.SampleMotion(t + h);
+		(Vector3 pos, Quaternion rot) s_t = mc.SampleMotion(t);
+		(Vector3 pos, Quaternion rot) s_tmh = mc.SampleMotion(h > t ? 0 : t - h); // clamp to 0
+
+		// accel(t) = (p(t+h) - 2p(t) + p(t-h)) / h^2
+
+		Vector3 accel =
+			(s_tph.pos - 2 * s_t.pos + s_tmh.pos)
+			/ (Mathf.Pow((float)h / DVConfig.timeScale, 2));
+
+		Quaternion delta = Quaternion.Inverse(s_tmh.rot) * s_tph.rot;
+		// Shortest rotation
+		if (delta.w < 0f) {
+			delta = new Quaternion(
+				-delta.x, -delta.y, -delta.z, -delta.w
+			);
+		}
+		delta.ToAngleAxis(out float angle, out Vector3 axis);
+		float rad = angle * Mathf.Deg2Rad;
+
+		Vector3 angularVel = axis * (rad / (2f * ((float)h / DVConfig.timeScale)));
+
+		IMULog.Add((time, accel, angularVel));
+	}
+
+	void SaveIMU(string dataPath) {
+		Log("Saving IMU");
+		string outPath = Path.Join(dataPath, DVConfig.IMUFileName);
+
+		StringBuilder sb = new();
+
+		// header
+		sb.AppendLine(string.Join(',', DVConfig.IMUCSVHeader));
+
+		static string enc(float val) => val.ToString("F9", CultureInfo.InvariantCulture);
+
+		foreach (var (t, accel, angularVel) in IMULog) {
+			sb.AppendLine(string.Join(',', new[] {
+				t.ToString(), // encode timestamp
+				enc(angularVel.x), enc(angularVel.y), enc(angularVel.z), // encode angular vel
+				enc(accel.x), enc(accel.y), enc(accel.z) })); // encode accel
+		}
+
+		File.Delete(outPath); // shouldnt be necessary
+		File.WriteAllText(outPath, sb.ToString());
 	}
 }

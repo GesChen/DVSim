@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Newtonsoft.Json.Converters;
@@ -15,7 +15,7 @@ public static class DVConfig {
 	// simulated fps 10k-100k most realistic.
 	// make it 1m if you have all the time in the world i guess.
 	// higher = better temporal precision, more realistic
-	public const float simFPS = 100; 
+	public const float simFPS = 1000; 
 	public const int timeScale = 1_000_000_000; // just means the sim runs at ns scale. dont change this.
 	public const bool interpolateTime = true;
 	public const int refractoryPeriod = 6800; // global timescale, this is ns -- https://doi.org/10.3929/ethz-c-000655648
@@ -75,6 +75,14 @@ public static class DVConfig {
 	public const string bboxFileName = "bboxes_raw.json";
 	public const bool autoDeleteBBoxesRaw = true;
 
+	public const bool recordIMU = true;
+	public const string IMUFileName = "imu.csv";
+	// sampled vs analytic/continuous motion find the h differently
+	public const float IMU_H_DeltaT_coef = .5f; // h is chosen as what coef of Δt of the sampled motion? - .5 => h = dt/2
+	public const float IMU_H_analyticSecs = .001f; // 
+	public static readonly string[] IMUCSVHeader // uses unicode but can be swapped to ascii if needed
+		= new[] {"time (ns)", "wx (rad/s)", "wy (rad/s)", "wz (rad/s)", "ax (m/s^2)", "ay (m/s^2)", "az (m/s^2)"};
+
 	// ------- frame captures ------
 	public const bool doFrameCaptures = true;
 	public const bool useEXR = false; // easy to debug, takes longer to encode
@@ -83,7 +91,7 @@ public static class DVConfig {
 	public const string frameCapSubFolder = "frames";
 	public const string frameCapDataSubFolder = "data";
 	public const int frameNumDigits = 5;
-	public const bool autoDeleteFrameCaps = false;
+	public const bool autoDeleteFrameCaps = true;
 
 	// --- post processing---
 	public const string eventsOut = "events.npz";

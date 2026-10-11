@@ -8,9 +8,12 @@ using UnityEditor;
 #endif
 
 [ExecuteAlways]
-public sealed class DVM_DroneCamera : DVMotion {
+public sealed class DVM_DroneCamera : DVSampledMotion {
 	// Prevents invalid settings from producing an unbounded cache build.
 	private const double MaximumCacheSimulationSeconds = 600.0;
+
+	// should be the right var
+	public override float SampleRate => playModeCacheTimeStepsPerSecond;
 
 	#region Types
 
@@ -697,9 +700,8 @@ public sealed class DVM_DroneCamera : DVMotion {
 		lastAppliedCacheRevision = -1;
 	}
 
-	public override void UpdateMotion(ulong t) {
-		ApplyTime(t / (double)DVConfig.timeScale, false);
-	}
+	public override (Vector3, Quaternion) SampleMotion(ulong t) => 
+		SampleTime(t / (double)DVConfig.timeScale);
 
 	private void Update() {
 		if (timeMode == TimeMode.AutomaticPreview) {
@@ -1074,6 +1076,27 @@ public sealed class DVM_DroneCamera : DVMotion {
 	#endregion
 
 	#region Cached Pose Sampling
+
+	private (Vector3, Quaternion) SampleTime(double requestedTime) {
+		if (flightCache.Count == 0)
+			return (Vector3.zero, Quaternion.identity);
+
+		double time = ResolvePlaybackTime(requestedTime);
+
+		int upper = FindUpperSampleIndex(time);
+		int lower = Math.Max(0, upper - 1);
+		FlightSample a = flightCache[lower];
+		FlightSample b = flightCache[upper];
+
+		double interval = b.time - a.time;
+		float blend = interval > double.Epsilon
+			? (float)((time - a.time) / interval)
+			: 0f;
+
+		return 
+			(Vector3.LerpUnclamped(a.position, b.position, blend),
+			Quaternion.SlerpUnclamped(a.rotation, b.rotation, blend));
+	}
 
 	private void ApplyTime(double requestedTime, bool force) {
 		if (flightCache.Count == 0)

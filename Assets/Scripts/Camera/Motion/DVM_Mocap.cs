@@ -9,10 +9,12 @@ using UnityEngine;
 using UnityEngine.UIElements;
 
 // expects CSV in vicon format Frame	Time	X	Y	Z	Roll	Pitch	Yaw (mm) (deg)
-public class DVM_Mocap : DVMotion {
+public class DVM_Mocap : DVSampledMotion {
 	public string SourceResourcePath;
 	public float SourcePositionScaleFactorToM = 1000; // 1000x from mm -> m, assumed default
 	public Transform pathTransform;
+
+	public override float SampleRate => (float)HzGuess * DVConfig.timeScale;
 
 	struct Keyframe {
 		public ulong time;
@@ -136,12 +138,10 @@ public class DVM_Mocap : DVMotion {
 		return keys;
 	}
 
-	public override void UpdateMotion(ulong t) {
-		if (path.Length == 0) return;
+	public override (Vector3, Quaternion) SampleMotion(ulong t) {
+		if (path.Length == 0) return (Vector3.zero, Quaternion.identity);
 
-		(Vector3 interPos, Quaternion interRot) = SamplePath(t);
-
-		transform.SetPositionAndRotation(interPos, interRot);
+		return SamplePath(t);
 	}
 
 	private (Vector3 pos, Quaternion rot) SamplePath(ulong t) {

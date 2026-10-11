@@ -23,17 +23,15 @@ public class DVM_HandheldTremor : DVMotion {
 
 	Quaternion baseRot;
 
-
 	public override void Initialize() {
 		baseRot = transform.localRotation;
 	}
 
-	public override void UpdateMotion(ulong t) {
-		UpdateTremor(t / (double)DVConfig.timeScale);
-	}
+	public override (Vector3, Quaternion) SampleMotion(ulong t) => 
+		SampleTremor(t / (double)DVConfig.timeScale);
 
-	public void UpdateTremor(double time) {
-		if (!enabled) return;
+	public (Vector3, Quaternion) SampleTremor(double time) {
+		if (!enabled) return (Vector3.zero, Quaternion.identity);
 
 		float t = (float)time;
 
@@ -43,7 +41,7 @@ public class DVM_HandheldTremor : DVMotion {
 			Fbm(_seed0.z, _seed1.z, t * Frequency.z * TimeScale.z, Octaves, Lacunarity.z, Gain.z) * Amplitude.z
 		) * Scale;
 
-		transform.localRotation = baseRot * Quaternion.Euler(euler);
+		return (transform.position, baseRot * Quaternion.Euler(euler));
 	}
 
 	private void Update() { // needed for the enable checkbox

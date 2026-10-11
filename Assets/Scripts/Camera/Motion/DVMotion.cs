@@ -4,5 +4,5 @@ using UnityEngine;
 
 public abstract class DVMotion : MonoBehaviour {
 	public abstract void Initialize();
-	public abstract void UpdateMotion(ulong t);
+	public abstract (Vector3 pos, Quaternion rot) SampleMotion(ulong t);
 }

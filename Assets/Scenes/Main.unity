@@ -46202,7 +46202,7 @@ MonoBehaviour:
   SourceResourcePath: Camera Paths/vicon_upward_spiral_10s_100hz
   SourcePositionScaleFactorToM: 1
   pathTransform: {fileID: 1019249732}
-  samplesPerSegment: 16
+  samplesPerSegment: 1
   arrowSpacing: 0.5
   arrowLength: 0.25
   arrowHeadSize: 0.08

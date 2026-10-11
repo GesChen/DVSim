@@ -127,10 +127,10 @@ InitTestScene*.unity*
 /Python/room generation/habitat-sim-master
 /Python/room generation/ptexutils
 !*.blend
-/Python/events/data/from umd
-/Python/events/data/IROS_Dataset-2018-independent-motion
-/Python/events/V2CE-Toolbox-master
-/Python/events/v2e-master
+/Python/tools/data/from umd
+/Python/tools/data/IROS_Dataset-2018-independent-motion
+/Python/tools/V2CE-Toolbox-master
+/Python/tools/v2e-master
 /Python/exterior/AdditionalMaps_0.9.15
 /Python/exterior/CARLA_0.9.15
 /Python/interior/ig_dataset
@@ -139,7 +139,7 @@ InitTestScene*.unity*
 /Python/motion/mmpose-dev-1.x
 /Python/motion/video to fbx/input
 /Python/motion/VideoPose3D-main
-/Python/events/data
+/Python/tools/data
 /Python/interior/3D-Front
 /Python/motion/MotionBERT
 /Python/exterior/urbanscene3d/ArtSci_fine
@@ -172,3 +172,4 @@ credentials.json
 /Assets/Resources/Mocap/cmu mocap bvhs
 /Python/AdditionalMaps_Latest
 /Python/CARLA_Latest
+/Python/example imu output eth/calibration_datasets
